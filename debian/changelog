@@ -1,0 +1,5 @@
+monitoring-common-shell-library (1.0-1~unki.1) stretch; urgency=medium
+
+  * Initial release
+
+ -- Andreas Unterkircher <unki@netshadow.net>  Wed, 02 Aug 2017 19:44:42 +0200

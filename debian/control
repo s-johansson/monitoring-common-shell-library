@@ -1,0 +1,15 @@
+Source: monitoring-common-shell-library
+Section: net
+Priority: optional
+Maintainer: Andreas Unterkircher <unki@netshadow.net>
+Build-Depends: debhelper (>= 9), coreutils, util-linux, bc
+Standards-Version: 3.9.8
+Homepage: https://netshadow.org/monitoring-plugins/monitoring-common-shell-library
+Vcs-Git: https://netshadow.org/monitoring-plugins/monitoring-common-shell-library.git
+Vcs-Browser: https://netshadow.org/monitoring-plugins/monitoring-common-shell-library
+
+Package: monitoring-common-shell-library
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: a library of commonly used shell functions.
+ a library of commonly used shell functions.
