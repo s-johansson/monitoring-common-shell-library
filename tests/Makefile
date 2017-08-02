@@ -22,6 +22,20 @@
 
 ###############################################################################
 
+script_args :=
+rparts_args := --report
+
+ifdef v
+	rparts_args := --report --verbose
+endif
+
+ifdef d
+	script_args := -a--debug
+	rparts_args := --verbose
+endif
+
+.PHONY: all
+
 all:
-	run-parts --verbose --exit-on-error --regex '^1[[:digit:]][[:digit:]]_' 1xx
-	run-parts --verbose --exit-on-error --regex '^2[[:digit:]][[:digit:]]_' 2xx
+	@run-parts $(rparts_args) --exit-on-error --regex '^1[[:digit:]][[:digit:]]_' $(script_args) 1xx
+	@run-parts $(rparts_args) --exit-on-error --regex '^2[[:digit:]][[:digit:]]_' $(script_args) 2xx
