@@ -16,4 +16,3 @@ assert_func validate_parameters $TEST_FAIL "critical parameter contains an inval
 
 unset -v CSL_WARNING_LIMIT CSL_CRITICAL_LIMIT
 assert_func validate_parameters $TEST_FAIL "are mandatory"
-

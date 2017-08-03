@@ -41,3 +41,29 @@ assert_func parse_parameters $TEST_FAIL "unrecognized option" --x
 assert_func parse_parameters $TEST_FAIL "unrecognized option" --2
 assert_func parse_parameters $TEST_FAIL "unrecognized option" --xxxxx
 assert_func parse_parameters $TEST_FAIL "unrecognized option" --22222
+
+# using custom getopt-parameters
+CSL_GETOPT_SHORT="mn:"
+CSL_GETOPT_LONG="minimum,neutral:,"
+declare -A CSL_USER_GETOPT_PARAMS=()
+CSL_USER_GETOPT_PARAMS+=( [m]="minimum_test" )
+CSL_USER_GETOPT_PARAMS+=( [minimum]="minimum_test" )
+CSL_USER_GETOPT_PARAMS+=( [n]="neutral_test" )
+CSL_USER_GETOPT_PARAMS+=( [neutral]="neutral_test" )
+assert_func parse_parameters $TEST_FAIL "No function" --minimum --neutral 5
+
+minimum_test ()
+{
+   return 0
+}
+
+neutral_test ()
+{
+   [ "x${1}" == "x5" ] || return 1
+   return 0
+}
+
+assert_func parse_parameters $TEST_OK $TEST_EMPTY --minimum --neutral 5
+assert_func parse_parameters $TEST_FAIL "Parameter function 'neutral_test' exited non-zero" --minimum --neutral 4
+unset -f minimum_test neutral_test
+unset -v CSL_USER_GETOPT_PARAMS CSL_GETOPT_SHORT CSL_GETOPT_LONG

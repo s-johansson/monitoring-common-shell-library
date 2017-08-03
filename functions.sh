@@ -44,6 +44,12 @@ declare -g CSL_EXIT_CODE=0 CSL_EXIT_TEXT= CSL_EXIT_PERF=
 declare -g CSL_WARNING_LIMIT= CSL_CRITICAL_LIMIT=
 declare -g CSL_DEBUG= CSL_VERBOSE=
 declare -g CSL_DEFAULT_HELP_TEXT= CSL_HELP_TEXT=
+declare -g CSL_GETOPT_SHORT= CSL_GETOPT_LONG=
+
+readonly CSL_DEFAULT_GETOPT_SHORT='w:c:dhv'
+readonly CSL_DEFAULT_GETOPT_LONG='warning:,critical:,debug,verbose,help'
+
+declare -A CSL_USER_GETOPT_PARAMS=()
 
 # the '&& true' is required as read exits non-zero on reaching end-of-file
 read -r -d '' CSL_DEFAULT_HELP_TEXT <<'EOF' && true
@@ -203,6 +209,13 @@ is_declared ()
    return $?
 }
 
+is_declared_func ()
+{
+   [ $# -ge 1 ] || return 1
+   declare -p -f "$1" &> /dev/null
+   return $?
+}
+
 is_set ()
 {
    #is_declared ${1}" || return 1;
@@ -352,6 +365,9 @@ eval_limits ()
 parse_parameters ()
 {
    local TEMP= RETVAL=
+   local GETOPT_SHORT="${CSL_DEFAULT_GETOPT_SHORT}"
+   local GETOPT_LONG="${CSL_DEFAULT_GETOPT_LONG}"
+
    if [ $# -lt 1 ]; then
       fail "Parameters required!"
       echo
@@ -359,7 +375,23 @@ parse_parameters ()
       exit 1
    fi
 
-   TEMP=$(getopt -n ${FUNCNAME[0]} -o 'w:c:dhv' --long 'warning:,critical:,debug,verbose,help' -- "${@}")
+   if has_short_params; then
+      local USER_SHORT=$(get_short_params)
+
+      if [ ! -z "${USER_SHORT}" ]; then
+         GETOPT_SHORT+="${USER_SHORT}"
+      fi
+   fi
+
+   if has_long_params; then
+      local USER_LONG=$(get_long_params)
+
+      if [ ! -z "${USER_LONG}" ]; then
+         GETOPT_LONG+=",${USER_LONG}"
+      fi
+   fi
+
+   TEMP=$(getopt -n ${FUNCNAME[0]} -o "${GETOPT_SHORT}" --long "${GETOPT_LONG}" -- "${@}")
    RETVAL="${?}"
 
    if [ "x${RETVAL}" != "x0" ] || [[ "${TEMP}" =~ invalid[[:blank:]]option ]]; then
@@ -369,6 +401,7 @@ parse_parameters ()
 
    verbose "Parameters: ${TEMP}"
 
+   # add the parsed parameters back to the positional parameters.
    eval set -- "${TEMP}"
    unset -v TEMP
 
@@ -404,10 +437,50 @@ parse_parameters ()
             break
             ;;
          *)
-            echo "Invalid parameter(s)! ${1}"
-            echo
-            show_help
-            exit 1
+            local USER_OPT="${1}" USER_FUNC= USER_ARG= SHIFT=1
+
+            if ! [[ "${USER_OPT}" =~ ^-?-?([[:alnum:]]+)$ ]]; then
+               echo "Invalid parameter! ${USER_OPT}"
+               show_help
+               exit 1
+            fi
+
+            USER_OPT="${BASH_REMATCH[1]}"
+
+            if ! is_declared CSL_USER_GETOPT_PARAMS || \
+               ! [[ -v CSL_USER_GETOPT_PARAMS[${USER_OPT}] ]]; then
+               echo "Unknown parameter! ${USER_OPT}"
+               show_help
+               exit 1
+            fi
+
+            USER_FUNC="${CSL_USER_GETOPT_PARAMS[${USER_OPT}]}"
+
+            if ! is_declared_func ${USER_FUNC}; then
+               echo "No function '${USER_FUNC}' for parameter '${USER_OPT}'!"
+               exit 1
+            fi
+
+            #
+            # if the next parameter does not start with a hyphen, its
+            # most probably an argument to the $1 positional parameter.
+            #
+            if [ $# -ge 2 ] && [[ "${2}" =~ ^[^-] ]]; then
+               USER_ARG="${2}"
+               SHIFT=2
+            fi
+
+            $USER_FUNC $USER_ARG
+            RETVAL=$?
+
+            if [ "x${RETVAL}" != "x0" ]; then
+               fail "Parameter function '${USER_FUNC}' exited non-zero: ${RETVAL}"
+               exit 1
+            fi
+
+            shift $SHIFT
+            unset -v USER_OPT USER_FUNC USER_ARG SHIFT
+            continue
             ;;
       esac
    done
@@ -601,6 +674,87 @@ get_help_text ()
    has_help_text || return 1
 
    echo "${CSL_HELP_TEXT}"
+   return 0
+}
+
+has_short_params ()
+{
+   is_declared CSL_GETOPT_SHORT || return 1
+   [ ! -z "${CSL_GETOPT_SHORT}" ]  || return 1
+
+   return 0
+}
+
+has_long_params ()
+{
+   is_declared CSL_GETOPT_LONG || return 1
+   [ ! -z "${CSL_GETOPT_LONG}" ]  || return 1
+
+   return 0
+}
+
+
+add_param ()
+{
+   [ $# -eq 3 ] || { fail "exactly 3 parameters are required!"; return 1; }
+
+   local GETOPT_SHORT="${1}"
+   local GETOPT_LONG="${2}"
+   local OPT_FUNC="${3}"
+
+   if [ -z "${GETOPT_SHORT}" ] && [ -z "${GETOPT_LONG}" ]; then
+      fail "at least a short or a long option name has to be provided."
+      return 1
+   fi
+
+   if [ ! -z "${GETOPT_SHORT}" ]; then
+      if  ! [[ "${GETOPT_SHORT}" =~ ^-?([[:alnum:]]):?$ ]]; then
+         fail "given short parameter is invalid."
+         return 1
+      fi
+      GETOPT_SHORT="${BASH_REMATCH[1]}"
+   fi
+
+   if [ ! -z "${GETOPT_LONG}" ]; then
+      if ! [[ "${GETOPT_LONG}" =~ ^-?-?([[:alnum:]]+):?$ ]]; then
+         fail "given long parameter is invalid."
+         return 1
+      fi
+      GETOPT_LONG="${BASH_REMATCH[1]}"
+   fi
+
+   if ! is_declared_func $OPT_FUNC; then
+      fail "function ${OPT_FUNC} is not declared."
+      return 1
+   fi
+
+   if [ ! -z "${GETOPT_SHORT}" ]; then
+      CSL_USER_GETOPT_PARAMS["${GETOPT_SHORT}"]="${OPT_FUNC}"
+      CSL_GETOPT_SHORT+="${GETOPT_SHORT}"
+   fi
+
+   if [ ! -z "${GETOPT_LONG}" ]; then
+      CSL_USER_GETOPT_PARAMS["${GETOPT_LONG}"]="${OPT_FUNC}"
+      CSL_GETOPT_LONG+="${GETOPT_SHORT},"
+   fi
+
+   return 0
+}
+
+get_short_params ()
+{
+   has_short_params || return 1
+
+   echo "${CSL_GETOPT_SHORT}"
+   return 0
+}
+
+get_long_params ()
+{
+   has_long_params || return 1
+
+   # remove the trailing comma from the end of the string.
+   echo "${CSL_GETOPT_LONG:0:-1}"
    return 0
 }
 
