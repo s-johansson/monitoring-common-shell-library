@@ -2,8 +2,8 @@
 
 . common.sh
 
-unset -v EXIT_NO_DATA_IS_CRITICAL
+unset -v CSL_EXIT_NO_DATA_IS_CRITICAL
 assert_func is_exit_on_no_data_critical $TEST_FALSE $TEST_EMPTY
-EXIT_NO_DATA_IS_CRITICAL=1
+CSL_EXIT_NO_DATA_IS_CRITICAL=1
 assert_func is_exit_on_no_data_critical $TEST_TRUE $TEST_EMPTY
-unset -v EXIT_NO_DATA_IS_CRITICAL
+unset -v CSL_EXIT_NO_DATA_IS_CRITICAL

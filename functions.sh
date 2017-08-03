@@ -30,20 +30,19 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 # <Variables>
 #
 
-readonly EXIT_OK=0
-readonly EXIT_WARNING=1
-readonly EXIT_CRITICAL=2
-readonly EXIT_UNKNOWN=3
+readonly CSL_EXIT_OK=0
+readonly CSL_EXIT_WARNING=1
+readonly CSL_EXIT_CRITICAL=2
+readonly CSL_EXIT_UNKNOWN=3
 
-readonly TRUE=true
-readonly FALSE=false
+readonly CSL_TRUE=true
+readonly CSL_FALSE=false
 
 # reset variables, just in case...
-declare EXIT_NO_DATA_IS_CRITICAL=0
-declare EXIT_CODE=0 EXIT_TEXT="" EXIT_PERF=""
-declare WARNING="" CRITICAL=""
-declare DEBUG= VERBOSE=""
-declare UNIT='C' DISK= DISK_TEMP= ZERO=
+declare CSL_EXIT_NO_DATA_IS_CRITICAL=0
+declare CSL_EXIT_CODE=0 CSL_EXIT_TEXT="" CSL_EXIT_PERF=""
+declare CSL_WARNING_LIMIT="" CSL_CRITICAL_LIMIT=""
+declare CSL_DEBUG= CSL_VERBOSE=""
 
 #
 # </Variables>
@@ -58,9 +57,9 @@ declare UNIT='C' DISK= DISK_TEMP= ZERO=
 #
 is_debug ()
 {
-   is_declared DEBUG || return 1;
-   [ ! -z "${DEBUG}" ] || return 1;
-   [ "x${DEBUG}" != "x0" ] || return 1;
+   is_declared CSL_DEBUG || return 1;
+   [ ! -z "${CSL_DEBUG}" ] || return 1;
+   [ "x${CSL_DEBUG}" != "x0" ] || return 1;
 
    return 0
 } 
@@ -87,9 +86,9 @@ fail ()
 
 is_verbose ()
 {
-   is_declared VERBOSE || return 1;
-   [ ! -z "${VERBOSE}" ] || return 1;
-   [ "x${VERBOSE}" != "x0" ] || return 1;
+   is_declared CSL_VERBOSE || return 1;
+   [ ! -z "${CSL_VERBOSE}" ] || return 1;
+   [ "x${CSL_VERBOSE}" != "x0" ] || return 1;
 
    return 0
 }
@@ -112,9 +111,9 @@ verbose ()
 #
 is_exit_on_no_data_critical ()
 {
-   is_declared EXIT_NO_DATA_IS_CRITICAL || return 1
-   [ ! -z "${EXIT_NO_DATA_IS_CRITICAL}" ] || return 1
-   [ "x${EXIT_NO_DATA_IS_CRITICAL}" != "x0" ] || return 1
+   is_declared CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
+   [ ! -z "${CSL_EXIT_NO_DATA_IS_CRITICAL}" ] || return 1
+   [ "x${CSL_EXIT_NO_DATA_IS_CRITICAL}" != "x0" ] || return 1
    return 0
 }
 
@@ -124,10 +123,10 @@ is_exit_on_no_data_critical ()
 check_requirements ()
 {
    ( is_declared BASH_VERSINFO && [ ! -z "${BASH_VERSINFO[0]}" ] ) || \
-      { fail "Strangle BASH_VERSINFO variable is not (correctly) set!"; exit ${EXIT_CRITICAL}; }
+      { fail "Strangle BASH_VERSINFO variable is not (correctly) set!"; exit ${CSL_EXIT_CRITICAL}; }
 
    [ ${BASH_VERSINFO} -ge 4 ] || \
-      { fail "BASH version 4 or greater is required!"; return ${EXIT_CRITICAL}; }
+      { fail "BASH version 4 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
 
    [ ! -z "$(which getopt)" ] || \
       { fail "unable to locate GNU 'getopt' binary!"; return 1; }
@@ -216,7 +215,7 @@ is_match ()
 
 #
 # eval_limits() evaluates the given value against the given
-# WARNING and CRITICAL limits.
+# CSL_WARNING_LIMIT and CSL_CRITICAL_LIMIT limits.
 #
 eval_limits ()
 {
@@ -254,7 +253,7 @@ eval_limits ()
       is_match "${VALUE} >= ${WARN_MIN}" && \
       is_match "${VALUE} <= ${WARN_MAX}"; then
       TEXT="WARNING"
-      STATE=${EXIT_WARNING}
+      STATE=${CSL_EXIT_WARNING}
       MATCH="inside-range-match"
    # inside-range critical
    elif is_set ${CRIT_MIN} ${CRIT_MAX} && \
@@ -262,7 +261,7 @@ eval_limits ()
       is_match "${VALUE} >= ${CRIT_MIN}" && \
       is_match "${VALUE} <= ${CRIT_MAX}"; then
       TEXT="CRITICAL"
-      STATE=${EXIT_CRITICAL}
+      STATE=${CSL_EXIT_CRITICAL}
       MATCH="inside-range-match"
    # outside-range warning
    elif is_set ${WARN_MIN} ${WARN_MAX} && \
@@ -273,7 +272,7 @@ eval_limits ()
       is_match "${VALUE} < ${CRIT_MIN}" && \
       is_match "${VALUE} > ${CRIT_MAX}"; then
       TEXT="WARNING"
-      STATE=${EXIT_WARNING}
+      STATE=${CSL_EXIT_WARNING}
       MATCH="outside-range-match"
    # outside-range critical
    elif is_set ${CRIT_MIN} ${CRIT_MAX} && \
@@ -281,7 +280,7 @@ eval_limits ()
       is_match "${VALUE} > ${CRIT_MIN}" || \
       is_match "${VALUE} < ${CRIT_MAX}"; }; then
       TEXT="CRITICAL"
-      STATE=${EXIT_CRITICAL}
+      STATE=${CSL_EXIT_CRITICAL}
       MATCH="outside-range-match"
    #
    # now we check for greater-than-or-equal (max)
@@ -291,12 +290,12 @@ eval_limits ()
       is_match "${VALUE} >= ${WARN_MAX}" &&
       is_match "${VALUE} < ${CRIT_MAX}"; then
       TEXT="WARNING"
-      STATE=${EXIT_WARNING}
+      STATE=${CSL_EXIT_WARNING}
       MATCH="greater-than-or-equal-match"
    elif ! is_set ${CRIT_MIN} && is_set ${CRIT_MAX} && \
       is_match "${VALUE} >= ${CRIT_MAX}"; then
       TEXT="CRITICAL"
-      STATE=${EXIT_CRITICAL}
+      STATE=${CSL_EXIT_CRITICAL}
       MATCH="greater-than-or-equal-match"
    #
    # finally check for less-than-or-equal (min)
@@ -305,16 +304,16 @@ eval_limits ()
       is_match "${VALUE} <= ${WARN_MIN}" &&
       is_match "${VALUE} > ${CRIT_MIN}"; then
       TEXT="WARNING"
-      STATE=${EXIT_WARNING}
+      STATE=${CSL_EXIT_WARNING}
       MATCH="less-than-or-equal-match"
    elif ! is_set ${CRIT_MAX} && is_set ${CRIT_MIN} && \
       is_match "${VALUE} <= ${CRIT_MIN}"; then
       TEXT="CRITICAL"
-      STATE=${EXIT_CRITICAL}
+      STATE=${CSL_EXIT_CRITICAL}
       MATCH="less-than-or-equal-match"
    else
       TEXT="OK"
-      STATE=${EXIT_OK}
+      STATE=${CSL_EXIT_OK}
       MATCH="no-match-at-all"
    fi
 
@@ -336,7 +335,7 @@ parse_parameters ()
       exit 1
    fi
 
-   TEMP=$(getopt -n ${FUNCNAME[0]} -o 'w:c:D:u:dhvz' --long 'warning:,critical:,disk:,unit:,debug,verbose,help,zero' -- "${@}")
+   TEMP=$(getopt -n ${FUNCNAME[0]} -o 'w:c:dhv' --long 'warning:,critical:,debug,verbose,help' -- "${@}")
    RETVAL="${?}"
 
    if [ "x${RETVAL}" != "x0" ] || [[ "${TEMP}" =~ invalid[[:blank:]]option ]]; then
@@ -357,22 +356,22 @@ parse_parameters ()
             exit 0
             ;;
          '-d'|'--debug')
-            readonly DEBUG=1
+            readonly CSL_DEBUG=1
             shift
             continue
             ;;
          '-v'|'--verbose')
-            readonly VERBOSE=1
+            readonly CSL_VERBOSE=1
             shift
             continue
             ;;
          '-w'|'--warning')
-            readonly WARNING="${2}"
+            readonly CSL_WARNING_LIMIT="${2}"
             shift 2
             continue
             ;;
          '-c'|'--critical')
-            readonly CRITICAL="${2}"
+            readonly CSL_CRITICAL_LIMIT="${2}"
             shift 2
             continue
             ;;
@@ -395,10 +394,10 @@ parse_parameters ()
    #   show_help
    #   exit 1
    #fi
-   ! is_set DEBUG || debug "Debugging: enabled"
-   ! is_set VERBOSE || verbose "Verbose output: enabled"
-   ! is_set WARNING || debug "Warning limit: ${WARNING}"
-   ! is_set CRITICAL || debug "Critical limit: ${CRITICAL}"
+   ! is_set CSL_DEBUG || debug "Debugging: enabled"
+   ! is_set CSL_VERBOSE || verbose "Verbose output: enabled"
+   ! is_set CSL_WARNING_LIMIT || debug "Warning limit: ${CSL_WARNING_LIMIT}"
+   ! is_set CSL_CRITICAL_LIMIT || debug "Critical limit: ${CSL_CRITICAL_LIMIT}"
 
 }
 
@@ -476,18 +475,18 @@ is_valid_limit ()
 #
 validate_parameters ()
 {
-   if ! is_declared WARNING || [ -z "${WARNING}" ] || \
-      ! is_declared CRITICAL || [ -z "${CRITICAL}" ]; then
+   if ! is_declared CSL_WARNING_LIMIT || [ -z "${CSL_WARNING_LIMIT}" ] || \
+      ! is_declared CSL_CRITICAL_LIMIT || [ -z "${CSL_CRITICAL_LIMIT}" ]; then
       fail "warning and critical parameters are mandatory!"
       return 1
    fi
 
-   if ! is_valid_limit "${WARNING}"; then
+   if ! is_valid_limit "${CSL_WARNING_LIMIT}"; then
       fail "warning parameter contains an invalid value!"
       return 1
    fi
 
-   if ! is_valid_limit "${CRITICAL}"; then
+   if ! is_valid_limit "${CSL_CRITICAL_LIMIT}"; then
       fail "critical parameter contains an invalid value!"
       return 1
    fi
@@ -501,18 +500,18 @@ validate_parameters ()
 #
 print_result ()
 {
-   # EXIT_TEXT minus 2 characters removes the ", " at the end.
-   # EXIT_PERF minus 1 character remove the " " at the end.
+   # CSL_EXIT_TEXT minus 2 characters removes the ", " at the end.
+   # CSL_EXIT_PERF minus 1 character remove the " " at the end.
    readonly STOP_TIME_PLUGIN="$(date +%s%3N)"
 
-   if [ -z "${EXIT_TEXT}" ]; then
+   if [ -z "${CSL_EXIT_TEXT}" ]; then
       echo "No hddtemp data available."
-      ! is_exit_on_no_data_critical || exit ${EXIT_CRITICAL}
-      exit ${EXIT_UNKNOWN}
+      ! is_exit_on_no_data_critical || exit ${CSL_EXIT_CRITICAL}
+      exit ${CSL_EXIT_UNKNOWN}
    fi
 
-   echo "${EXIT_TEXT:0:-2}|${EXIT_PERF:0:-1}"
-   exit ${EXIT_CODE}
+   echo "${CSL_EXIT_TEXT:0:-2}|${CSL_EXIT_PERF:0:-1}"
+   exit ${CSL_EXIT_CODE}
 }
 
 #
@@ -602,9 +601,9 @@ trap cleanup INT QUIT TERM EXIT
 #
 # normally our script should have exited in print_result() already.
 # so we should not get to this end at all.
-# Anyway we exit with $EXIT_UNKNOWN in case.
+# Anyway we exit with $CSL_EXIT_UNKNOWN in case.
 #
-#exit $EXIT_UNKNOWN
+#exit $CSL_EXIT_UNKNOWN
 
 #
 # </TheActualWorkStartsHere>

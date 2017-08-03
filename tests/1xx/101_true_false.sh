@@ -2,5 +2,5 @@
 
 . common.sh
 
-assert_equals ${TRUE} true
-assert_equals ${FALSE} false
+assert_equals ${CSL_TRUE} true
+assert_equals ${CSL_FALSE} false

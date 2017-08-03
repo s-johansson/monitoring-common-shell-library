@@ -2,18 +2,18 @@
 
 . common.sh
 
-WARNING=5
-CRITICAL=10
+CSL_WARNING_LIMIT=5
+CSL_CRITICAL_LIMIT=10
 assert_func validate_parameters $TEST_OK $TEST_EMPTY
 
-WARNING=x
-CRITICAL=5
+CSL_WARNING_LIMIT=x
+CSL_CRITICAL_LIMIT=5
 assert_func validate_parameters $TEST_FAIL "warning parameter contains an invalid value"
 
-WARNING=5
-CRITICAL=x
+CSL_WARNING_LIMIT=5
+CSL_CRITICAL_LIMIT=x
 assert_func validate_parameters $TEST_FAIL "critical parameter contains an invalid value"
 
-unset -v WARNING CRITICAL
+unset -v CSL_WARNING_LIMIT CSL_CRITICAL_LIMIT
 assert_func validate_parameters $TEST_FAIL "are mandatory"
 
