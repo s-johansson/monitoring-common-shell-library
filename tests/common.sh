@@ -24,7 +24,7 @@ export TEST_NUM
 #readonly CWD=$(dirname $(realpath $0))
 
 # we use a place holder to signalize no output is desired.
-readonly TEST_EMPTY=":::*?*:::"
+readonly TEST_EMPTY="xxxxxxLANGWEILIGxxxxxx"
 
 # boolean exit states
 readonly TEST_TRUE=0
@@ -109,7 +109,7 @@ assert_func ()
 
    if [[ ${RETVAL} =~ ${EXPECT_CODE} ]] && \
       ( ( [ "${EXPECT_TEXT}" == "${TEST_EMPTY}" ] && [ -z "${RESULT}" ] ) || \
-      [[ "${RESULT}" =~ "${EXPECT_TEXT}" ]] ); then
+      [[ "${RESULT}" =~ ${EXPECT_TEXT} ]] ); then
       do_debug "PASS"
       return 0
    fi
@@ -118,7 +118,7 @@ assert_func ()
       FAIL_TEXT+="Expected exit-code '${EXPECT_CODE}', but got '${RETVAL}'!\n\t"
    fi
 
-   if [ "${EXPECT_TEXT}" != "${TEST_EMPTY}" ] && ! [[ "${RESULT}" =~ "${EXPECT_TEXT}" ]]; then
+   if [ "${EXPECT_TEXT}" != "${TEST_EMPTY}" ] && ! [[ "${RESULT}" =~ ${EXPECT_TEXT} ]]; then
       FAIL_TEXT+="Expected output '${EXPECT_TEXT}', but got '${RESULT//[^a-zA-Z0-9_[:blank:][:punct:]]/}'!\n\t"
    fi
 
@@ -129,7 +129,7 @@ assert_func ()
    echo "FAILED"; echo
    echo -e "TEST:\tNo.${TEST_NUM} (${FUNCNAME[0]}:${BASH_LINENO[0]})"
    echo -e "PARAM:\t${@}"
-   echo -e "ERR:\t${FAIL_TEXT:0:-4}"
+   [ ! -z "${FAIL_TEXT}" ] && echo -e "ERR:\t${FAIL_TEXT:0:-4}"
    echo
 
    exit 1
