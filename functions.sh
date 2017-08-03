@@ -3,7 +3,7 @@
 ###############################################################################
 
 
-# This file is part of monitoring-common-shell-library.
+# This file is part of monitoring-common-shell-library v1.1.
 #
 # monitoring-common-shell-library, a library of shell functions used for
 # monitoring plugins like used with (c) Nagios, (c) Icinga, etc.
@@ -49,6 +49,7 @@ declare -g CSL_GETOPT_SHORT= CSL_GETOPT_LONG=
 readonly CSL_DEFAULT_GETOPT_SHORT='w:c:dhv'
 readonly CSL_DEFAULT_GETOPT_LONG='warning:,critical:,debug,verbose,help'
 
+declare -a CSL_TEMP_DIRS=()
 declare -A CSL_USER_GETOPT_PARAMS=()
 
 # the '&& true' is required as read exits non-zero on reaching end-of-file
@@ -173,6 +174,9 @@ check_requirements ()
    ! is_empty "$(which bc)" || \
       { fail "unable to locate 'bc' binary!"; return 1; }
 
+   ! is_empty "$(which mktemp)" || \
+      { fail "unable to locate 'mktemp' binary!"; return 1; }
+
    return 0
 }
 
@@ -261,6 +265,15 @@ is_match ()
 
    debug "${1} = ${RETVAL} (retval:${RESULT})"
    return $RESULT
+}
+
+is_dir ()
+{
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
+   [ -d "${1}" ] || return 1
+
+   return 0
 }
 
 #
@@ -673,9 +686,16 @@ cleanup ()
 {
    local EXITCODE=$?
 
-   #[ ! -z "${TMPDIR}" ] || exit $EXITCODE;
-   #[ -d "${TMPDIR}" ] || exit $EXITCODE;
-   #rm -rf ${TMPDIR}
+   if [ ${#CSL_TEMP_DIRS} -lt 1 ]; then
+      exit $EXITCODE
+   fi
+
+   local TMPDIR
+   for TMPDIR in "${CSL_TEMP_DIRS[@]}"; do
+      ! is_empty "${TMPDIR}" || continue
+      is_dir "${TMPDIR}" || continue
+      rm -rf ${TMPDIR}
+   done
 
    exit $EXITCODE
 }
@@ -683,9 +703,6 @@ cleanup ()
 startup ()
 {
    readonly START_TIME_PLUGIN="$(date +%s%3N)"
-
-   #declare -g TMPDIR="$(mktemp -d -p /tmp krbtest.XXXXXX)"
-   #[ ! -z "${TMPDIR}" ] || { fail "Failed to create temporary directory in /tmp!"; return 1; }
 }
 
 rename_func ()
@@ -798,7 +815,53 @@ get_long_params ()
    return 0
 }
 
-trap cleanup INT QUIT TERM EXIT
+create_tmpdir ()
+{
+   local TMPDIR= RETVAL=
+
+   if [ ${#CSL_TEMP_DIRS[@]} -gt 10 ]; then
+      fail "I am not willing to create more than 10 temp-directories for you!"
+      exit 1
+   fi
+
+   TMPDIR="$(mktemp -d -p /tmp csl.XXXXXX)"
+   RETVAL=$?
+
+   if [ "x${RETVAL}" != "x0" ]; then
+      fail "mktemp exited non-zero!";
+      exit 1
+   fi
+
+   if is_empty "${TMPDIR}"; then
+      fail "mktemp did not return the path of the created temp-directory in /tmp."
+      exit 1
+   fi
+
+   if ! is_dir "${TMPDIR}"; then
+      fail "mktemp did not create a temp-directory for the returned path ${TMPDIR}."
+      exit 1
+   fi
+
+   CSL_TEMP_DIRS=( "${TMPDIR}" )
+
+   setup_cleanup_trap ||  \
+      { fail "Failed to install cleanup trap!"; exit 1; }
+
+   echo "${TMPDIR}"
+}
+
+setup_cleanup_trap ()
+{
+   #
+   # has the cleanup trap already been installed
+   #
+   if trap -p | grep -qsE "^trap[[:blank:]]--[[:blank:]]'cleanup'[[:blank:]]"; then
+      return 0
+   fi
+
+   trap cleanup INT QUIT TERM EXIT
+   return $?
+}
 
 #
 # </Functions>

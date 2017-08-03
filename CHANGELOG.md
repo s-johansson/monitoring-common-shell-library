@@ -7,6 +7,8 @@
  * add_param(), (get|has)_short_params(), (get|has)_long_params()
  * is_declared_func()
  * is_empty()
+ * is_dir()
+ * create_tmpdir()
 
 # 1.0
 
