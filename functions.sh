@@ -88,7 +88,7 @@ readonly CSL_DEFAULT_HELP_TEXT
 is_debug ()
 {
    is_declared CSL_DEBUG || return 1;
-   [ ! -z "${CSL_DEBUG}" ] || return 1;
+   ! is_empty "${CSL_DEBUG}" || return 1;
    [ "x${CSL_DEBUG}" != "x0" ] || return 1;
 
    return 0
@@ -117,7 +117,7 @@ fail ()
 is_verbose ()
 {
    is_declared CSL_VERBOSE || return 1;
-   [ ! -z "${CSL_VERBOSE}" ] || return 1;
+   ! is_empty "${CSL_VERBOSE}" || return 1;
    [ "x${CSL_VERBOSE}" != "x0" ] || return 1;
 
    return 0
@@ -142,7 +142,7 @@ verbose ()
 is_exit_on_no_data_critical ()
 {
    is_declared CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
-   [ ! -z "${CSL_EXIT_NO_DATA_IS_CRITICAL}" ] || return 1
+   ! is_empty "${CSL_EXIT_NO_DATA_IS_CRITICAL}" || return 1
    [ "x${CSL_EXIT_NO_DATA_IS_CRITICAL}" != "x0" ] || return 1
    return 0
 }
@@ -152,19 +152,25 @@ is_exit_on_no_data_critical ()
 #
 check_requirements ()
 {
-   ( is_declared BASH_VERSINFO && [ ! -z "${BASH_VERSINFO[0]}" ] ) || \
+   # is Bash actually used?
+   ( is_declared BASH_VERSINFO && ! is_empty "${BASH_VERSINFO[0]}" ) || \
       { fail "Strangle BASH_VERSINFO variable is not (correctly) set!"; exit ${CSL_EXIT_CRITICAL}; }
 
-   [ ${BASH_VERSINFO} -ge 4 ] || \
-      { fail "BASH version 4 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
+   # Bash major version 4 or later is required
+   [ ${BASH_VERSINFO[0]} -ge 4 ] || \
+      { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
 
-   [ ! -z "$(which getopt)" ] || \
+   # If bash major version 4 is used, the minor needs to be 3 or greater (for [[ -v ]] tests).
+   ( [ ${BASH_VERSINFO[0]} -eq 4 ] && [ ${BASH_VERSINFO[1]} -ge 3 ] ) || \
+      { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
+
+   ! is_empty "$(which getopt)" || \
       { fail "unable to locate GNU 'getopt' binary!"; return 1; }
 
-   [ ! -z "$(which cat)" ] || \
+   ! is_empty "$(which cat)" || \
       { fail "unable to locate 'cat' binary!"; return 1; }
 
-   [ ! -z "$(which bc)" ] || \
+   ! is_empty "$(which bc)" || \
       { fail "unable to locate 'bc' binary!"; return 1; }
 
    return 0
@@ -172,29 +178,28 @@ check_requirements ()
 
 get_limit_range ()
 {
-   [ ! -z "${1}" ] || return 1
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
    local LIMIT="${1}"
 
    # for ordinary numbers as limit
-   if is_integer $LIMIT || is_float $LIMIT; then
+   if is_integer "${LIMIT}" || is_float "${LIMIT}"; then
       echo "x ${LIMIT}"
       return 0
    fi
 
    if ! [[ ${LIMIT} =~ ^(-?[[:digit:]]+[\.[:digit:]]*)?:(-?[[:digit:]]+[\.[:digit:]]*)?$ ]]; then
-      fail "That does not look like a limit-range at all! ${LIMIT}"
+      fail "That does not look like a limit-range at all!"
       return 1
    fi
 
-   if [ -z "${BASH_REMATCH[1]}" ]; then
-      LIMIT_MIN="x"
-   else
+   local LIMIT_MIN="x"
+   if ! is_empty "${BASH_REMATCH[1]}"; then
       LIMIT_MIN="${BASH_REMATCH[1]}"
    fi
 
-   if [ -z "${BASH_REMATCH[2]}" ]; then
-      LIMIT_MAX="x"
-   else
+   local LIMIT_MAX="x"
+   if ! is_empty "${BASH_REMATCH[2]}"; then
       LIMIT_MAX="${BASH_REMATCH[2]}"
    fi
 
@@ -204,22 +209,21 @@ get_limit_range ()
 
 is_declared ()
 {
-   [ $# -ge 1 ] || return 1
-   declare -p "$1" &> /dev/null
+   [ $# -eq 1 ] || return 1
+   declare -p "${1}" &> /dev/null
    return $?
 }
 
 is_declared_func ()
 {
-   [ $# -ge 1 ] || return 1
-   declare -p -f "$1" &> /dev/null
+   [ $# -eq 1 ] || return 1
+   declare -p -f "${1}" &> /dev/null
    return $?
 }
 
 is_set ()
 {
-   #is_declared ${1}" || return 1;
-   [ ! -z "${1}" ] || return 1;
+   [ $# -ge 1 ] || return 1
 
    local PARAM
    for PARAM in "${@}"; do
@@ -229,9 +233,18 @@ is_set ()
    return 0
 }
 
+is_empty ()
+{
+   [ $# -eq 1 ] || return 1
+   [ -z "${1}" ] || return 1
+
+   return 0
+}
+
 is_match ()
 {
-   [ ! -z "${1}" ] || return 1
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
 
    local RETVAL RESULT
 
@@ -256,32 +269,34 @@ is_match ()
 #
 eval_limits ()
 {
-   [ $# -le 3 ] || { fail "eval_limits() requires at least 3 parameters."; return 1; }
-   { [ ! -z "${1}" ] && [ ! -z "${2}" ] && [ ! -z "${3}" ]; } || return 1
+   [ $# -eq 3 ] || \
+      { fail "eval_limits() requires 3 parameters."; return 1; }
+
+   ( ! is_empty "${1}" && ! is_empty "${2}" && ! is_empty "${3}" ) || return 1
 
    local VALUE="${1}"
-   local WARNING="${2}"
-   local CRITICAL="${3}"
-   local TEXT STATE
-   local MATCH
+   local WARNING="${2}" WARN_MIN= WARN_MAX=
+   local CRITICAL="${3}" CRIT_MIN= CRIT_MAX=
+   local TEXT= STATE= MATCH=
 
    read -r WARN_MIN WARN_MAX < <(get_limit_range "${WARNING}")
    read -r CRIT_MIN CRIT_MAX < <(get_limit_range "${CRITICAL}")
 
-   if [ -z "${WARN_MIN}" ] || [ -z "${WARN_MAX}" ] || \
-      [ -z "${CRIT_MIN}" ] || [ -z "${CRIT_MAX}" ]; then
+   if is_empty "${WARN_MIN}" || is_empty "${WARN_MAX}" || \
+      is_empty "${CRIT_MIN}" || is_empty "${CRIT_MAX}"; then
       fail "something went wrong on parsing limits!"
       exit 1
    fi
 
-   debug "WARN limit: min=${WARN_MIN}, max=${WARN_MAX}"
-   debug "CRIT limit: min=${CRIT_MIN}, max=${CRIT_MAX}"
+   debug "WARN thres: min=${WARN_MIN}, max=${WARN_MAX}"
+   debug "CRIT thres: min=${CRIT_MIN}, max=${CRIT_MAX}"
    debug "VALUE:      val=${VALUE}"
 
    #
    # first we check for inside- and outside-ranges
    #
    # inside-range warning
+   #
    if is_set ${WARN_MIN} ${WARN_MAX} ${CRIT_MIN} ${CRIT_MAX} && \
       is_match "${WARN_MIN} <= ${WARN_MAX}" && \
       is_match "${VALUE} >= ${WARN_MIN}" && \
@@ -292,7 +307,9 @@ eval_limits ()
       TEXT="WARNING"
       STATE=${CSL_EXIT_WARNING}
       MATCH="inside-range-match"
+   #
    # inside-range critical
+   #
    elif is_set ${CRIT_MIN} ${CRIT_MAX} && \
       is_match "${CRIT_MIN} <= ${CRIT_MAX}" && \
       is_match "${VALUE} >= ${CRIT_MIN}" && \
@@ -300,7 +317,9 @@ eval_limits ()
       TEXT="CRITICAL"
       STATE=${CSL_EXIT_CRITICAL}
       MATCH="inside-range-match"
+   #
    # outside-range warning
+   #
    elif is_set ${WARN_MIN} ${WARN_MAX} && \
       is_match "${WARN_MIN} > ${WARN_MAX}" && { \
       is_match "${VALUE} > ${WARN_MIN}" || \
@@ -311,7 +330,9 @@ eval_limits ()
       TEXT="WARNING"
       STATE=${CSL_EXIT_WARNING}
       MATCH="outside-range-match"
+   #
    # outside-range critical
+   #
    elif is_set ${CRIT_MIN} ${CRIT_MAX} && \
       is_match "${CRIT_MIN} > ${CRIT_MAX}" && { \
       is_match "${VALUE} > ${CRIT_MIN}" || \
@@ -323,6 +344,7 @@ eval_limits ()
    # now we check for greater-than-or-equal (max)
    #
    # greater-than-or-equal (max)
+   #
    elif ! is_set ${WARN_MIN} && is_set ${WARN_MAX} && \
       is_match "${VALUE} >= ${WARN_MAX}" &&
       is_match "${VALUE} < ${CRIT_MAX}"; then
@@ -354,6 +376,11 @@ eval_limits ()
       MATCH="no-match-at-all"
    fi
 
+   if is_empty "${MATCH}" || is_empty "${TEXT}" || is_empty "${STATE}"; then
+      fail "something went horribly wrong."
+      exit 1
+   fi
+
    debug "RESULT: ${MATCH}, eval'd to ${TEXT}(${STATE})."
    echo "${TEXT}"
    return ${STATE}
@@ -376,30 +403,33 @@ parse_parameters ()
    fi
 
    if has_short_params; then
-      local USER_SHORT=$(get_short_params)
+      TEMP=$(get_short_params)
 
-      if [ ! -z "${USER_SHORT}" ]; then
-         GETOPT_SHORT+="${USER_SHORT}"
+      if ! is_empty "${TEMP}"; then
+         GETOPT_SHORT+="${TEMP}"
       fi
    fi
 
    if has_long_params; then
-      local USER_LONG=$(get_long_params)
+      TEMP=$(get_long_params)
 
-      if [ ! -z "${USER_LONG}" ]; then
-         GETOPT_LONG+=",${USER_LONG}"
+      if ! is_empty "${TEMP}" ; then
+         GETOPT_LONG+=",${TEMP}"
       fi
    fi
 
    TEMP=$(getopt -n ${FUNCNAME[0]} -o "${GETOPT_SHORT}" --long "${GETOPT_LONG}" -- "${@}")
    RETVAL="${?}"
 
-   if [ "x${RETVAL}" != "x0" ] || [[ "${TEMP}" =~ invalid[[:blank:]]option ]]; then
+   if [ "x${RETVAL}" != "x0" ] || \
+     is_empty "${TEMP}" || \
+     [[ "${TEMP}" =~ invalid[[:blank:]]option ]]; then
+
       fail "error parsing arguments, getopt returned '${RETVAL}'!"
       exit 1
    fi
 
-   verbose "Parameters: ${TEMP}"
+   debug "Parameters: ${TEMP}"
 
    # add the parsed parameters back to the positional parameters.
    eval set -- "${TEMP}"
@@ -437,6 +467,11 @@ parse_parameters ()
             break
             ;;
          *)
+            if is_empty "${1}"; then
+               shift
+               continue
+            fi
+
             local USER_OPT="${1}" USER_FUNC= USER_ARG= SHIFT=1
 
             if ! [[ "${USER_OPT}" =~ ^-?-?([[:alnum:]]+)$ ]]; then
@@ -504,10 +539,12 @@ parse_parameters ()
 #
 is_range ()
 {
-   [ ! -z "${1}" ] || return 1
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
 
-   [[ "${1}" =~ ^(-?[[:digit:]]+[\.[:digit:]]*)?:(-?[[:digit:]]+[\.[:digit:]]*)?$ ]] || \
+   if ! [[ "${1}" =~ ^(-?[[:digit:]]+[\.[:digit:]]*)?:(-?[[:digit:]]+[\.[:digit:]]*)?$ ]]; then
       return 1
+   fi
 
    return 0
 }
@@ -519,7 +556,8 @@ is_range ()
 #
 is_integer ()
 {
-   [ ! -z "${1}" ] || return 1
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
    [[ "${1}" =~ ^-?[[:digit:]]+$ ]] || return 1
 
    return 0
@@ -531,7 +569,8 @@ is_integer ()
 #
 is_float ()
 {
-   [ ! -z "${1}" ] || return 1
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
    [[ "${1}" =~ ^-?[[:digit:]]+\.[[:digit:]]*$ ]] || return 1
 
    return 0
@@ -544,7 +583,8 @@ is_float ()
 #
 is_valid_limit ()
 {
-   [ ! -z "${1}" ] || return 1
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
 
    local LIMIT="${1}"
 
@@ -572,8 +612,8 @@ is_valid_limit ()
 #
 validate_parameters ()
 {
-   if ! is_declared CSL_WARNING_LIMIT || [ -z "${CSL_WARNING_LIMIT}" ] || \
-      ! is_declared CSL_CRITICAL_LIMIT || [ -z "${CSL_CRITICAL_LIMIT}" ]; then
+   if ! is_declared CSL_WARNING_LIMIT || is_empty "${CSL_WARNING_LIMIT}" || \
+      ! is_declared CSL_CRITICAL_LIMIT || is_empty "${CSL_CRITICAL_LIMIT}"; then
       fail "warning and critical parameters are mandatory!"
       return 1
    fi
@@ -601,7 +641,7 @@ print_result ()
    # CSL_EXIT_PERF minus 1 character remove the " " at the end.
    readonly STOP_TIME_PLUGIN="$(date +%s%3N)"
 
-   if [ -z "${CSL_EXIT_TEXT}" ]; then
+   if is_empty "${CSL_EXIT_TEXT}"; then
       echo "No hddtemp data available."
       ! is_exit_on_no_data_critical || exit ${CSL_EXIT_CRITICAL}
       exit ${CSL_EXIT_UNKNOWN}
@@ -658,7 +698,7 @@ rename_func ()
 has_help_text ()
 {
    is_declared CSL_HELP_TEXT || return 1
-   [ ! -z "${CSL_HELP_TEXT}" ] || return 1
+   ! is_empty "${CSL_HELP_TEXT}" || return 1
 
    return 0
 }
@@ -680,7 +720,7 @@ get_help_text ()
 has_short_params ()
 {
    is_declared CSL_GETOPT_SHORT || return 1
-   [ ! -z "${CSL_GETOPT_SHORT}" ]  || return 1
+   ! is_empty "${CSL_GETOPT_SHORT}" || return 1
 
    return 0
 }
@@ -688,7 +728,7 @@ has_short_params ()
 has_long_params ()
 {
    is_declared CSL_GETOPT_LONG || return 1
-   [ ! -z "${CSL_GETOPT_LONG}" ]  || return 1
+   ! is_empty "${CSL_GETOPT_LONG}" || return 1
 
    return 0
 }
@@ -702,12 +742,12 @@ add_param ()
    local GETOPT_LONG="${2}"
    local OPT_FUNC="${3}"
 
-   if [ -z "${GETOPT_SHORT}" ] && [ -z "${GETOPT_LONG}" ]; then
+   if is_empty "${GETOPT_SHORT}" && is_empty "${GETOPT_LONG}"; then
       fail "at least a short or a long option name has to be provided."
       return 1
    fi
 
-   if [ ! -z "${GETOPT_SHORT}" ]; then
+   if ! is_empty "${GETOPT_SHORT}"; then
       if  ! [[ "${GETOPT_SHORT}" =~ ^-?([[:alnum:]]):?$ ]]; then
          fail "given short parameter is invalid."
          return 1
@@ -715,7 +755,7 @@ add_param ()
       GETOPT_SHORT="${BASH_REMATCH[1]}"
    fi
 
-   if [ ! -z "${GETOPT_LONG}" ]; then
+   if ! is_empty "${GETOPT_LONG}"; then
       if ! [[ "${GETOPT_LONG}" =~ ^-?-?([[:alnum:]]+):?$ ]]; then
          fail "given long parameter is invalid."
          return 1
@@ -728,12 +768,12 @@ add_param ()
       return 1
    fi
 
-   if [ ! -z "${GETOPT_SHORT}" ]; then
+   if ! is_empty "${GETOPT_SHORT}"; then
       CSL_USER_GETOPT_PARAMS["${GETOPT_SHORT}"]="${OPT_FUNC}"
       CSL_GETOPT_SHORT+="${GETOPT_SHORT}"
    fi
 
-   if [ ! -z "${GETOPT_LONG}" ]; then
+   if ! is_empty "${GETOPT_LONG}"; then
       CSL_USER_GETOPT_PARAMS["${GETOPT_LONG}"]="${OPT_FUNC}"
       CSL_GETOPT_LONG+="${GETOPT_SHORT},"
    fi
