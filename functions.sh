@@ -39,10 +39,34 @@ readonly CSL_TRUE=true
 readonly CSL_FALSE=false
 
 # reset variables, just in case...
-declare CSL_EXIT_NO_DATA_IS_CRITICAL=0
-declare CSL_EXIT_CODE=0 CSL_EXIT_TEXT="" CSL_EXIT_PERF=""
-declare CSL_WARNING_LIMIT="" CSL_CRITICAL_LIMIT=""
-declare CSL_DEBUG= CSL_VERBOSE=""
+declare -g CSL_EXIT_NO_DATA_IS_CRITICAL=0
+declare -g CSL_EXIT_CODE=0 CSL_EXIT_TEXT= CSL_EXIT_PERF=
+declare -g CSL_WARNING_LIMIT= CSL_CRITICAL_LIMIT=
+declare -g CSL_DEBUG= CSL_VERBOSE=
+declare -g CSL_DEFAULT_HELP_TEXT= CSL_HELP_TEXT=
+
+# the '&& true' is required as read exits non-zero on reaching end-of-file
+read -r -d '' CSL_DEFAULT_HELP_TEXT <<'EOF' && true
+   -h, --help          ... help
+   -d, --debug         ... enable debugging.
+   -v, --verbose       ... be verbose.
+
+   -w, --warning=arg   ... warning limit, see below LIMITS section.
+   -c, --critical=arg  ... critical limit, see below LIMITS section.
+
+LIMITS are given similar to check_procs:
+
+   * greater-than-or-equal-match (max) results in warning on:
+      --warning :4
+      --warning 4
+   * less-than-or-equal-match (min) results in warning on:
+      --warning 4:
+   * inside-range-match (min:max)
+      --warning 5:10
+   * outside-range-match (max:min)
+      --warning 10:5
+EOF
+readonly CSL_DEFAULT_HELP_TEXT
 
 #
 # </Variables>
@@ -62,7 +86,7 @@ is_debug ()
    [ "x${CSL_DEBUG}" != "x0" ] || return 1;
 
    return 0
-} 
+}
 
 #
 # debug() outputs only if --debug or -d parameters have been given.
@@ -173,7 +197,7 @@ get_limit_range ()
 }
 
 is_declared ()
-{     
+{
    [ $# -ge 1 ] || return 1
    declare -p "$1" &> /dev/null
    return $?
@@ -228,8 +252,8 @@ eval_limits ()
    local TEXT STATE
    local MATCH
 
-   read WARN_MIN WARN_MAX < <(get_limit_range "${WARNING}")
-   read CRIT_MIN CRIT_MAX < <(get_limit_range "${CRITICAL}")
+   read -r WARN_MIN WARN_MAX < <(get_limit_range "${WARNING}")
+   read -r CRIT_MIN CRIT_MAX < <(get_limit_range "${CRITICAL}")
 
    if [ -z "${WARN_MIN}" ] || [ -z "${WARN_MAX}" ] || \
       [ -z "${CRIT_MIN}" ] || [ -z "${CRIT_MAX}" ]; then
@@ -519,32 +543,16 @@ print_result ()
 #
 show_help ()
 {
+   local TEXT=
+
+   if has_help_text; then
+      TEXT="$(get_help_text)"
+   else
+      TEXT="${CSL_DEFAULT_HELP_TEXT}"
+   fi
+
    echo
-   cat <<EOF
-   -h, --help          ... help
-   -r, --realm=arg     ... Kerberos realm to use.
-   -k, --keytab=arg    ... keytab to use on authenticating against the KDC.
-   -p, --principal=arg ... principal to fetch a ticket-granting-ticket (TGT) for.
-   -s, --server=arg    ... KDC to authenticate on.
-   -S, --service=arg   ... obtain a ticket for a particular service.
-   -d, --debug         ... enable debugging.
-   -v, --verbose       ... be verbose.
-
-   -w, --warning=arg   ... warning limit, see below LIMITS section (seconds).
-   -c, --critical=arg  ... critical limit, see below LIMITS section (seconds).
-
-LIMITS are given similar to check_procs:
-
-   * greater-than-or-equal-match (max) results in warning on:
-      --warning :4
-      --warning 4
-   * less-than-or-equal-match (min) results in warning on:
-      --warning 4:
-   * inside-range-match (min:max)
-      --warning 5:10
-   * outside-range-match (max:min)
-      --warning 10:5
-EOF
+   echo -e "${TEXT}"
    echo
 }
 
@@ -572,6 +580,28 @@ rename_func ()
    local SRC_FUNC=$(declare -f ${1})
    local DST_FUNC="$2${DST_FUNC#${1}}"
    eval "${DST_FUNC}"
+}
+
+has_help_text ()
+{
+   is_declared CSL_HELP_TEXT || return 1
+   [ ! -z "${CSL_HELP_TEXT}" ] || return 1
+
+   return 0
+}
+
+set_help_text ()
+{
+   [ $# -gt 0 ] || return 1
+   CSL_HELP_TEXT="${1}"
+}
+
+get_help_text ()
+{
+   has_help_text || return 1
+
+   echo "${CSL_HELP_TEXT}"
+   return 0
 }
 
 trap cleanup INT QUIT TERM EXIT
