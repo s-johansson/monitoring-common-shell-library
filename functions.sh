@@ -49,6 +49,9 @@ declare -g CSL_GETOPT_SHORT= CSL_GETOPT_LONG=
 readonly CSL_DEFAULT_GETOPT_SHORT='w:c:dhv'
 readonly CSL_DEFAULT_GETOPT_LONG='warning:,critical:,debug,verbose,help'
 
+readonly -a CSL_DEFAULT_PREREQ=( 'getopt' 'cat' 'bc' 'mktemp' )
+declare -a CSL_USER_PREREQ=()
+
 declare -a CSL_TEMP_DIRS=()
 declare -A CSL_USER_GETOPT_PARAMS=()
 
@@ -165,17 +168,11 @@ check_requirements ()
    ( [ ${BASH_VERSINFO[0]} -eq 4 ] && [ ${BASH_VERSINFO[1]} -ge 3 ] ) || \
       { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
 
-   is_cmd "getopt" || \
-      { fail "unable to locate GNU 'getopt' binary!"; return 1; }
+   local PREREQ
 
-   is_cmd "cat" || \
-      { fail "unable to locate 'cat' binary!"; return 1; }
-
-   is_cmd "bc" || \
-      { fail "unable to locate 'bc' binary!"; return 1; }
-
-   is_cmd "mktemp" || \
-      { fail "unable to locate 'mktemp' binary!"; return 1; }
+   for PREREQ in "${CSL_DEFAULT_PREREQ[@]}" "${CSL_USER_PREREQ[@]}"; do
+      is_cmd "${PREREQ}" || { fail "Unable to locate '${PREREQ}' binary!"; return 1; }
+   done
 
    return 0
 }
@@ -731,8 +728,18 @@ has_help_text ()
 
 set_help_text ()
 {
-   [ $# -gt 0 ] || return 1
-   CSL_HELP_TEXT="${1}"
+   # the text might have been provided as first parameter.
+   if [ $# -ge 1 ]; then
+      ! is_empty "${1}" || return 1
+      CSL_HELP_TEXT="${1}"
+      return 0
+   fi
+
+   # otherwise we accept whatever is passed by STDIN
+   read -r -d '' CSL_HELP_TEXT && true
+
+   ! is_empty "${CSL_HELP_TEXT}" || return 1
+   return 0
 }
 
 get_help_text ()
@@ -803,6 +810,18 @@ add_param ()
       CSL_USER_GETOPT_PARAMS["${GETOPT_LONG}"]="${OPT_FUNC}"
       CSL_GETOPT_LONG+="${GETOPT_SHORT},"
    fi
+
+   return 0
+}
+
+add_prereq ()
+{
+   [ $# -ge 1 ] || return 1
+   local PREREQ
+
+   for PREREQ in "${@}"; do
+      CSL_USER_PREREQ+=( "${PREREQ//[^a-zA-Z0-9_[:blank:][:punct:]]/}" )
+   done
 
    return 0
 }

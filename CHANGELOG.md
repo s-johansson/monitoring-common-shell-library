@@ -3,6 +3,9 @@
 # 1.2
 * new functions
  * is_cmd()
+ * add_prereq()
+* set_help_text() now accepts the text either as first parameter or via received
+  via STDIN.
 
 # 1.1
 
