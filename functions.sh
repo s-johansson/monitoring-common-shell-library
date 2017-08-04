@@ -625,6 +625,18 @@ is_cmd ()
    return $?
 }
 
+is_func ()
+{
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
+
+   if [ "$(type -t ${1//[^a-zA-Z0-9_[:blank:][:punct:]]/})" != "function" ]; then
+      return 1
+   fi
+
+   return 0
+}
+
 #
 # validate_parameters() returns true, if the given command-line parameters are
 # valid. otherwise it returns false.
