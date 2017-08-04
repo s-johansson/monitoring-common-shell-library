@@ -704,6 +704,10 @@ cleanup ()
 {
    local EXITCODE=$?
 
+   if is_func plugin_cleanup; then
+      plugin_cleanup;
+   fi
+
    if [ ${#CSL_TEMP_DIRS} -lt 1 ]; then
       exit $EXITCODE
    fi
