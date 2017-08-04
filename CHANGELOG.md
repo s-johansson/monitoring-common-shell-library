@@ -1,5 +1,9 @@
 # Changes in monitoring-common-shell-library
 
+# 1.2
+* new functions
+ * is_cmd()
+
 # 1.1
 
 * new functions

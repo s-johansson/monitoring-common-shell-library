@@ -165,16 +165,16 @@ check_requirements ()
    ( [ ${BASH_VERSINFO[0]} -eq 4 ] && [ ${BASH_VERSINFO[1]} -ge 3 ] ) || \
       { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
 
-   ! is_empty "$(which getopt)" || \
+   is_cmd "getopt" || \
       { fail "unable to locate GNU 'getopt' binary!"; return 1; }
 
-   ! is_empty "$(which cat)" || \
+   is_cmd "cat" || \
       { fail "unable to locate 'cat' binary!"; return 1; }
 
-   ! is_empty "$(which bc)" || \
+   is_cmd "bc" || \
       { fail "unable to locate 'bc' binary!"; return 1; }
 
-   ! is_empty "$(which mktemp)" || \
+   is_cmd "mktemp" || \
       { fail "unable to locate 'mktemp' binary!"; return 1; }
 
    return 0
@@ -617,6 +617,15 @@ is_valid_limit ()
    fi
 
    return 1
+}
+
+is_cmd ()
+{
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
+
+   command -v "${1}" >/dev/null 2>&1;
+   return $?
 }
 
 #
