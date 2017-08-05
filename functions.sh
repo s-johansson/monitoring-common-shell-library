@@ -98,6 +98,7 @@ is_debug ()
 
    return 0
 }
+readonly -f is_debug
 
 #
 # debug() outputs only if --debug or -d parameters have been given.
@@ -109,6 +110,7 @@ debug ()
 
    echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\t${1}" >&2
 }
+readonly -f debug
 
 #
 # fail() prints the fail-text as well as the function and code-line from
@@ -118,6 +120,7 @@ fail ()
 {
    echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\t${1}"
 }
+readonly -f fail
 
 is_verbose ()
 {
@@ -127,6 +130,7 @@ is_verbose ()
 
    return 0
 }
+readonly -f is_verbose
 
 #
 # verbose() outputs only if --verbose or -v parameters have been given.
@@ -138,25 +142,29 @@ verbose ()
 
    echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\t${1}" >&2
 }
+readonly -f verbose
 
 #
-# is_exit_on_no_data_critical() returns true, if it has been
+# csl_is_exit_on_no_data_critical() returns true, if it has been
 # choosen, that no-data-available is a critical error.
 # otherwise it returns false.
 #
-is_exit_on_no_data_critical ()
+csl_is_exit_on_no_data_critical ()
 {
    is_declared CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
    ! is_empty "${CSL_EXIT_NO_DATA_IS_CRITICAL}" || return 1
    [ "x${CSL_EXIT_NO_DATA_IS_CRITICAL}" != "x0" ] || return 1
    return 0
 }
+readonly -f csl_is_exit_on_no_data_critical
 
 #
-# check_requirements() tests for other required tools.
+# csl_check_requirements() tests for other required tools.
 #
-check_requirements ()
+csl_check_requirements ()
 {
+   local RETVAL=0
+
    # is Bash actually used?
    ( is_declared BASH_VERSINFO && ! is_empty "${BASH_VERSINFO[0]}" ) || \
       { fail "Strangle BASH_VERSINFO variable is not (correctly) set!"; exit ${CSL_EXIT_CRITICAL}; }
@@ -175,10 +183,16 @@ check_requirements ()
       is_cmd "${PREREQ}" || { fail "Unable to locate '${PREREQ}' binary!"; return 1; }
    done
 
-   return 0
-}
+   if is_func plugin_prereq; then
+      plugin_prereq;
+      RETVAL=$?
+   fi
 
-get_limit_range ()
+   return $RETVAL
+}
+readonly -f csl_check_requirements
+
+csl_get_limit_range ()
 {
    [ $# -eq 1 ] || return 1
    ! is_empty "${1}" || return 1
@@ -208,6 +222,7 @@ get_limit_range ()
    echo "${LIMIT_MIN} ${LIMIT_MAX}"
    return 0
 }
+readonly -f csl_get_limit_range
 
 is_declared ()
 {
@@ -215,6 +230,7 @@ is_declared ()
    declare -p "${1}" &> /dev/null
    return $?
 }
+readonly -f is_declared
 
 is_declared_func ()
 {
@@ -222,6 +238,7 @@ is_declared_func ()
    declare -p -f "${1}" &> /dev/null
    return $?
 }
+readonly -f is_declared_func
 
 is_set ()
 {
@@ -234,6 +251,7 @@ is_set ()
 
    return 0
 }
+readonly -f is_set
 
 is_empty ()
 {
@@ -242,6 +260,7 @@ is_empty ()
 
    return 0
 }
+readonly -f is_empty
 
 is_match ()
 {
@@ -264,6 +283,7 @@ is_match ()
    debug "${1} = ${RETVAL} (retval:${RESULT})"
    return $RESULT
 }
+readonly -f is_match
 
 is_dir ()
 {
@@ -273,10 +293,11 @@ is_dir ()
 
    return 0
 }
+readonly -f is_dir
 
 #
 # eval_limits() evaluates the given value against the given
-# CSL_WARNING_LIMIT and CSL_CRITICAL_LIMIT limits.
+# WARNING ($2) and CRITICAL ($3) thresholds.
 #
 eval_limits ()
 {
@@ -290,8 +311,8 @@ eval_limits ()
    local CRITICAL="${3}" CRIT_MIN= CRIT_MAX=
    local TEXT= STATE= MATCH=
 
-   read -r WARN_MIN WARN_MAX < <(get_limit_range "${WARNING}")
-   read -r CRIT_MIN CRIT_MAX < <(get_limit_range "${CRITICAL}")
+   read -r WARN_MIN WARN_MAX < <(csl_get_limit_range "${WARNING}")
+   read -r CRIT_MIN CRIT_MAX < <(csl_get_limit_range "${CRITICAL}")
 
    if is_empty "${WARN_MIN}" || is_empty "${WARN_MAX}" || \
       is_empty "${CRIT_MIN}" || is_empty "${CRIT_MAX}"; then
@@ -396,11 +417,12 @@ eval_limits ()
    echo "${TEXT}"
    return ${STATE}
 }
+readonly -f eval_limits
 
 #
-# parse_parameters() uses GNU getopt to parse the given command-line parameters.
+# csl_parse_parameters() uses GNU getopt to parse the given command-line parameters.
 #
-parse_parameters ()
+csl_parse_parameters ()
 {
    local TEMP= RETVAL=
    local GETOPT_SHORT="${CSL_DEFAULT_GETOPT_SHORT}"
@@ -413,16 +435,16 @@ parse_parameters ()
       exit 1
    fi
 
-   if has_short_params; then
-      TEMP=$(get_short_params)
+   if csl_has_short_params; then
+      TEMP=$(csl_get_short_params)
 
       if ! is_empty "${TEMP}"; then
          GETOPT_SHORT+="${TEMP}"
       fi
    fi
 
-   if has_long_params; then
-      TEMP=$(get_long_params)
+   if csl_has_long_params; then
+      TEMP=$(csl_get_long_params)
 
       if ! is_empty "${TEMP}" ; then
          GETOPT_LONG+=",${TEMP}"
@@ -557,6 +579,7 @@ parse_parameters ()
    ! is_set CSL_CRITICAL_LIMIT || debug "Critical limit: ${CSL_CRITICAL_LIMIT}"
 
 }
+readonly -f csl_parse_parameters
 
 #
 # is_range() returns true, if the argument given is in the form of an range.
@@ -573,6 +596,7 @@ is_range ()
 
    return 0
 }
+readonly -f is_range
 
 #
 # is_integer() returns true, if the given argument is an integer number.
@@ -587,6 +611,7 @@ is_integer ()
 
    return 0
 }
+readonly -f is_integer
 
 #
 # is_float() returns true, if the given argument is a floating point number.
@@ -600,6 +625,7 @@ is_float ()
 
    return 0
 }
+readonly -f is_float
 
 #
 # is_valid_limit() performs the checks on the given warning
@@ -630,6 +656,7 @@ is_valid_limit ()
 
    return 1
 }
+readonly -f is_valid_limit
 
 is_cmd ()
 {
@@ -639,6 +666,7 @@ is_cmd ()
    command -v "${1}" >/dev/null 2>&1;
    return $?
 }
+readonly -f is_cmd
 
 is_func ()
 {
@@ -651,12 +679,13 @@ is_func ()
 
    return 0
 }
+readonly -f is_func
 
 #
-# validate_parameters() returns true, if the given command-line parameters are
+# csl_validate_parameters() returns true, if the given command-line parameters are
 # valid. otherwise it returns false.
 #
-validate_parameters ()
+csl_validate_parameters ()
 {
    if ! is_declared CSL_WARNING_LIMIT || is_empty "${CSL_WARNING_LIMIT}" || \
       ! is_declared CSL_CRITICAL_LIMIT || is_empty "${CSL_CRITICAL_LIMIT}"; then
@@ -696,7 +725,7 @@ print_result ()
 
    if is_empty "${CSL_EXIT_TEXT}"; then
       echo "No hddtemp data available."
-      ! is_exit_on_no_data_critical || exit ${CSL_EXIT_CRITICAL}
+      ! csl_is_exit_on_no_data_critical || exit ${CSL_EXIT_CRITICAL}
       exit ${CSL_EXIT_UNKNOWN}
    fi
 
@@ -752,12 +781,12 @@ startup ()
 {
    readonly START_TIME_PLUGIN="$(date +%s%3N)"
 
-   check_requirements || \
-      { echo "check_requirements() returned non-zero!"; exit 1; }
-   parse_parameters "${@}" || \
-      { echo "parse_parameters() returned non-zero!"; exit 1; }
-   validate_parameters || \
-      { echo "validate_parameters() returned non-zero!"; exit 1; }
+   csl_check_requirements || \
+      { echo "csl_check_requirements() returned non-zero!"; exit 1; }
+   csl_parse_parameters "${@}" || \
+      { echo "csl_parse_parameters() returned non-zero!"; exit 1; }
+   csl_validate_parameters || \
+      { echo "csl_validate_parameters() returned non-zero!"; exit 1; }
 
    if is_func plugin_startup; then
       plugin_startup;
@@ -772,6 +801,7 @@ rename_func ()
    local DST_FUNC="$2${DST_FUNC#${1}}"
    eval "${DST_FUNC}"
 }
+readonly -f rename_func
 
 has_help_text ()
 {
@@ -780,6 +810,7 @@ has_help_text ()
 
    return 0
 }
+readonly -f has_help_text
 
 set_help_text ()
 {
@@ -796,6 +827,7 @@ set_help_text ()
    ! is_empty "${CSL_HELP_TEXT}" || return 1
    return 0
 }
+readonly -f set_help_text
 
 get_help_text ()
 {
@@ -804,23 +836,25 @@ get_help_text ()
    echo "${CSL_HELP_TEXT}"
    return 0
 }
+readonly -f get_help_text
 
-has_short_params ()
+csl_has_short_params ()
 {
    is_declared CSL_GETOPT_SHORT || return 1
    ! is_empty "${CSL_GETOPT_SHORT}" || return 1
 
    return 0
 }
+readonly -f csl_has_short_params
 
-has_long_params ()
+csl_has_long_params ()
 {
    is_declared CSL_GETOPT_LONG || return 1
    ! is_empty "${CSL_GETOPT_LONG}" || return 1
 
    return 0
 }
-
+readonly -f csl_has_long_params
 
 add_param ()
 {
@@ -874,6 +908,7 @@ add_param ()
    #echo "Added parameter ${OPT_VAR}: short:${GETOPT_SHORT-}, long:${GETOPT_LONG-}"
    return 0
 }
+readonly -f add_param
 
 has_param ()
 {
@@ -886,6 +921,7 @@ has_param ()
 
    return 0
 }
+readonly -f has_param
 
 has_param_value ()
 {
@@ -896,6 +932,7 @@ has_param_value ()
 
    return 0
 }
+readonly -f has_param_value
 
 get_param_value ()
 {
@@ -906,6 +943,7 @@ get_param_value ()
    echo "${CSL_USER_PARAMS[${1}]}"
    return 0
 }
+readonly -f get_param_value
 
 get_param ()
 {
@@ -934,6 +972,7 @@ get_param ()
    echo "${CSL_USER_PARAMS[${KEY}]}"
    return 0
 }
+readonly -f get_param
 
 add_prereq ()
 {
@@ -946,23 +985,26 @@ add_prereq ()
 
    return 0
 }
+readonly -f add_prereq
 
-get_short_params ()
+csl_get_short_params ()
 {
-   has_short_params || return 1
+   csl_has_short_params || return 1
 
    echo "${CSL_GETOPT_SHORT}"
    return 0
 }
+readonly -f csl_get_short_params
 
-get_long_params ()
+csl_get_long_params ()
 {
-   has_long_params || return 1
+   csl_has_long_params || return 1
 
    # remove the trailing comma from the end of the string.
    echo "${CSL_GETOPT_LONG:0:-1}"
    return 0
 }
+readonly -f csl_get_long_params
 
 create_tmpdir ()
 {
@@ -994,6 +1036,7 @@ create_tmpdir ()
    CSL_TEMP_DIRS=( "${CSL_TMPDIR}" )
    echo "${CSL_TMPDIR}"
 }
+readonly -f create_tmpdir
 
 #
 # note that the cleanup trap must be installed from the plugin.
@@ -1012,6 +1055,7 @@ setup_cleanup_trap ()
    trap cleanup INT QUIT TERM EXIT
    return $?
 }
+readonly -f setup_cleanup_trap
 
 #
 # </Functions>
