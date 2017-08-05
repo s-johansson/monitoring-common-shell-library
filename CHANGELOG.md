@@ -6,10 +6,13 @@
 * Mark most of the functions readonly to avoid, someone mix them up.
 * set_help_text() now accepts the text either as first parameter or via received via STDIN.
 * New functions introduced (see README.md)
-    * is_cmd()* is_func()
+    * is_cmd() is_func()
     * add_prereq()
     * (has|get)_param()
     * (has|get)_param_value()
+    * (set|has|get)_result_text()
+    * (set|has|get)_result_code()
+    * (set|has|get)_result_perfdata()
 * New plugin hooks introduced (see README.md)
     * plugin_startup()
     * plugin_cleanup()
