@@ -50,7 +50,21 @@ CSL_USER_GETOPT_PARAMS+=( [m]="minimum_test" )
 CSL_USER_GETOPT_PARAMS+=( [minimum]="minimum_test" )
 CSL_USER_GETOPT_PARAMS+=( [n]="neutral_test" )
 CSL_USER_GETOPT_PARAMS+=( [neutral]="neutral_test" )
-assert_func parse_parameters $TEST_FAIL "No function" --minimum --neutral 5
+assert_func parse_parameters $TEST_OK $TEST_EMPTY --minimum --neutral 5
+
+minimum_test ()
+{
+   return 5
+}
+
+neutral_test ()
+{
+   [ "x${1}" == "x5" ] || return 1
+   return 5
+}
+
+assert_func parse_parameters $TEST_FAIL "Parameter function 'minimum_test' exited non-zero" --minimum --neutral 5
+assert_func parse_parameters $TEST_FAIL "Parameter function 'neutral_test' exited non-zero" --neutral 4 --minimum
 
 minimum_test ()
 {
@@ -64,6 +78,6 @@ neutral_test ()
 }
 
 assert_func parse_parameters $TEST_OK $TEST_EMPTY --minimum --neutral 5
-assert_func parse_parameters $TEST_FAIL "Parameter function 'neutral_test' exited non-zero" --minimum --neutral 4
+
 unset -f minimum_test neutral_test
 unset -v CSL_USER_GETOPT_PARAMS CSL_GETOPT_SHORT CSL_GETOPT_LONG

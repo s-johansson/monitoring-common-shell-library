@@ -51,6 +51,7 @@ readonly CSL_DEFAULT_GETOPT_LONG='warning:,critical:,debug,verbose,help'
 
 readonly -a CSL_DEFAULT_PREREQ=( 'getopt' 'cat' 'bc' 'mktemp' )
 declare -a CSL_USER_PREREQ=()
+declare -A CSL_USER_PARAMS=()
 
 declare -a CSL_TEMP_DIRS=()
 declare -A CSL_USER_GETOPT_PARAMS=()
@@ -482,7 +483,7 @@ parse_parameters ()
                continue
             fi
 
-            local USER_OPT="${1}" USER_FUNC= USER_ARG= SHIFT=1
+            local USER_OPT="${1}" OPT_VAR= OPT_ARG= SHIFT=1
 
             if ! [[ "${USER_OPT}" =~ ^-?-?([[:alnum:]]+)$ ]]; then
                echo "Invalid parameter! ${USER_OPT}"
@@ -499,32 +500,46 @@ parse_parameters ()
                exit 1
             fi
 
-            USER_FUNC="${CSL_USER_GETOPT_PARAMS[${USER_OPT}]}"
-
-            if ! is_declared_func ${USER_FUNC}; then
-               echo "No function '${USER_FUNC}' for parameter '${USER_OPT}'!"
-               exit 1
-            fi
+            OPT_VAR="${CSL_USER_GETOPT_PARAMS[${USER_OPT}]}"
 
             #
             # if the next parameter does not start with a hyphen, its
             # most probably an argument to the $1 positional parameter.
             #
             if [ $# -ge 2 ] && [[ "${2}" =~ ^[^-] ]]; then
-               USER_ARG="${2}"
+               OPT_ARG="${2}"
                SHIFT=2
             fi
 
-            $USER_FUNC $USER_ARG
+            #
+            # if the option is only meant to be a variable.
+            #
+            if ! is_declared_func ${OPT_VAR}; then
+               is_empty "${OPT_ARG}" && CSL_USER_PARAMS[${OPT_VAR}]=${CSL_TRUE}
+               ! is_empty "${OPT_ARG}" && CSL_USER_PARAMS[${OPT_VAR}]="${OPT_ARG}"
+               shift $SHIFT
+               unset -v USER_OPT OPT_VAR OPT_ARG SHIFT
+               continue
+            fi
+
+            #
+            # or if it is handled by a function.
+            #
+            if ! is_func "${OPT_VAR}"; then
+               echo "No valid function '${OPT_VAR}' for parameter '${USER_OPT}'!"
+               exit 1
+            fi
+
+            $OPT_VAR $OPT_ARG
             RETVAL=$?
 
             if [ "x${RETVAL}" != "x0" ]; then
-               fail "Parameter function '${USER_FUNC}' exited non-zero: ${RETVAL}"
+               fail "Parameter function '${OPT_VAR}' exited non-zero: ${RETVAL}"
                exit 1
             fi
 
             shift $SHIFT
-            unset -v USER_OPT USER_FUNC USER_ARG SHIFT
+            unset -v USER_OPT OPT_VAR OPT_ARG SHIFT
             continue
             ;;
       esac
@@ -659,7 +674,14 @@ validate_parameters ()
       return 1
    fi
 
-   return 0
+   local RETVAL=0
+
+   if is_func plugin_params_validate; then
+      plugin_params_validate;
+      RETVAL=$?
+   fi
+
+   return $RETVAL
 }
 
 #
@@ -708,16 +730,20 @@ cleanup ()
       plugin_cleanup;
    fi
 
-   if [ ${#CSL_TEMP_DIRS} -lt 1 ]; then
+   if ! is_declared CSL_TEMP_DIRS || [ ${#CSL_TEMP_DIRS[@]} -lt 1 ]; then
       exit $EXITCODE
    fi
 
-   local TMPDIR
-   for TMPDIR in "${CSL_TEMP_DIRS[@]}"; do
-      ! is_empty "${TMPDIR}" || continue
-      is_dir "${TMPDIR}" || continue
-      rm -rf ${TMPDIR}
+   local CSL_TMPDIR
+   for CSL_TMPDIR in "${CSL_TEMP_DIRS[@]}"; do
+      ! is_empty "${CSL_TMPDIR}" || continue
+      is_dir "${CSL_TMPDIR}" || continue
+      rm -rf ${CSL_TMPDIR}
    done
+
+   if is_func plugin_params; then
+      plugin_params;
+   fi
 
    exit $EXITCODE
 }
@@ -725,6 +751,19 @@ cleanup ()
 startup ()
 {
    readonly START_TIME_PLUGIN="$(date +%s%3N)"
+
+   check_requirements || \
+      { echo "check_requirements() returned non-zero!"; exit 1; }
+   parse_parameters "${@}" || \
+      { echo "parse_parameters() returned non-zero!"; exit 1; }
+   validate_parameters || \
+      { echo "validate_parameters() returned non-zero!"; exit 1; }
+
+   if is_func plugin_startup; then
+      plugin_startup;
+   fi
+
+   return 0
 }
 
 rename_func ()
@@ -785,11 +824,12 @@ has_long_params ()
 
 add_param ()
 {
-   [ $# -eq 3 ] || { fail "exactly 3 parameters are required!"; return 1; }
+   ( [ $# -ge 3 ] && [ $# -le 4 ] ) || { fail "3 or 4 parameters are required!"; return 1; }
 
    local GETOPT_SHORT="${1}"
    local GETOPT_LONG="${2}"
-   local OPT_FUNC="${3}"
+   local OPT_VAR="${3}"
+   [ $# -eq 4 ] && local OPT_DEFAULT="${4}"
 
    if is_empty "${GETOPT_SHORT}" && is_empty "${GETOPT_LONG}"; then
       fail "at least a short or a long option name has to be provided."
@@ -805,28 +845,93 @@ add_param ()
    fi
 
    if ! is_empty "${GETOPT_LONG}"; then
-      if ! [[ "${GETOPT_LONG}" =~ ^-?-?([[:alnum:]]+):?$ ]]; then
+      if ! [[ "${GETOPT_LONG}" =~ ^-?-?([[:alnum:]]+)(:?)$ ]]; then
          fail "given long parameter is invalid."
          return 1
       fi
       GETOPT_LONG="${BASH_REMATCH[1]}"
    fi
 
-   if ! is_declared_func $OPT_FUNC; then
-      fail "function ${OPT_FUNC} is not declared."
+   if [[ -v CSL_USER_PARAMS[${OPT_VAR}] ]]; then
+      fail "Variable ${OPT_VAR} is already declared."
       return 1
    fi
 
    if ! is_empty "${GETOPT_SHORT}"; then
-      CSL_USER_GETOPT_PARAMS["${GETOPT_SHORT}"]="${OPT_FUNC}"
-      CSL_GETOPT_SHORT+="${GETOPT_SHORT}"
+      CSL_USER_GETOPT_PARAMS["${GETOPT_SHORT}"]="${OPT_VAR}"
+      CSL_GETOPT_SHORT+="${GETOPT_SHORT}${BASH_REMATCH[2]-}"
    fi
 
    if ! is_empty "${GETOPT_LONG}"; then
-      CSL_USER_GETOPT_PARAMS["${GETOPT_LONG}"]="${OPT_FUNC}"
-      CSL_GETOPT_LONG+="${GETOPT_SHORT},"
+      CSL_USER_GETOPT_PARAMS["${GETOPT_LONG}"]="${OPT_VAR}"
+      CSL_GETOPT_LONG+="${GETOPT_SHORT}${BASH_REMATCH[2]-},"
    fi
 
+   if is_declared OPT_DEFAULT; then
+      CSL_USER_PARAMS[${OPT_VAR}]="${OPT_DEFAULT}"
+   fi
+
+   #echo "Added parameter ${OPT_VAR}: short:${GETOPT_SHORT-}, long:${GETOPT_LONG-}"
+   return 0
+}
+
+has_param ()
+{
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
+
+   if ! [[ -v CSL_USER_PARAMS[${1}] ]]; then
+      return 1
+   fi
+
+   return 0
+}
+
+has_param_value ()
+{
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
+   has_param "${1}" || return 1
+   ! is_empty "${CSL_USER_PARAMS[${1}]}" || return 1
+
+   return 0
+}
+
+get_param_value ()
+{
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
+   has_param_value "${1}" || return 1
+
+   echo "${CSL_USER_PARAMS[${1}]}"
+   return 0
+}
+
+get_param ()
+{
+   [ $# -eq 1 ] || return 1
+   ! is_empty "${1}" || return 1
+
+   if ! [[ "${1}" =~ ^[[[:alnum:]]_]+$ ]]; then
+      if ! [[ -v CSL_USER_PARAMS[${1}] ]]; then
+         return 1
+      fi
+
+      echo "${CSL_USER_PARAMS[${1}]}"
+      return 0
+   fi
+
+   if ! [[ "${1}" =~ ^-?-?[[:alnum:]]+$ ]]; then
+      return 1
+   fi
+
+   if ! [[ -v CSL_USER_GETOPT_PARAMS[${1}] ]]; then
+      return 1
+   fi
+
+   local KEY="${CSL_USER_GETOPT_PARAMS[${1}]}"
+
+   echo "${CSL_USER_PARAMS[${KEY}]}"
    return 0
 }
 
@@ -861,14 +966,14 @@ get_long_params ()
 
 create_tmpdir ()
 {
-   local TMPDIR= RETVAL=
+   local CSL_TMPDIR= RETVAL=
 
    if [ ${#CSL_TEMP_DIRS[@]} -gt 10 ]; then
       fail "I am not willing to create more than 10 temp-directories for you!"
       exit 1
    fi
 
-   TMPDIR="$(mktemp -d -p /tmp csl.XXXXXX)"
+   CSL_TMPDIR="$(mktemp -d -p /tmp csl.XXXXXX)"
    RETVAL=$?
 
    if [ "x${RETVAL}" != "x0" ]; then
@@ -876,24 +981,25 @@ create_tmpdir ()
       exit 1
    fi
 
-   if is_empty "${TMPDIR}"; then
+   if is_empty "${CSL_TMPDIR}"; then
       fail "mktemp did not return the path of the created temp-directory in /tmp."
       exit 1
    fi
 
-   if ! is_dir "${TMPDIR}"; then
-      fail "mktemp did not create a temp-directory for the returned path ${TMPDIR}."
+   if ! is_dir "${CSL_TMPDIR}"; then
+      fail "mktemp did not create a temp-directory for the returned path ${CSL_TMPDIR}."
       exit 1
    fi
 
-   CSL_TEMP_DIRS=( "${TMPDIR}" )
-
-   setup_cleanup_trap ||  \
-      { fail "Failed to install cleanup trap!"; exit 1; }
-
-   echo "${TMPDIR}"
+   CSL_TEMP_DIRS=( "${CSL_TMPDIR}" )
+   echo "${CSL_TMPDIR}"
 }
 
+#
+# note that the cleanup trap must be installed from the plugin.
+# if it would be installed with create_tmpdir(), the trap would
+# only life within the subshell that captures the output of create_tmpdir()
+#
 setup_cleanup_trap ()
 {
    #
@@ -918,14 +1024,8 @@ setup_cleanup_trap ()
 #
 # <TheActualWorkStartsHere>
 #
-#check_requirements || \
-#   { echo "check_requirements() returned non-zero!"; exit 1; }
 #startup || \
 #   { echo "startup() returned non-zero!"; exit 1; }
-#parse_parameters "${@}" || \
-#   { echo "parse_parameters() returned non-zero!"; exit 1; }
-#validate_parameters || \
-#   { echo "validate_parameters() returned non-zero!"; exit 1; }
 #print_result ||  \
 #   { echo "print_result() returned non-zero!"; exit 1; }
 

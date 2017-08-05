@@ -5,8 +5,14 @@
  * is_cmd()
  * is_func()
  * add_prereq()
+ * (has|get)_param()
+ * (has|get)_param_value()
 * set_help_text() now accepts the text either as first parameter or via received
   via STDIN.
+* New plugin hooks
+ * plugin_startup()
+ * plugin_cleanup()
+ * plugin_params_validate()
 
 # 1.1
 

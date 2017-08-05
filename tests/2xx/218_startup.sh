@@ -2,4 +2,4 @@
 
 . common.sh
 
-assert_func startup $TEST_OK $TEST_EMPTY
+assert_func startup $TEST_FAIL "parse_parameters"
