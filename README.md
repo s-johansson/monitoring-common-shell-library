@@ -45,49 +45,7 @@ You may override any of the functions provided by using the included **rename_fu
 
 # Functions List
 
-## check_requirements()
-
-## cleanup()
-
-## debug()
-
-## eval_limits()
-
-## fail()
-
-## get_limit_range()
-
-## is_debug()
-
-## is_declared()
-
-## is_exit_on_no_data_critical()
-
-## is_float()
-
-## is_integer()
-
-## is_match()
-
-## is_range()
-
-## is_set()
-
-## is_valid_limit()
-
-## is_verbose()
-
-## parse_parameters()
-
-## print_result()
-
-## show_help()
-
-## startup()
-
-## validate_parameters()
-
-## verbose()
+See the function reference in `FUNCREF.md` that is automatically generated from *functions.sh*.
 
 # Automated Testing
 
