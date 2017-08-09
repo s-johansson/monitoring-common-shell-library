@@ -1,5 +1,10 @@
 # Changes in monitoring-common-shell-library
 
+# 1.2.1 (20170809)
+
+* bugfix release
+* fix typo in add_param()
+
 # 1.2 (20170809)
 
 * Prefix all function that are not meant to be public with csl\_
