@@ -3,7 +3,7 @@
 ###############################################################################
 
 
-# This file is part of monitoring-common-shell-library v1.2.
+# This file is part of monitoring-common-shell-library v1.2.1
 #
 # monitoring-common-shell-library, a library of shell functions used for
 # monitoring plugins like used with (c) Nagios, (c) Icinga, etc.
@@ -1153,7 +1153,7 @@ add_param ()
 
    if ! is_empty "${GETOPT_LONG}"; then
       CSL_USER_GETOPT_PARAMS["${GETOPT_LONG}"]="${OPT_VAR}"
-      CSL_GETOPT_LONG+="${GETOPT_SHORT}${BASH_REMATCH[2]-},"
+      CSL_GETOPT_LONG+="${GETOPT_LONG}${BASH_REMATCH[2]-},"
    fi
 
    if is_declared OPT_DEFAULT; then
