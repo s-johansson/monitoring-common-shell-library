@@ -3,7 +3,7 @@
 ###############################################################################
 
 
-# This file is part of monitoring-common-shell-library v1.1.
+# This file is part of monitoring-common-shell-library v1.2.
 #
 # monitoring-common-shell-library, a library of shell functions used for
 # monitoring plugins like used with (c) Nagios, (c) Icinga, etc.

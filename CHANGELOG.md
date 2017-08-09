@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-# 1.2 (unreleased)
+# 1.2 (20170809)
 
 * Prefix all function that are not meant to be public with csl\_
 * Mark most of the functions readonly to avoid, someone mix them up.
