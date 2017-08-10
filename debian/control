@@ -9,7 +9,7 @@ Vcs-Git: https://netshadow.org/monitoring-plugins/monitoring-common-shell-librar
 Vcs-Browser: https://netshadow.org/monitoring-plugins/monitoring-common-shell-library
 
 Package: monitoring-common-shell-library
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: a library of commonly used shell functions.
  a library of commonly used shell functions.

@@ -1,3 +1,10 @@
+monitoring-common-shell-library (1.2.1-1~unki.2) stretch; urgency=medium
+
+  * Non-maintainer upload.
+  * set package architecture-independent
+
+ -- Andreas Unterkircher <unki@netshadow.net>  Thu, 10 Aug 2017 07:16:23 +0200
+
 monitoring-common-shell-library (1.2.1-1~unki.1) stretch; urgency=medium
 
   * Non-maintainer upload.
