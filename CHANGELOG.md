@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-# 1.3 (unreleased)
+# 1.3 (20170821)
 
 * New functions introduced (see FUNCREF.md)
     * sanitize()

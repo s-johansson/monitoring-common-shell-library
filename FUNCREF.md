@@ -1,4 +1,11 @@
-# shell-docs-gen.sh Function Reference
+# monitoring-common-shell-library Function Reference
+
+| Tag | Value |
+| - | - |
+| Author | Andreas Unterkircher |
+| Version | 1.3 |
+| License | AGPLv3 |
+
 
 ## Function `is_debug`
 
@@ -12,7 +19,7 @@ Type: `int`
 
 ## Function `debug`
 
-prints output only if --debug or -d parameters have been given. debug output is sent to STDERR!
+prints output only if --debug or -d parameters have been given. debug output is sent to STDERR! The debug-output contains the function name from which debug() has been called (if no function -> 'main'). Furthermore the line-number of the line that triggered debug() is displayed.
 
 ***Parameters***
 
@@ -27,7 +34,7 @@ Type: `int`
 
 ## Function `fail`
 
-prints the fail-text as well as the function and code-line from which it was called.
+prints the fail-text as well as the function and code-line from which it was called. The debug-output contains the function name from which debug() has been called (if no function -> 'main'). Furthermore the line-number of the line that triggered debug() is displayed.
 
 ***Parameters***
 
@@ -171,7 +178,7 @@ Type: `int`
 
 ## Function `is_match`
 
-invokes the Basic Calculator (bc) and provideѕ it the given $condition. If the condition is met in bc, that one returns '1' - in this is_match() returns 0. Otherwise bc will return '0', than is_match() returns 1....
+invokes the Basic Calculator (bc) and provideѕ it the given $condition. If the condition is met, bc returns '1' - in this is_match() returns 0. Otherwise if the condition fails, bc will return '0', than is_match() returns 1.
 
 ***Parameters***
 
@@ -781,4 +788,4 @@ This function tests if the provided array $1 is either an indexed- or an associa
 
 Type: `int`
 
-[^1]: Created by shell-docs-gen.sh v1.1 on Mon Aug 21 17:34:05 CEST 2017.
+[^1]: Created by shell-docs-gen.sh v1.1 on Mon Aug 21 21:44:14 CEST 2017.

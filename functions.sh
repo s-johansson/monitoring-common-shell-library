@@ -3,7 +3,7 @@
 ###############################################################################
 
 
-# This file is part of monitoring-common-shell-library v1.2.1
+# This file is part of monitoring-common-shell-library v1.3
 #
 # monitoring-common-shell-library, a library of shell functions used for
 # monitoring plugins like used with (c) Nagios, (c) Icinga, etc.
@@ -23,7 +23,7 @@
 # @author Andreas Unterkircher
 # @license AGPLv3
 # @title monitoring-common-shell-library Function Reference
-# @version 1.2.1
+# @version 1.3
 
 set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
