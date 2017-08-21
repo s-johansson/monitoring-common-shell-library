@@ -1,5 +1,13 @@
 # Changes in monitoring-common-shell-library
 
+# 1.3 (unreleased)
+
+* New functions introduced (see FUNCREF.md)
+    * sanitize()
+    * in_array()
+    * in_array_re()
+    * is_array()
+
 # 1.2.1 (20170809)
 
 * bugfix release

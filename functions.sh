@@ -1396,6 +1396,101 @@ setup_cleanup_trap ()
 }
 readonly -f setup_cleanup_trap
 
+# @function: sanitize()
+# @brief This function tries to sanitize the provided string
+# and removes all characters from the string that are not
+# matching the provided pattern mask.
+# @param1 string text
+# @output string
+# @return int
+sanitize ()
+{
+   # exactly one argument is required.
+   [ $# -eq 1 ] || return 1
+   # zero-strings we can skip.
+   [ ! -z "${1}" ] || return 0
+   local SANI="${1}"
+   # strip of any control characters.
+   SANI="${SANI//[[:cntrl:]]/}"
+   #SANI="${SANI//[\x01-\x1F\x7F]/}"
+   # strip of any backslash sequence.
+   SANI="${SANI//\\[:alnum:]/}"
+   # ensure the script only contains printable characters and blanks.
+   SANI="${SANI//^+([^[:alnum][:punct:][:blank:]])$/}"
+
+   echo "${SANI}"
+   return 0
+}
+readonly -f sanitize
+
+# @function in_array()
+# @brief searches the array $1 for the value given in $2.
+# $2 may even contain a regular expression pattern.
+# On success, it returns 0. Otherwise 1 is returned.
+# @param1 string array-name
+# @param2 string needle
+# @return int
+in_array ()
+{
+   [ $# -eq 2 ] || return 1
+   [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
+   is_array $1 || return 1
+
+   local -a 'haystack=("${'"$1"'[@]}")'
+
+   for i in "${haystack[@]}"; do
+      if [[ "${i}" =~ ${2} ]]; then
+         return 0
+      fi
+   done
+
+   return 1
+}
+
+# @function in_array_re()
+# @brief This function works similar as in_array(), but uses the
+# patterns that have been stored in the array $1 against the fixed
+# string provided with $2.
+# On success, it returns 0. Otherwise 1 is returned.
+# @param1 string array-name
+# @param2 string needle
+# @return int
+in_array_re ()
+{
+   [ $# -eq 2 ] || return 1
+   [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
+   is_array $1 || return 1
+
+   local -a 'haystack=("${'"$1"'[@]}")'
+
+   for i in "${haystack[@]}"; do
+      if [[ "${2}" =~ ${i} ]]; then
+         return 0
+      fi
+   done
+
+   return 1
+}
+
+# @function is_array()
+# @brief This function tests if the provided array
+# $1 is either an indexed- or an associative-array.
+# If so, the function returns 0, otherwise 1.
+# @param1 string array-name
+# @return int
+is_array ()
+{
+   [ $# -eq 1 ] || return 1
+   [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
+
+   if ! [[ "$(declare -p ${1} 2>&1)" =~ ^declare[[:blank:]]+-(a|A)[[:blank:]]+ ]]; then
+      return 1
+   fi
+
+   return 0
+}
+
+
 #
 # </Functions>
 #

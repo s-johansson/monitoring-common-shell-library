@@ -717,4 +717,68 @@ Type: `int`
 Type: `int`
 0 on success, 1 on failure
 
-[^1]: Created by shell-docs-gen.sh v1.1 on Mon Aug 21 17:21:40 CEST 2017.
+
+## Function `sanitize`
+
+This function tries to sanitize the provided string and removes all characters from the string that are not matching the provided pattern mask.
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | text |
+
+*Outputs*: string
+
+***Returns***
+
+Type: `int`
+
+
+## Function `in_array`
+
+searches the array $1 for the value given in $2. $2 may even contain a regular expression pattern. On success, it returns 0. Otherwise 1 is returned.
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | array-name |
+| *$2* | string | needle |
+
+***Returns***
+
+Type: `int`
+
+
+## Function `in_array_re`
+
+This function works similar as in_array(), but uses the patterns that have been stored in the array $1 against the fixed string provided with $2. On success, it returns 0. Otherwise 1 is returned.
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | array-name |
+| *$2* | string | needle |
+
+***Returns***
+
+Type: `int`
+
+
+## Function `is_array`
+
+This function tests if the provided array $1 is either an indexed- or an associative-array. If so, the function returns 0, otherwise 1.
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | array-name |
+
+***Returns***
+
+Type: `int`
+
+[^1]: Created by shell-docs-gen.sh v1.1 on Mon Aug 21 17:34:05 CEST 2017.
