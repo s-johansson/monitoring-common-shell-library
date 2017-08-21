@@ -39,3 +39,6 @@ clean:
 
 test:
 	$(MAKE) -C tests
+
+check:
+	shellcheck -s bash functions.sh
