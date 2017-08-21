@@ -7,6 +7,7 @@
     * in_array()
     * in_array_re()
     * is_array()
+* functions.sh linted by shellcheck.
 
 # 1.2.1 (20170809)
 

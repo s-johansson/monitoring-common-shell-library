@@ -20,6 +20,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
 
+# @author Andreas Unterkircher
+# @license AGPLv3
+# @title monitoring-common-shell-library Function Reference
+# @version 1.2.1
+
 set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
 
@@ -29,9 +34,8 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 #
 # <Variables>
 #
-# remember, on the shell TRUE=0, FALSE=1.
+# remember: on the shell TRUE=0, FALSE=1.
 #
-
 readonly CSL_EXIT_OK=0
 readonly CSL_EXIT_WARNING=1
 readonly CSL_EXIT_CRITICAL=2
@@ -42,25 +46,30 @@ readonly CSL_FALSE=false
 
 # reset variables, just in case...
 declare -g CSL_EXIT_NO_DATA_IS_CRITICAL=0
-declare -g CSL_RESULT_CODE= CSL_RESULT_TEXT= CSL_RESULT_PERFDATA=
-declare -g CSL_WARNING_LIMIT= CSL_CRITICAL_LIMIT=
-declare -g CSL_DEBUG= CSL_VERBOSE=
-declare -g CSL_DEFAULT_HELP_TEXT= CSL_HELP_TEXT=
-declare -g CSL_GETOPT_SHORT= CSL_GETOPT_LONG=
+declare -g CSL_RESULT_CODE='' CSL_RESULT_TEXT='' CSL_RESULT_PERFDATA=''
+declare -g CSL_WARNING_LIMIT='' CSL_CRITICAL_LIMIT=''
+declare -g CSL_DEBUG='' CSL_VERBOSE=''
+declare -g CSL_DEFAULT_HELP_TEXT='' CSL_HELP_TEXT=''
+declare -g CSL_GETOPT_SHORT='' CSL_GETOPT_LONG=''
 
-readonly CSL_DEFAULT_GETOPT_SHORT='w:c:dhv'
-readonly CSL_DEFAULT_GETOPT_LONG='warning:,critical:,debug,verbose,help'
+readonly CSL_DEFAULT_GETOPT_SHORT='c:dhvw:'
+readonly CSL_DEFAULT_GETOPT_LONG='critical:,debug,help,warning:,verbose'
 
-readonly -a CSL_DEFAULT_PREREQ=( 'getopt' 'cat' 'bc' 'mktemp' )
+readonly -a CSL_DEFAULT_PREREQ=(
+   'getopt'
+   'cat'
+   'bc'
+   'mktemp'
+)
 declare -a CSL_USER_PREREQ=()
 declare -A CSL_USER_PARAMS=()
 declare -A CSL_USER_GETOPT_PARAMS=()
 
 #
 # on any invocation of create_tmpdir(), that one will push the name
-# of the returned temp-directory to CSL_TEMP_DIRS[]. cleanup()
-# could then take care of it and removes all the temp-directories
-# on script-exit.
+# of the returned temp-directory to CSL_TEMP_DIRS[]. cleanup() can
+# later take care of it and removes the temp-directories found in
+# CSL_TEMP_DIRS[] when the script finish.
 #
 declare -a CSL_TEMP_DIRS=()
 
@@ -98,7 +107,6 @@ readonly CSL_DEFAULT_HELP_TEXT
 # @function is_debug()
 # @brief returns 0 if debugging is enabled, otherwise it returns 1.
 # @return int 0 or 1
-# @end
 is_debug ()
 {
    is_declared CSL_DEBUG || return 1;
@@ -111,10 +119,12 @@ readonly -f is_debug
 
 # @function debug()
 # @brief prints output only if --debug or -d parameters have been given.
-# debug output is sent to STDERR!
+# debug output is sent to STDERR! The debug-output contains the function
+# name from which debug() has been called (if no function -> 'main').
+# Furthermore the line-number of the line that triggered debug() is
+# displayed.
 # @param1 string $debug_text
 # @return int
-#
 debug ()
 {
    is_debug || return 0;
@@ -125,10 +135,11 @@ readonly -f debug
 
 # @function fail()
 # @brief prints the fail-text as well as the function and code-line from
-# which it was called.
+# which it was called. The debug-output contains the function name from
+# which debug() has been called (if no function -> 'main'). Furthermore
+# the line-number of the line that triggered debug() is displayed.
 # @param1 string $fail_text
 # @return int
-#
 fail ()
 {
    echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\t${1}"
@@ -187,11 +198,11 @@ csl_check_requirements ()
       { fail "Strangely BASH_VERSINFO variable is not (correctly) set!"; exit ${CSL_EXIT_CRITICAL}; }
 
    # Bash major version 4 or later is required
-   [ ${BASH_VERSINFO[0]} -ge 4 ] || \
+   [ "${BASH_VERSINFO[0]}" -ge 4 ] || \
       { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
 
    # If bash major version 4 is used, the minor needs to be 3 or greater (for [[ -v ]] tests).
-   ( [ ${BASH_VERSINFO[0]} -eq 4 ] && [ ${BASH_VERSINFO[1]} -ge 3 ] ) || \
+   ( [ "${BASH_VERSINFO[0]}" -eq "4" ] && [ "${BASH_VERSINFO[1]}" -ge "3" ] ) || \
       { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
 
    local PREREQ
@@ -311,10 +322,9 @@ is_empty ()
 readonly -f is_empty
 
 # @function is_match()
-# @brief invokes the Basic Calculator (bc) and provideѕ it the
-# given $condition. If the condition is met in bc, that one returns '1' -
-# in this is_match() returns 0. Otherwise bc will return '0', than
-# is_match() returns 1....
+# @brief invokes the Basic Calculator (bc) and provideѕ it the given $condition.
+# If the condition is met, bc returns '1' - in this is_match() returns 0.
+# Otherwise if the condition fails, bc will return '0', than is_match() returns 1.
 # @param1 string $condition
 # @return int 0 on success, 1 on failure
 is_match ()
@@ -371,9 +381,9 @@ eval_limits ()
    ( ! is_empty "${1}" && ! is_empty "${2}" && ! is_empty "${3}" ) || return 1
 
    local VALUE="${1}"
-   local WARNING="${2}" WARN_MIN= WARN_MAX=
-   local CRITICAL="${3}" CRIT_MIN= CRIT_MAX=
-   local TEXT= STATE= MATCH=
+   local WARNING="${2}" WARN_MIN='' WARN_MAX=''
+   local CRITICAL="${3}" CRIT_MIN='' CRIT_MAX=''
+   local TEXT='' STATE='' MATCH=''
 
    read -r WARN_MIN WARN_MAX < <(csl_get_limit_range "${WARNING}")
    read -r CRIT_MIN CRIT_MAX < <(csl_get_limit_range "${CRITICAL}")
@@ -393,7 +403,7 @@ eval_limits ()
    #
    # inside-range warning
    #
-   if is_set ${WARN_MIN} ${WARN_MAX} ${CRIT_MIN} ${CRIT_MAX} && \
+   if is_set "${WARN_MIN}" "${WARN_MAX}" "${CRIT_MIN}" "${CRIT_MAX}" && \
       is_match "${WARN_MIN} <= ${WARN_MAX}" && \
       is_match "${VALUE} >= ${WARN_MIN}" && \
       is_match "${VALUE} <= ${WARN_MAX}" &&
@@ -406,7 +416,7 @@ eval_limits ()
    #
    # inside-range critical
    #
-   elif is_set ${CRIT_MIN} ${CRIT_MAX} && \
+   elif is_set "${CRIT_MIN}" "${CRIT_MAX}" && \
       is_match "${CRIT_MIN} <= ${CRIT_MAX}" && \
       is_match "${VALUE} >= ${CRIT_MIN}" && \
       is_match "${VALUE} <= ${CRIT_MAX}"; then
@@ -416,7 +426,7 @@ eval_limits ()
    #
    # outside-range warning
    #
-   elif is_set ${WARN_MIN} ${WARN_MAX} && \
+   elif is_set "${WARN_MIN}" "${WARN_MAX}" && \
       is_match "${WARN_MIN} > ${WARN_MAX}" && { \
       is_match "${VALUE} > ${WARN_MIN}" || \
       is_match "${VALUE} < ${WARN_MAX}"; } &&
@@ -429,7 +439,7 @@ eval_limits ()
    #
    # outside-range critical
    #
-   elif is_set ${CRIT_MIN} ${CRIT_MAX} && \
+   elif is_set "${CRIT_MIN}" "${CRIT_MAX}" && \
       is_match "${CRIT_MIN} > ${CRIT_MAX}" && { \
       is_match "${VALUE} > ${CRIT_MIN}" || \
       is_match "${VALUE} < ${CRIT_MAX}"; }; then
@@ -441,13 +451,13 @@ eval_limits ()
    #
    # greater-than-or-equal (max)
    #
-   elif ! is_set ${WARN_MIN} && is_set ${WARN_MAX} && \
+   elif ! is_set "${WARN_MIN}" && is_set "${WARN_MAX}" && \
       is_match "${VALUE} >= ${WARN_MAX}" &&
       is_match "${VALUE} < ${CRIT_MAX}"; then
       TEXT="WARNING"
       STATE=${CSL_EXIT_WARNING}
       MATCH="greater-than-or-equal-match"
-   elif ! is_set ${CRIT_MIN} && is_set ${CRIT_MAX} && \
+   elif ! is_set "${CRIT_MIN}" && is_set "${CRIT_MAX}" && \
       is_match "${VALUE} >= ${CRIT_MAX}"; then
       TEXT="CRITICAL"
       STATE=${CSL_EXIT_CRITICAL}
@@ -455,13 +465,13 @@ eval_limits ()
    #
    # finally check for less-than-or-equal (min)
    #
-   elif ! is_set ${WARN_MAX} && is_set ${WARN_MIN} && \
+   elif ! is_set "${WARN_MAX}" && is_set "${WARN_MIN}" && \
       is_match "${VALUE} <= ${WARN_MIN}" &&
       is_match "${VALUE} > ${CRIT_MIN}"; then
       TEXT="WARNING"
       STATE=${CSL_EXIT_WARNING}
       MATCH="less-than-or-equal-match"
-   elif ! is_set ${CRIT_MAX} && is_set ${CRIT_MIN} && \
+   elif ! is_set "${CRIT_MAX}" && is_set "${CRIT_MIN}" && \
       is_match "${VALUE} <= ${CRIT_MIN}"; then
       TEXT="CRITICAL"
       STATE=${CSL_EXIT_CRITICAL}
@@ -489,7 +499,7 @@ readonly -f eval_limits
 # @return int 0 on success, 1 on failure
 csl_parse_parameters ()
 {
-   local TEMP= RETVAL=
+   local TEMP='' RETVAL=''
    local GETOPT_SHORT="${CSL_DEFAULT_GETOPT_SHORT}"
    local GETOPT_LONG="${CSL_DEFAULT_GETOPT_LONG}"
 
@@ -516,7 +526,7 @@ csl_parse_parameters ()
       fi
    fi
 
-   TEMP=$(getopt -n ${FUNCNAME[0]} -o "${GETOPT_SHORT}" --long "${GETOPT_LONG}" -- "${@}")
+   TEMP=$(getopt -n "${FUNCNAME[0]}" -o "${GETOPT_SHORT}" --long "${GETOPT_LONG}" -- "${@}")
    RETVAL="${?}"
 
    if [ "x${RETVAL}" != "x0" ] || \
@@ -535,7 +545,7 @@ csl_parse_parameters ()
 
    while true; do
       #ARGSPARSED=1
-      case ${1} in
+      case "${1}" in
          '-h'|'--help')
             show_help
             exit 0
@@ -570,7 +580,7 @@ csl_parse_parameters ()
                continue
             fi
 
-            local USER_OPT="${1}" OPT_VAR= OPT_ARG= SHIFT=1
+            local USER_OPT="${1}" OPT_VAR='' OPT_ARG='' SHIFT=1
 
             if ! [[ "${USER_OPT}" =~ ^-?-?([[:alnum:]]+)$ ]]; then
                echo "Invalid parameter! ${USER_OPT}"
@@ -581,7 +591,7 @@ csl_parse_parameters ()
             USER_OPT="${BASH_REMATCH[1]}"
 
             if ! is_declared CSL_USER_GETOPT_PARAMS || \
-               ! [[ -v CSL_USER_GETOPT_PARAMS[${USER_OPT}] ]]; then
+               ! [[ -v "CSL_USER_GETOPT_PARAMS[${USER_OPT}]" ]]; then
                echo "Unknown parameter! ${USER_OPT}"
                show_help
                exit 1
@@ -601,7 +611,7 @@ csl_parse_parameters ()
             #
             # if the option is only meant to be a variable.
             #
-            if ! is_declared_func ${OPT_VAR}; then
+            if ! is_declared_func "${OPT_VAR}"; then
                is_empty "${OPT_ARG}" && CSL_USER_PARAMS[${OPT_VAR}]=${CSL_TRUE}
                ! is_empty "${OPT_ARG}" && CSL_USER_PARAMS[${OPT_VAR}]="${OPT_ARG}"
                shift $SHIFT
@@ -617,7 +627,7 @@ csl_parse_parameters ()
                exit 1
             fi
 
-            $OPT_VAR $OPT_ARG
+            ${OPT_VAR} "${OPT_ARG}"
             RETVAL=$?
 
             if [ "x${RETVAL}" != "x0" ]; then
@@ -752,7 +762,7 @@ is_func ()
    [ $# -eq 1 ] || return 1
    ! is_empty "${1}" || return 1
 
-   if [ "$(type -t ${1//[^a-zA-Z0-9_[:blank:][:punct:]]/})" != "function" ]; then
+   if [ "$(type -t "${1//[^a-zA-Z0-9_[:blank:][:punct:]]/}")" != "function" ]; then
       return 1
    fi
 
@@ -935,6 +945,7 @@ readonly -f get_result_code
 # @return int plugin-code
 print_result ()
 {
+   local RESULT PERFDATA
    readonly STOP_TIME_PLUGIN="$(date +%s%3N)"
 
    if ! is_empty "${START_TIME_PLUGIN}" && ! is_empty "${STOP_TIME_PLUGIN}"; then
@@ -948,16 +959,16 @@ print_result ()
       exit ${CSL_EXIT_UNKNOWN}
    fi
 
-   local RESULT="$(get_result_text)"
+   RESULT="$(get_result_text)"
 
    if ! has_result_perfdata; then
       echo "${RESULT}"
-      exit $(get_result_code)
+      exit "$(get_result_code)"
    fi
 
-   local PERFDATA="$(get_result_perfdata)${CYCLE_TIME-}"
+   PERFDATA="$(get_result_perfdata)${CYCLE_TIME-}"
    echo "${RESULT}|${PERFDATA}"
-   exit $(get_result_code)
+   exit "$(get_result_code)"
 }
 readonly -f print_result
 
@@ -1007,7 +1018,7 @@ cleanup ()
    for CSL_TMPDIR in "${CSL_TEMP_DIRS[@]}"; do
       ! is_empty "${CSL_TMPDIR}" || continue
       is_dir "${CSL_TMPDIR}" || continue
-      rm -rf ${CSL_TMPDIR}
+      rm -rf "${CSL_TMPDIR}"
    done
 
    if is_func plugin_params; then
@@ -1141,7 +1152,7 @@ add_param ()
       GETOPT_LONG="${BASH_REMATCH[1]}"
    fi
 
-   if [[ -v CSL_USER_PARAMS[${OPT_VAR}] ]]; then
+   if [[ -v "CSL_USER_PARAMS[${OPT_VAR}]" ]]; then
       fail "Variable ${OPT_VAR} is already declared."
       return 1
    fi
@@ -1175,7 +1186,7 @@ has_param ()
    [ $# -eq 1 ] || return 1
    ! is_empty "${1}" || return 1
 
-   if ! [[ -v CSL_USER_PARAMS[${1}] ]]; then
+   if ! [[ -v "CSL_USER_PARAMS[${1}]" ]]; then
       return 1
    fi
 
@@ -1230,7 +1241,7 @@ get_param ()
    ! is_empty "${1}" || return 1
 
    if ! [[ "${1}" =~ ^[[[:alnum:]]_]+$ ]]; then
-      if ! [[ -v CSL_USER_PARAMS[${1}] ]]; then
+      if ! [[ -v "CSL_USER_PARAMS[${1}]" ]]; then
          return 1
       fi
 
@@ -1242,7 +1253,7 @@ get_param ()
       return 1
    fi
 
-   if ! [[ -v CSL_USER_GETOPT_PARAMS[${1}] ]]; then
+   if ! [[ -v "CSL_USER_GETOPT_PARAMS[${1}]" ]]; then
       return 1
    fi
 
@@ -1341,7 +1352,7 @@ readonly -f csl_get_long_params
 # @return int 0 on success, 1 on failure
 create_tmpdir ()
 {
-   local CSL_TMPDIR= RETVAL=
+   local CSL_TMPDIR='' RETVAL=''
 
    if [ ${#CSL_TEMP_DIRS[@]} -gt 10 ]; then
       fail "I am not willing to create more than 10 temp-directories for you!"
@@ -1434,9 +1445,10 @@ in_array ()
 {
    [ $# -eq 2 ] || return 1
    [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
-   is_array $1 || return 1
+   is_array "${1}" || return 1
 
-   local -a 'haystack=("${'"$1"'[@]}")'
+   local -n haystack="${1}"
+   #local -a haystack='("${'"${1}"'[@]}")'
 
    for i in "${haystack[@]}"; do
       if [[ "${i}" =~ ${2} ]]; then
@@ -1459,9 +1471,10 @@ in_array_re ()
 {
    [ $# -eq 2 ] || return 1
    [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
-   is_array $1 || return 1
+   is_array "${1}" || return 1
 
-   local -a 'haystack=("${'"$1"'[@]}")'
+   local -n haystack="${1}"
+   #local -a 'haystack=("${'"${1}"'[@]}")'
 
    for i in "${haystack[@]}"; do
       if [[ "${2}" =~ ${i} ]]; then
@@ -1483,7 +1496,7 @@ is_array ()
    [ $# -eq 1 ] || return 1
    [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
 
-   if ! [[ "$(declare -p ${1} 2>&1)" =~ ^declare[[:blank:]]+-(a|A)[[:blank:]]+ ]]; then
+   if ! [[ "$(declare -p "${1}" 2>&1)" =~ ^declare[[:blank:]]+-(a|A)[[:blank:]]+ ]]; then
       return 1
    fi
 
