@@ -110,8 +110,8 @@ is_debug ()
 readonly -f is_debug
 
 # @function debug()
-# @brief prints output only if --debug or -d parameters \ have been given. \
-# debug output is sent to STDERR! \
+# @brief prints output only if --debug or -d parameters have been given.
+# debug output is sent to STDERR!
 # @param1 string $debug_text
 # @return int
 #
@@ -124,7 +124,7 @@ debug ()
 readonly -f debug
 
 # @function fail()
-# @brief prints the fail-text as well as the function and code-line from \
+# @brief prints the fail-text as well as the function and code-line from
 # which it was called.
 # @param1 string $fail_text
 # @return int
@@ -149,7 +149,7 @@ is_verbose ()
 readonly -f is_verbose
 
 # @function verbose()
-# @brief prints output only if --verbose or -v parameters have been given. \
+# @brief prints output only if --verbose or -v parameters have been given.
 # verbose output is sent to STDERR!
 # @param1 string $log_text
 # @return int
@@ -162,7 +162,7 @@ verbose ()
 readonly -f verbose
 
 # @function csl_is_exit_on_no_data_critical()
-# @brief returns 0, if it has been choosen, that no-data-is-available is \
+# @brief returns 0, if it has been choosen, that no-data-is-available is
 # a critical error. otherwise it returns 1.
 # @return int 0 on success, 1 on failure
 csl_is_exit_on_no_data_critical ()
@@ -175,7 +175,7 @@ csl_is_exit_on_no_data_critical ()
 readonly -f csl_is_exit_on_no_data_critical
 
 # @function: csl_check_requirements()
-# @brief: tests for other required tools. It also invokes an possible \
+# @brief: tests for other required tools. It also invokes an possible
 # plugin-specific requirement-check function called plugin_prereq().
 # @return int 0 on success, 1 on failure
 csl_check_requirements ()
@@ -210,8 +210,8 @@ csl_check_requirements ()
 readonly -f csl_check_requirements
 
 # @function csl_get_limit_range()
-# @brief returns the provided threshold as range in the form of \
-# 'MIN MAX'. In case the provided value is a single value (either \
+# @brief returns the provided threshold as range in the form of
+# 'MIN MAX'. In case the provided value is a single value (either
 # integer or float), then 'x MAX' is returned.
 # @param1 string $limit
 # @output string
@@ -249,8 +249,8 @@ csl_get_limit_range ()
 readonly -f csl_get_limit_range
 
 # @function is_declared()
-# @brief returns 0 if the provided variable has been declared (that \
-# does not mean, that the variable actually has a value!), otherwise \
+# @brief returns 0 if the provided variable has been declared (that
+# does not mean, that the variable actually has a value!), otherwise
 # it returns 1.
 # @param1 string $var
 # @return int 0 on success, 1 on failure
@@ -263,7 +263,7 @@ is_declared ()
 readonly -f is_declared
 
 # @function: is_declared_func()
-# @brief returns 0 if the provided function name refers to an \
+# @brief returns 0 if the provided function name refers to an
 # already declared function. Otherwise it returns 1.
 # @param1 string $var
 # @return int 0 on success, 1 on failure
@@ -276,7 +276,7 @@ is_declared_func ()
 readonly -f is_declared_func
 
 # @function is_set()
-# @brief returns 0, if all the provided values are set (non-empty string). \
+# @brief returns 0, if all the provided values are set (non-empty string).
 # specific to this library, the value 'x' also signals emptiness.
 # @param1 string $val1
 # @param2 string $val2
@@ -297,7 +297,7 @@ is_set ()
 readonly -f is_set
 
 # @function is_empty()
-# @brief returns 0, if the provided string has a zero length. \
+# @brief returns 0, if the provided string has a zero length.
 # Otherwise it returns 1.
 # @param1 string $string
 # @return int 0 on success, 1 on failure
@@ -311,10 +311,10 @@ is_empty ()
 readonly -f is_empty
 
 # @function is_match()
-# @brief invokes the Basic Calculator (bc) and provideѕ it the \
-# given $condition. If the condition is met in bc, that one returns '1' - \
-# in this is_match() returns 0. Otherwise bc will return '0', than \
-# is_match() returns 1.... \
+# @brief invokes the Basic Calculator (bc) and provideѕ it the
+# given $condition. If the condition is met in bc, that one returns '1' -
+# in this is_match() returns 0. Otherwise bc will return '0', than
+# is_match() returns 1....
 # @param1 string $condition
 # @return int 0 on success, 1 on failure
 is_match ()
@@ -341,7 +341,7 @@ is_match ()
 readonly -f is_match
 
 # @function is_dir()
-# @brief returns 0, if the given directory actually exists. \
+# @brief returns 0, if the given directory actually exists.
 # Otherwise it returns 1.
 # @param1 string $path
 # @return int 0 on success, 1 on failure
@@ -356,7 +356,7 @@ is_dir ()
 readonly -f is_dir
 
 # @function: eval_limits()
-# @brief evaluates the given value against the given \
+# @brief evaluates the given value against the given
 # WARNING ($2) and CRITICAL ($3) thresholds.
 # @param1 string $value
 # @param2 string $warning
@@ -647,7 +647,7 @@ csl_parse_parameters ()
 readonly -f csl_parse_parameters
 
 # @function is_range()
-# @brief returns 0, if the argument given is in the form of an range. \
+# @brief returns 0, if the argument given is in the form of an range.
 # Otherwise it returns 1.
 # @param1 string $range
 # @return int 0 on success, 1 on failure
@@ -665,8 +665,8 @@ is_range ()
 readonly -f is_range
 
 # @function is_integer()
-# @brief returns 0, if the given argument is an integer number. \
-# it also accepts the form :[0-9] (value lower than) and [0-9]: (value \
+# @brief returns 0, if the given argument is an integer number.
+# it also accepts the form :[0-9] (value lower than) and [0-9]: (value
 # greater than). Otherwise it returns 1.
 # @param1 string $integer
 # @return int 0 on success, 1 on failure
@@ -681,7 +681,7 @@ is_integer ()
 readonly -f is_integer
 
 # @function is_float()
-# @brief returns 0, if the given argument is a floating point number. \
+# @brief returns 0, if the given argument is a floating point number.
 # Otherwise it returns 1.
 # @param1 string $float
 # @return int 0 on success, 1 on failure
@@ -696,8 +696,8 @@ is_float ()
 readonly -f is_float
 
 # @function: is_valid_limit()
-# @brief performs the checks on the given warning \
-# and critical values and returns 0, if they are. \
+# @brief performs the checks on the given warning
+# and critical values and returns 0, if they are.
 # Otherwise it returns 1.
 # @param1 string $limit
 # @return int 0 on success, 1 on failure
@@ -728,7 +728,7 @@ is_valid_limit ()
 readonly -f is_valid_limit
 
 # @function: is_cmd()
-# @brief returns 0, if the provided external command exists. \
+# @brief returns 0, if the provided external command exists.
 # Otherwise it returns 1.
 # @param1 string $command
 # @return int 0 on success, 1 on failure
@@ -743,7 +743,7 @@ is_cmd ()
 readonly -f is_cmd
 
 # @function is_func()
-# @brief returns 0, if the given function name refers an already \
+# @brief returns 0, if the given function name refers an already
 # declared function. Otherwise it returns 1
 # @param1 string $funcname
 # @return int 0 on success, 1 on failure
@@ -761,7 +761,7 @@ is_func ()
 readonly -f is_func
 
 # @function csl_validate_parameters()
-# @brief returns 0, if the given command-line parameters are \
+# @brief returns 0, if the given command-line parameters are
 # valid. Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
 csl_validate_parameters ()
@@ -793,8 +793,8 @@ csl_validate_parameters ()
 }
 
 # @function set_result_text()
-# @brief accepts the plugin-result either as first parameter, \
-# or reads it from STDIN (what allows heredoc usage for example). \
+# @brief accepts the plugin-result either as first parameter,
+# or reads it from STDIN (what allows heredoc usage for example).
 # In case of STDIN, the read-timeout is set to 1 seconds.
 # @param1 string $text
 # @return int 0 on success, 1 on failure
@@ -816,7 +816,7 @@ set_result_text ()
 readonly -f set_result_text
 
 # @function has_result_text()
-# @brief returns 0, if the plugin-result has already \
+# @brief returns 0, if the plugin-result has already
 # been set. Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
 has_result_text ()
@@ -829,7 +829,7 @@ has_result_text ()
 readonly -f has_result_text
 
 # @function get_result_text()
-# @brief outputs the plugin-result, if it has already been set - \
+# @brief outputs the plugin-result, if it has already been set -
 # in this case it returns 0. Otherwise it returns 1.
 # @output string
 # @return int 0 on success, 1 on failure
@@ -843,7 +843,7 @@ get_result_text ()
 readonly -f get_result_text
 
 # @function set_result_perfdata()
-# @brief accepts the plugin-perfdata as first parameter. \
+# @brief accepts the plugin-perfdata as first parameter.
 # On success it returns 0, otherwise 1.
 # @param1 string $perfdata
 # @return int 0 on success, 1 on failure
@@ -858,7 +858,7 @@ set_result_perfdata ()
 readonly -f set_result_perfdata
 
 # @function has_result_perfdata()
-# @brief returns 0, if the plugin-perfdata has already \
+# @brief returns 0, if the plugin-perfdata has already
 # been set. Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
 has_result_perfdata ()
@@ -871,7 +871,7 @@ has_result_perfdata ()
 readonly -f has_result_perfdata
 
 # @function get_result_perfdata()
-# @brief outputs the plugin-perfdata, if it has already \
+# @brief outputs the plugin-perfdata, if it has already
 # been set - in this case it returns 0. Otherwise it returns 1.
 # @output string
 # @return int 0 on success, 1 on failure
@@ -885,7 +885,7 @@ get_result_perfdata ()
 readonly -f get_result_perfdata
 
 # @function set_result_code()
-# @brief accepts the plugin-exit-code as first parameter. \
+# @brief accepts the plugin-exit-code as first parameter.
 # On success it returns 0, otherwise 1.
 # @param1 string $perfdata
 # @return int 0 on success, 1 on failure
@@ -901,7 +901,7 @@ set_result_code ()
 readonly -f set_result_code
 
 # @function has_result_code()
-# @brief returns 0, if the plugin-code has already \
+# @brief returns 0, if the plugin-code has already
 # been set. Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
 has_result_code ()
@@ -915,7 +915,7 @@ has_result_code ()
 readonly -f has_result_code
 
 # @function get_result_code()
-# @brief outputs the plugin-code, if it has already \
+# @brief outputs the plugin-code, if it has already
 # been set - in this case it returns 0. Otherwise it returns 1.
 # @output string
 # @return int 0 on success, 1 on failure
@@ -929,7 +929,7 @@ get_result_code ()
 readonly -f get_result_code
 
 # @function print_result()
-# @brief outputs the final result as required for (c) Nagios, \
+# @brief outputs the final result as required for (c) Nagios,
 # (c) Icinga, etc.
 # @output plugin-result + plugin-perfdata
 # @return int plugin-code
@@ -962,10 +962,10 @@ print_result ()
 readonly -f print_result
 
 # @function show_help()
-# @brief displays the help text. \
-# \
-# If a plugin-specifc help-text has been set via set_help_text(), \
-# that one is printed. Otherwise the libraries $CSL_DEFAULT_HELP_TEXT \
+# @brief displays the help text.
+#
+# If a plugin-specifc help-text has been set via set_help_text(),
+# that one is printed. Otherwise the libraries $CSL_DEFAULT_HELP_TEXT
 # is used.
 # @output plugin-helptext
 # @return int 0 on success, 1 on failure
@@ -986,8 +986,8 @@ show_help ()
 readonly -f show_help
 
 # @function cleanup()
-# @brief is a function, that would be called on soon as this \
-# script has finished. \
+# @brief is a function, that would be called on soon as this
+# script has finished.
 # It must be set upped by using setup_cleanup_trap ().
 # @param1 int $exit_code
 # @return int 0 on success, 1 on failure
@@ -1045,7 +1045,7 @@ startup ()
 
    plugin_worker "${@}"
 
-   print_result ||  \
+   print_result || \
       { echo "print_result() returned non-zero!"; exit 1; }
 
    return 0
@@ -1053,10 +1053,10 @@ startup ()
 readonly -f startup
 
 # @function set_help_text()
-# @brief: accepts a plugin-specific help-text, that is \
-# returned when show_help() is called. \
-# \
-# The text can either be provided as first parameter or being read \
+# @brief: accepts a plugin-specific help-text, that is
+# returned when show_help() is called.
+#
+# The text can either be provided as first parameter or being read
 # from STDIN (what allows heredoc usage for example).
 # @param1 string $text
 # @return int 0 on success, 1 on failure
@@ -1078,7 +1078,7 @@ set_help_text ()
 readonly -f set_help_text
 
 # @function has_help_text()
-# @brief returns 0, if a plugin-specific help-text has been set. \
+# @brief returns 0, if a plugin-specific help-text has been set.
 # Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
 has_help_text ()
@@ -1091,7 +1091,7 @@ has_help_text ()
 readonly -f has_help_text
 
 # @function get_help_text()
-# @brief outputs a plugin-specific help-text, if it has been previously \
+# @brief outputs a plugin-specific help-text, if it has been previously
 # set by set_help_text(). In this case it returns 0, otherwise 1.
 # @output plugin-helptext
 # @return int 0 on success, 1 on failure
@@ -1166,7 +1166,7 @@ add_param ()
 readonly -f add_param
 
 # @function has_param()
-# @brief returns 0, if the given parameter name actually is defined. \
+# @brief returns 0, if the given parameter name actually is defined.
 # Otherwise it returns 1.
 # @param1 string $param
 # @return int 0 on success, 1 on failure
@@ -1184,7 +1184,7 @@ has_param ()
 readonly -f has_param
 
 # @function has_param_value()
-# @brief returns 0, if the given parameter has been defined \
+# @brief returns 0, if the given parameter has been defined
 # and consists of a value that is not empty. Otherwise it returns 1.
 # @param1 string $param
 # @return int 0 on success, 1 on failure
@@ -1201,7 +1201,7 @@ has_param_value ()
 readonly -f has_param_value
 
 # @function get_param_value()
-# @brief outputs the value of a given parameter, if it has \
+# @brief outputs the value of a given parameter, if it has
 # been set already - in this case it returns 0. Otherwise it returns 1.
 # @param1 string $param
 # @return int 0 on success, 1 on failure
@@ -1217,9 +1217,9 @@ get_param_value ()
 readonly -f get_param_value
 
 # @function get_param()
-# @brief works similar as get_param_value(), but it also \
-# accepts the short- (eg. -w) and long-parameters (eg. --warning) \
-# as indirect lookup keys. On success, the value is printed and \
+# @brief works similar as get_param_value(), but it also
+# accepts the short- (eg. -w) and long-parameters (eg. --warning)
+# as indirect lookup keys. On success, the value is printed and
 # the function returns 0. Otherwise it returns 1.
 # @param1 string $param
 # @output param-value
@@ -1254,11 +1254,11 @@ get_param ()
 readonly -f get_param
 
 # @function add_prereq()
-# @brief registers a new plugin-requesit. Those are \
-# then handled in csl_check_requirements(). On success \
-# the function returns 0, otherwise it returns 1. \
-# \
-# Multiple requesits can be registered in one step. \
+# @brief registers a new plugin-requesit. Those are
+# then handled in csl_check_requirements(). On success
+# the function returns 0, otherwise it returns 1.
+#
+# Multiple requesits can be registered in one step.
 #
 # @param1 string $prereq1 $prereq2 etc.
 # @return int 0 on success, 1 on failure
@@ -1276,7 +1276,7 @@ add_prereq ()
 readonly -f add_prereq
 
 # @function csl_has_short_params()
-# @brief returns 0, if parameters in short form (-d -w 5...) \
+# @brief returns 0, if parameters in short form (-d -w 5...)
 # have been given on the command line. Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
 csl_has_short_params ()
@@ -1289,7 +1289,7 @@ csl_has_short_params ()
 readonly -f csl_has_short_params
 
 # @function csl_has_long_params()
-# @brief returns 0, if parameters in long form (--debug --warning 5...) \
+# @brief returns 0, if parameters in long form (--debug --warning 5...)
 #  have been given on the command line. Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
 csl_has_long_params ()
@@ -1302,7 +1302,7 @@ csl_has_long_params ()
 readonly -f csl_has_long_params
 
 # @function csl_get_short_params()
-# @brief outputs the registered short command-line-parameters \
+# @brief outputs the registered short command-line-parameters
 # in the form as required by GNU getopt.
 # @output short-params
 # @return int 0 on success, 1 on failure
@@ -1316,7 +1316,7 @@ csl_get_short_params ()
 readonly -f csl_get_short_params
 
 # @function csl_get_long_params()
-# @brief outputs the registered long command-line-parameters \
+# @brief outputs the registered long command-line-parameters
 # in the form as required by GNU getopt.
 # @output long-params
 # @return int 0 on success, 1 on failure
@@ -1331,11 +1331,11 @@ csl_get_long_params ()
 readonly -f csl_get_long_params
 
 # @function create_tmpdir()
-# @brief creates and tests for a temporary directory \
-# being created by mktemp. \
-# Furthermore it registers the temp-directory in the variable \
-# CSL_TEMP_DIRS[] that is eval'ed in case by cleanup(), to \
-# remove plugin residues. \
+# @brief creates and tests for a temporary directory
+# being created by mktemp.
+# Furthermore it registers the temp-directory in the variable
+# CSL_TEMP_DIRS[] that is eval'ed in case by cleanup(), to
+# remove plugin residues.
 # there is a hard-coded limit for max. 10 temp-directories.
 # @output temp-directory
 # @return int 0 on success, 1 on failure
@@ -1372,15 +1372,15 @@ create_tmpdir ()
 readonly -f create_tmpdir
 
 # @function setup_cleanup_trap()
-# registers a signal-trap for certain signals like \
-# EXIT and INT, to call the cleanup() function on program-termination \
-# (irrespectivly of success or failure). \
-# \
-# Note that the cleanup trap must be installed from the plugin. \
-# As mostly these libraries functions will be called within a subshell \
-# (eg. $(create_tmpdir)), the trap would only life within the context \
-# of this subshell and would immediately be fired as soon as create_tmpdir() \
-# finish. \
+# registers a signal-trap for certain signals like
+# EXIT and INT, to call the cleanup() function on program-termination
+# (irrespectivly of success or failure).
+#
+# Note that the cleanup trap must be installed from the plugin.
+# As mostly these libraries functions will be called within a subshell
+# (eg. $(create_tmpdir)), the trap would only life within the context
+# of this subshell and would immediately be fired as soon as create_tmpdir()
+# finish.
 # @return int 0 on success, 1 on failure
 setup_cleanup_trap ()
 {
