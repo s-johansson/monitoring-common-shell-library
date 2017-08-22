@@ -23,11 +23,14 @@
 
 .PHONY: all clean docs test
 all:
-	@echo "Possible make targets:"
+	@echo "Thank you for invoking the Makefile of the monitoring-ommon-shell-library.
 	@echo
-	@echo "make docs  --- generate function-reference by using the shell-docs-generator"
-	@echo "make clean --- cleanup"
+	@echo "The following make targets are available:"
+	@echo
+	@echo "make clean --- cleanup any residues that were left"
+	@echo "make docs  --- generate the function-reference by using the shell-docs-generator"
 	@echo "make test  --- startup the automated testing suite."
+	@echo "make check --- perform syntax validation by Bash and shellcheck."
 
 docs: clean FUNCREF.md
 
@@ -41,4 +44,8 @@ test:
 	$(MAKE) -C tests
 
 check:
+	@echo ">>> Performing syntax validation..."
+	bash -n functions.sh
+	@echo ">>> Now analysing and linting..."
 	shellcheck -s bash functions.sh
+	@echo ">>> This looks like a success!"
