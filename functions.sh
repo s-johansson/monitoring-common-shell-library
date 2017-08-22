@@ -33,6 +33,8 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
 #
 # <Variables>
+readonly CSL_VERSION="1.3"
+
 #
 # remember: on the shell TRUE=0, FALSE=1.
 #
