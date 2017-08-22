@@ -1505,6 +1505,21 @@ is_array ()
    return 0
 }
 
+# @function csl_get_version()
+# @brief This function returns the library version number as defined
+# in the variable $CSL_VERSION. Just in case, it also performs some
+# validation on the version number to ensure, not getting fooled.
+# @output string version-number
+# @return int 0 on success, 1 on failure
+csl_get_version ()
+{
+   [[ -v CSL_VERSION ]] || return 1
+   ! is_empty "${CSL_VERSION}" || return 1
+   [[ "${CSL_VERSION}" =~ ^[[:digit:]]+\.?[[:digit:]]*$ ]] || return 1
+
+   echo "${CSL_VERSION}"
+   return 0
+}
 
 #
 # </Functions>

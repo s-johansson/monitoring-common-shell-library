@@ -41,7 +41,7 @@ clean:
 	@rm -f FUNCREF.md
 
 test:
-	$(MAKE) -C tests
+	$(MAKE) -C tests v=1
 
 check:
 	@echo ">>> Performing syntax validation..."

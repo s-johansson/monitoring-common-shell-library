@@ -1,5 +1,10 @@
 # Changes in monitoring-common-shell-library
 
+# 1.4 (unreleased)
+
+* Introduced CSL_VERSION variable, to indicate the version number of the
+  library. It can be queried by the function csl_get_version().
+
 # 1.3 (20170821)
 
 * New functions introduced (see FUNCREF.md)
