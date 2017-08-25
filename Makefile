@@ -23,7 +23,7 @@
 
 .PHONY: all clean docs test
 all:
-	@echo "Thank you for invoking the Makefile of the monitoring-common-shell-library.
+	@echo "Thank you for invoking the Makefile of the monitoring-common-shell-library."
 	@echo
 	@echo "The following make targets are available:"
 	@echo
