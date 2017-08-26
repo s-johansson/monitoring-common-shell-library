@@ -39,3 +39,4 @@ endif
 all:
 	@run-parts $(rparts_args) --exit-on-error --regex '^1[[:digit:]][[:digit:]]_' $(script_args) 1xx
 	@run-parts $(rparts_args) --exit-on-error --regex '^2[[:digit:]][[:digit:]]_' $(script_args) 2xx
+	@run-parts $(rparts_args) --exit-on-error --regex '^3[[:digit:]][[:digit:]]_' $(script_args) 3xx
