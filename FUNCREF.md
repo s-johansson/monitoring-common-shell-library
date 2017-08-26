@@ -14,6 +14,7 @@ returns 0 if debugging is enabled, otherwise it returns 1.
 ***Returns***
 
 Type: `int`
+
 0 or 1
 
 
@@ -54,6 +55,7 @@ returns 0 if verbose-logging is enabled, otherwise it returns 1.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -79,6 +81,7 @@ returns 0, if it has been choosen, that no-data-is-available is a critical error
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -89,6 +92,7 @@ tests for other required tools. It also invokes an possible plugin-specific requ
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -107,6 +111,7 @@ returns the provided threshold as range in the form of 'MIN MAX'. In case the pr
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -123,6 +128,7 @@ returns 0 if the provided variable has been declared (that does not mean, that t
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -139,6 +145,7 @@ returns 0 if the provided function name refers to an already declared function. 
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -157,6 +164,7 @@ returns 0, if all the provided values are set (non-empty string). specific to th
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -173,6 +181,7 @@ returns 0, if the provided string has a zero length. Otherwise it returns 1.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -189,6 +198,7 @@ invokes the Basic Calculator (bc) and provideѕ it the given $condition. If the 
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -205,12 +215,13 @@ returns 0, if the given directory actually exists. Otherwise it returns 1.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
 ## Function `eval_limits`
 
-evaluates the given value against the given WARNING ($2) and CRITICAL ($3) thresholds.
+evaluates the given value $1 against WARNING ($2) and CRITICAL ($3) thresholds.
 
 ***Parameters***
 
@@ -225,12 +236,13 @@ evaluates the given value against the given WARNING ($2) and CRITICAL ($3) thres
 ***Returns***
 
 Type: `int`
+
 0|1|2|3
 
 
 ## Function `csl_parse_parameters`
 
-uses GNU getopt to parse the given command-line parameters.
+This function uses GNU getopt to parse the given command-line parameters.
 
 ***Parameters***
 
@@ -241,6 +253,7 @@ uses GNU getopt to parse the given command-line parameters.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -257,6 +270,7 @@ returns 0, if the argument given is in the form of an range. Otherwise it return
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -273,6 +287,7 @@ returns 0, if the given argument is an integer number. it also accepts the form 
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -289,6 +304,7 @@ returns 0, if the given argument is a floating point number. Otherwise it return
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -305,6 +321,7 @@ performs the checks on the given warning and critical values and returns 0, if t
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -321,6 +338,7 @@ returns 0, if the provided external command exists. Otherwise it returns 1.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -337,6 +355,7 @@ returns 0, if the given function name refers an already declared function. Other
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -347,6 +366,7 @@ returns 0, if the given command-line parameters are valid. Otherwise it returns 
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -363,6 +383,7 @@ accepts the plugin-result either as first parameter, or reads it from STDIN (wha
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -373,6 +394,7 @@ returns 0, if the plugin-result has already been set. Otherwise it returns 1.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -385,6 +407,7 @@ outputs the plugin-result, if it has already been set - in this case it returns 
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -401,6 +424,7 @@ accepts the plugin-perfdata as first parameter. On success it returns 0, otherwi
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -411,6 +435,7 @@ returns 0, if the plugin-perfdata has already been set. Otherwise it returns 1.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -423,6 +448,7 @@ outputs the plugin-perfdata, if it has already been set - in this case it return
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -434,11 +460,12 @@ accepts the plugin-exit-code as first parameter. On success it returns 0, otherw
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $perfdata |
+| *$1* | string | $exit_code |
 
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -449,6 +476,7 @@ returns 0, if the plugin-code has already been set. Otherwise it returns 1.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -461,6 +489,7 @@ outputs the plugin-code, if it has already been set - in this case it returns 0.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -473,6 +502,7 @@ outputs the final result as required for (c) Nagios, (c) Icinga, etc.
 ***Returns***
 
 Type: `int`
+
 plugin-code
 
 
@@ -485,6 +515,7 @@ displays the help text.  If a plugin-specifc help-text has been set via set_help
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -501,6 +532,7 @@ is a function, that would be called on soon as this script has finished. It must
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -519,6 +551,7 @@ is the first library function, that any plugin should invoke.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -535,6 +568,7 @@ accepts a plugin-specific help-text, that is returned when show_help() is called
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -545,6 +579,7 @@ returns 0, if a plugin-specific help-text has been set. Otherwise it returns 1.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -557,6 +592,7 @@ outputs a plugin-specific help-text, if it has been previously set by set_help_t
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -576,6 +612,7 @@ registers an additional, plugin-specific command-line-parameter.
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -592,6 +629,7 @@ returns 0, if the given parameter name actually is defined. Otherwise it returns
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -608,6 +646,7 @@ returns 0, if the given parameter has been defined and consists of a value that 
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure 
 
 
@@ -624,6 +663,7 @@ outputs the value of a given parameter, if it has been set already - in this cas
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -642,6 +682,7 @@ works similar as get_param_value(), but it also accepts the short- (eg. -w) and 
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -658,6 +699,7 @@ registers a new plugin-requesit. Those are then handled in csl_check_requirement
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -668,6 +710,7 @@ returns 0, if parameters in short form (-d -w 5...) have been given on the comma
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -678,6 +721,7 @@ returns 0, if parameters in long form (--debug --warning 5...) have been given o
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -690,6 +734,7 @@ outputs the registered short command-line-parameters in the form as required by 
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -702,6 +747,7 @@ outputs the registered long command-line-parameters in the form as required by G
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -714,6 +760,7 @@ creates and tests for a temporary directory being created by mktemp. Furthermore
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -722,6 +769,7 @@ Type: `int`
 ***Returns***
 
 Type: `int`
+
 0 on success, 1 on failure
 
 
@@ -774,6 +822,38 @@ This function works similar as in_array(), but uses the patterns that have been 
 Type: `int`
 
 
+## Function `key_in_array`
+
+searches the associatative array $1 for the key given in $2. $2 may even contain a regular expression pattern. On success, it returns 0. Otherwise 1 is returned.
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | array-name |
+| *$2* | string | needle |
+
+***Returns***
+
+Type: `int`
+
+
+## Function `key_in_array_re`
+
+This function works similar as key_in_array(), but uses the patterns that have been stored in the array $1 against the fixed string provided with $2. On success, it returns 0. Otherwise 1 is returned.
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | array-name |
+| *$2* | string | needle |
+
+***Returns***
+
+Type: `int`
+
+
 ## Function `is_array`
 
 This function tests if the provided array $1 is either an indexed- or an associative-array. If so, the function returns 0, otherwise 1.
@@ -788,4 +868,123 @@ This function tests if the provided array $1 is either an indexed- or an associa
 
 Type: `int`
 
-[^1]: Created by shell-docs-gen.sh v1.1 on Mon Aug 21 21:44:14 CEST 2017.
+
+## Function `csl_get_version`
+
+This function returns the library version number as defined in the variable $CSL_VERSION. Just in case, it also performs some validation on the version number to ensure, not getting fooled.
+
+*Outputs*: string version-number
+
+***Returns***
+
+Type: `int`
+
+0 on success, 1 on failure
+
+
+## Function `csl_add_limit`
+
+With this function, warning- and critical-limits for certain 'keys' are registered. A key is the text the matches a given input value.
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | Either 'WARNING' or 'CRITICAL' |
+| *$2* | string | key name |
+
+***Returns***
+
+Type: `int`
+
+
+## Function `get_limit_for_key`
+
+This function look up the declared warning- or critical-limits ($1) for the specified key ($2).
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | Either 'WARNING' or 'CRITICAL' |
+| *$2* | string | key name |
+
+*Outputs*: text threshold
+
+***Returns***
+
+Type: `int`
+
+0 on success, 1 on failure
+
+
+## Function `add_result`
+
+This function registers a result value ($2) for the given key ($1). The function does not allow to overrule an already set value with the same key.
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | key name |
+| *$2* | string | value |
+
+***Returns***
+
+Type: `int`
+
+0 on success, 1 on failure
+
+
+## Function `has_results`
+
+This function performs a quick check, if actually result values have been recorded.
+
+***Returns***
+
+Type: `int`
+
+0 on success, 1 on failure
+
+
+## Function `has_result`
+
+This function tests if a result has been recorded for the given key ($1).
+
+***Returns***
+
+Type: `int`
+
+0 on success, 1 on failure
+
+
+## Function `get_result`
+
+This function returns the result that has been recorded for the given key ($1).
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | key name |
+
+*Outputs*: string value
+
+***Returns***
+
+Type: `int`
+
+0 on success, 1 on failure
+
+
+## Function `eval_results`
+
+This function iterates over all the recorded results and evaluate their values with eval_limits(). Finally, the function uses set_result_(text|code|perfdata) to set the scripts final results.  To perform your own evaluations, you may override this function by specifying an user_eval_results() function in your plugin. Than plugin_worker() will _not_ call eval_results(), but invokes user_eval_results() instead.
+
+***Returns***
+
+Type: `0`
+
+on success, 1 on failure
+
+[^1]: Created by shell-docs-gen.sh v1.2 on Sam Aug 26 12:09:04 CEST 2017.

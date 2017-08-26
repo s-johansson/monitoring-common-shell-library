@@ -22,7 +22,8 @@
 ###############################################################################
 
 .PHONY: all clean docs test
-all:
+
+start:
 	@echo "Thank you for invoking the Makefile of the monitoring-common-shell-library."
 	@echo
 	@echo "The following make targets are available:"
@@ -31,6 +32,7 @@ all:
 	@echo "make docs  --- generate the function-reference by using the shell-docs-generator"
 	@echo "make test  --- startup the automated testing suite."
 	@echo "make check --- perform syntax validation by Bash and shellcheck."
+	@echo "make all   --- perform all the above listed in one series."
 
 docs: clean FUNCREF.md
 
@@ -49,3 +51,5 @@ check:
 	@echo ">>> Now analysing and linting..."
 	shellcheck -s bash functions.sh
 	@echo ">>> This looks like a success!"
+
+all: clean check test docs

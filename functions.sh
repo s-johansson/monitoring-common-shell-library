@@ -36,7 +36,7 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 readonly CSL_VERSION="1.3"
 
 #
-# remember: on the shell TRUE=0, FALSE=1.
+# remember: on the shell OK=0, FAIL!=0.
 #
 readonly CSL_EXIT_OK=0
 readonly CSL_EXIT_WARNING=1
@@ -46,26 +46,33 @@ readonly CSL_EXIT_UNKNOWN=3
 readonly CSL_TRUE=true
 readonly CSL_FALSE=false
 
-# reset variables, just in case...
-declare -g CSL_EXIT_NO_DATA_IS_CRITICAL=0
-declare -g CSL_RESULT_CODE='' CSL_RESULT_TEXT='' CSL_RESULT_PERFDATA=''
-declare -g CSL_WARNING_LIMIT='' CSL_CRITICAL_LIMIT=''
-declare -g CSL_DEBUG='' CSL_VERBOSE=''
-declare -g CSL_DEFAULT_HELP_TEXT='' CSL_HELP_TEXT=''
-declare -g CSL_GETOPT_SHORT='' CSL_GETOPT_LONG=''
+#
+# declare & reset variables, just in case they are already set...
+#
 
+# @var CSL_EXIT_NO_DATA_IS_CRITICAL
+# @desc if set to true, no result-data is treated as CRITICAL instead
+# of exiting with UNKNOWN.
+declare -g CSL_EXIT_NO_DATA_IS_CRITICAL="${CSL_FALSE}"
+
+declare -g CSL_DEBUG='' CSL_VERBOSE=''
+declare -g CSL_RESULT_CODE='' CSL_RESULT_TEXT='' CSL_RESULT_PERFDATA=''
+declare -A CSL_RESULT_VALUES=()
+
+declare -g CSL_GETOPT_SHORT='' CSL_GETOPT_LONG=''
 readonly CSL_DEFAULT_GETOPT_SHORT='c:dhvw:'
-readonly CSL_DEFAULT_GETOPT_LONG='critical:,debug,help,warning:,verbose'
+readonly CSL_DEFAULT_GETOPT_LONG='critical:,debug,help,verbose,warning:'
 
 readonly -a CSL_DEFAULT_PREREQ=(
-   'getopt'
-   'cat'
    'bc'
+   'cat'
+   'getopt'
    'mktemp'
 )
-declare -a CSL_USER_PREREQ=()
-declare -A CSL_USER_PARAMS=()
-declare -A CSL_USER_GETOPT_PARAMS=()
+declare -g -A CSL_WARNING_LIMIT=() CSL_CRITICAL_LIMIT=()
+declare -g -a CSL_USER_PREREQ=()
+declare -g -A CSL_USER_PARAMS=()
+declare -g -A CSL_USER_GETOPT_PARAMS=()
 
 #
 # on any invocation of create_tmpdir(), that one will push the name
@@ -75,7 +82,9 @@ declare -A CSL_USER_GETOPT_PARAMS=()
 #
 declare -a CSL_TEMP_DIRS=()
 
+declare -g CSL_HELP_TEXT=''
 # the '&& true' is required as read exits non-zero on reaching end-of-file
+declare -g CSL_DEFAULT_HELP_TEXT=''
 read -r -d '' CSL_DEFAULT_HELP_TEXT <<'EOF' && true
    -h, --help          ... help
    -d, --debug         ... enable debugging.
@@ -95,6 +104,18 @@ LIMITS are given similar to check_procs:
       --warning 5:10
    * outside-range-match (max:min)
       --warning 10:5
+
+Multiple thresholds can be specified comma separated. The syntax:
+
+   key1=val1,key2=val2,key3=val3
+
+* keyX is either the exact name of the counter value to be matched, or
+a regular expression (regex) pattern.
+* Regex patterns have to be surrounded by slashes: eg. /^http_resp/
+* valX uses the above descriped LIMIT syntax. eg.
+
+   http_status=403,^/http_resp/=5:10
+
 EOF
 readonly CSL_DEFAULT_HELP_TEXT
 
@@ -182,7 +203,7 @@ csl_is_exit_on_no_data_critical ()
 {
    is_declared CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
    ! is_empty "${CSL_EXIT_NO_DATA_IS_CRITICAL}" || return 1
-   [ "x${CSL_EXIT_NO_DATA_IS_CRITICAL}" != "x0" ] || return 1
+   ${CSL_EXIT_NO_DATA_IS_CRITICAL} || return 1
    return 0
 }
 readonly -f csl_is_exit_on_no_data_critical
@@ -368,8 +389,7 @@ is_dir ()
 readonly -f is_dir
 
 # @function: eval_limits()
-# @brief evaluates the given value against the given
-# WARNING ($2) and CRITICAL ($3) thresholds.
+# @brief evaluates the given value $1 against WARNING ($2) and CRITICAL ($3) thresholds.
 # @param1 string $value
 # @param2 string $warning
 # @param3 string $critical
@@ -496,7 +516,8 @@ eval_limits ()
 readonly -f eval_limits
 
 # @function csl_parse_parameters()
-# @brief uses GNU getopt to parse the given command-line parameters.
+# @brief This function uses GNU getopt to parse the given command-line
+# parameters.
 # @param1 string $params
 # @return int 0 on success, 1 on failure
 csl_parse_parameters ()
@@ -563,12 +584,12 @@ csl_parse_parameters ()
             continue
             ;;
          '-w'|'--warning')
-            readonly CSL_WARNING_LIMIT="${2}"
+            csl_add_limit WARNING "${2}"
             shift 2
             continue
             ;;
          '-c'|'--critical')
-            readonly CSL_CRITICAL_LIMIT="${2}"
+            csl_add_limit CRITICAL "${2}"
             shift 2
             continue
             ;;
@@ -652,9 +673,8 @@ csl_parse_parameters ()
    #fi
    ! is_set CSL_DEBUG || debug "Debugging: enabled"
    ! is_set CSL_VERBOSE || verbose "Verbose output: enabled"
-   ! is_set CSL_WARNING_LIMIT || debug "Warning limit: ${CSL_WARNING_LIMIT}"
-   ! is_set CSL_CRITICAL_LIMIT || debug "Critical limit: ${CSL_CRITICAL_LIMIT}"
-
+   ! is_set CSL_WARNING_LIMIT || debug "Warning limit: ${CSL_WARNING_LIMIT[*]}"
+   ! is_set CSL_CRITICAL_LIMIT || debug "Critical limit: ${CSL_CRITICAL_LIMIT[*]}"
 }
 readonly -f csl_parse_parameters
 
@@ -778,21 +798,49 @@ readonly -f is_func
 # @return int 0 on success, 1 on failure
 csl_validate_parameters ()
 {
-   if ! is_declared CSL_WARNING_LIMIT || is_empty "${CSL_WARNING_LIMIT}" || \
-      ! is_declared CSL_CRITICAL_LIMIT || is_empty "${CSL_CRITICAL_LIMIT}"; then
-      fail "warning and critical parameters are mandatory!"
+   #
+   # validate that warning- and critical-limits have been correctly provided.
+   #
+   if ! is_declared CSL_WARNING_LIMIT || [ ${#CSL_WARNING_LIMIT[@]} -lt 1 ] || \
+      ! is_declared CSL_CRITICAL_LIMIT || [ ${#CSL_CRITICAL_LIMIT[@]} -lt 1 ]; then
+      fail "Warning and critical parameters are mandatory!"
       return 1
    fi
 
-   if ! is_valid_limit "${CSL_WARNING_LIMIT}"; then
-      fail "warning parameter contains an invalid value!"
+   #
+   # a quick check, that the same count of limits is present for warning- as
+   # well for critical-limits.
+   #
+   if [ ${#CSL_WARNING_LIMIT[@]} -ne ${#CSL_CRITICAL_LIMIT[@]} ]; then
+      fail "Warning and critical parameters contain different amount of limits (w:${#CSL_WARNING_LIMIT[@]},c:${#CSL_CRITICAL_LIMIT[@]})!"
       return 1
    fi
 
-   if ! is_valid_limit "${CSL_CRITICAL_LIMIT}"; then
-      fail "critical parameter contains an invalid value!"
-      return 1
-   fi
+   local WARN_KEY='' CRIT_KEY=''
+   for WARN_KEY in "${!CSL_WARNING_LIMIT[@]}"; do
+      if ! key_in_array CSL_CRITICAL_LIMIT "${WARN_KEY}"; then
+         fail "Warning limit key '${WARN_KEY}' does not occur in critical limits!"
+         return 1
+      fi
+   done
+
+   for CRIT_KEY in "${!CSL_CRITICAL_LIMIT[@]}"; do
+      if ! key_in_array CSL_WARNING_LIMIT "${WARN_KEY}"; then
+         fail "Critical limit key '${CRIT_KEY}' does not occur in warning limits!"
+         return 1
+      fi
+   done
+
+   # TODO: to remove, will be checked by csl_add_limit() already
+   #if ! is_valid_limit "${CSL_WARNING_LIMIT}"; then
+   #   fail "warning parameter contains an invalid value!"
+      #return 1
+   #fi
+
+   #if ! is_valid_limit "${CSL_CRITICAL_LIMIT}"; then
+   #   fail "critical parameter contains an invalid value!"
+   #   return 1
+   #fi
 
    local RETVAL=0
 
@@ -813,6 +861,11 @@ csl_validate_parameters ()
 set_result_text ()
 {
    # the text might have been provided as first parameter.
+   if [ $# -gt 1 ]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
    if [ $# -ge 1 ]; then
       ! is_empty "${1}" || return 1
       CSL_RESULT_TEXT="${1}"
@@ -899,13 +952,19 @@ readonly -f get_result_perfdata
 # @function set_result_code()
 # @brief accepts the plugin-exit-code as first parameter.
 # On success it returns 0, otherwise 1.
-# @param1 string $perfdata
+# @param1 string $exit_code
 # @return int 0 on success, 1 on failure
 set_result_code ()
 {
    [ $# -eq 1 ] || return 1
    ! is_empty "${1}" || return 1
    [[ "${1}" =~ ^[[:digit:]]{1,3}$ ]] || return 1
+
+   # if the current result code is already set to something
+   # higher than the provided code in $1, ignore it.
+   if has_result_code && [ "${1}" -le "${CSL_RESULT_CODE}" ]; then
+      return 0
+   fi
 
    CSL_RESULT_CODE="${1}"
    return 0
@@ -1056,7 +1115,8 @@ startup ()
       return 1
    fi
 
-   plugin_worker "${@}"
+   plugin_worker "${@}" || \
+      { echo "plugin_worker() returned non-zero!"; exit 1; }
 
    print_result || \
       { echo "print_result() returned non-zero!"; exit 1; }
@@ -1445,12 +1505,14 @@ readonly -f sanitize
 # @return int
 in_array ()
 {
-   [ $# -eq 2 ] || return 1
-   [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
-   is_array "${1}" || return 1
+   if [ $# -ne 2 ] || \
+      ! [[ "${1}" =~ ^[[:graph:]]+$ ]] || \
+      ! is_array "${1}"; then
+      fail "Invalid parameters"
+      return 1
+   fi
 
    local -n haystack="${1}"
-   #local -a haystack='("${'"${1}"'[@]}")'
 
    for i in "${haystack[@]}"; do
       if [[ "${i}" =~ ${2} ]]; then
@@ -1471,9 +1533,12 @@ in_array ()
 # @return int
 in_array_re ()
 {
-   [ $# -eq 2 ] || return 1
-   [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
-   is_array "${1}" || return 1
+   if [ $# -ne 2 ] || \
+      ! [[ "${1}" =~ ^[[:graph:]]+$ ]] || \
+      ! is_array "${1}"; then
+      fail "Invalid parameters"
+      return 1
+   fi
 
    local -n haystack="${1}"
    #local -a 'haystack=("${'"${1}"'[@]}")'
@@ -1486,6 +1551,64 @@ in_array_re ()
 
    return 1
 }
+readonly -f in_array_re
+
+# @function key_in_array()
+# @brief searches the associatative array $1 for the key given in $2.
+# $2 may even contain a regular expression pattern.
+# On success, it returns 0. Otherwise 1 is returned.
+# @param1 string array-name
+# @param2 string needle
+# @return int
+key_in_array ()
+{
+   if [ $# -ne 2 ] || \
+      ! [[ "${1}" =~ ^[[:graph:]]+$ ]] || \
+      ! is_array "${1}"; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   local -n haystack="${1}"
+
+   for i in "${!haystack[@]}"; do
+      if [[ "${i}" =~ ${2} ]]; then
+         return 0
+      fi
+   done
+
+   return 1
+}
+readonly -f key_in_array
+
+# @function key_in_array_re()
+# @brief This function works similar as key_in_array(), but uses the
+# patterns that have been stored in the array $1 against the fixed
+# string provided with $2.
+# On success, it returns 0. Otherwise 1 is returned.
+# @param1 string array-name
+# @param2 string needle
+# @return int
+key_in_array_re ()
+{
+   if [ $# -ne 2 ] || \
+      ! [[ "${1}" =~ ^[[:graph:]]+$ ]] || \
+      ! is_array "${1}"; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   local -n haystack="${1}"
+
+   for i in "${!haystack[@]}"; do
+      if [[ "${2}" =~ ${i//\//} ]]; then
+         return 0
+      fi
+   done
+
+   return 1
+}
+readonly -f key_in_array_re
 
 # @function is_array()
 # @brief This function tests if the provided array
@@ -1520,6 +1643,303 @@ csl_get_version ()
    echo "${CSL_VERSION}"
    return 0
 }
+
+# @function csl_add_limit()
+# @brief With this function, warning- and critical-limits for certain
+# 'keys' are registered. A key is the text the matches a given input
+# value.
+# @param1 string Either 'WARNING' or 'CRITICAL'
+# @param2 string key name
+# @return int
+csl_add_limit ()
+{
+   if [ $# -ne 2 ] || \
+      is_empty "${1}" || \
+      is_empty "${2}" || \
+      ! [[ "${1}" =~ ^(WARNING|CRITICAL)$ ]]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   local -n TARGET="CSL_${1}_LIMIT"
+   local LIMIT="${2}"
+   local -a LIMIT_ARY=()
+   local KEY='' VAL='' KEY_CNT=0
+
+   IFS=',' read -r -a LIMIT_ARY <<< "${LIMIT}"
+
+   if ! is_array LIMIT_ARY || [ ${#LIMIT_ARY[@]} -lt 1 ]; then
+      fail "Invalid ${1} threshold! Check the syntax."
+      exit 1
+   fi
+
+   for LIMIT_COUPLE in "${LIMIT_ARY[@]}"; do
+      ! is_empty "${LIMIT_COUPLE}" || continue
+
+      if ! [[ "${LIMIT_COUPLE}" =~ ^([[:graph:]]+)=([[:graph:]]+)$ ]]; then
+         #echo "SINGLE>>> ${LIMIT_COUPLE}"
+         if ! is_valid_limit "${LIMIT_COUPLE}"; then
+            fail "${1} parameter contains an invalid threshold! Check the syntax."
+            exit 1
+         fi
+
+         # as we use an associative array in CSL_(WARNING|CRITICAL)_LIMIT, construct
+         # an array key to be able to push the value to the array.
+         TARGET+=( ["key${KEY_CNT}"]="${LIMIT_COUPLE}" )
+         ((KEY_CNT+=1))
+         continue
+      fi
+
+      [ ${#BASH_REMATCH[@]} -eq 3 ] || continue
+
+      #IFS='=' read -r KEY VAL <<< "${LIMIT_COUPLE}"
+      KEY="${BASH_REMATCH[1]}"
+      VAL="${BASH_REMATCH[2]}"
+
+      ! is_empty KEY || continue
+      ! is_empty VAL || continue
+
+      if ! is_valid_limit "${VAL}"; then
+         fail "${1} parameter contains an invalid threshold! Check the syntax."
+         exit 1
+      fi
+
+      #echo "COUPLE>>> a ${KEY} ${VAL}"
+      TARGET+=( ["${KEY}"]="${VAL}" )
+   done
+
+   # enable for debugging, runs before DEBUG=1 has been set by csl_parse_parameters().
+   #for KEY in "${!TARGET[@]}"; do
+      #echo "Limit ${1}: ${KEY}=${TARGET["${KEY}"]}"
+   #done
+}
+readonly -f csl_add_limit
+
+# @function get_limit_for_key()
+# @brief This function look up the declared warning- or critical-limits ($1)
+# for the specified key ($2).
+# @param1 string Either 'WARNING' or 'CRITICAL'
+# @param2 string key name
+# @output text threshold
+# @return int 0 on success, 1 on failure
+get_limit_for_key ()
+{
+   if [ $# -ne 2 ] || \
+      is_empty "${1}" || \
+      is_empty "${2}" || \
+      ! [[ "${1}" =~ ^(WARNING|CRITICAL)$ ]] || \
+      ! [[ "${2}" =~ ^[[:graph:]]+$ ]]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   if ! key_in_array_re "CSL_${1}_LIMIT" "${2}"; then
+      return 1
+   fi
+
+   local -n LIMIT="CSL_${1}_LIMIT"
+
+   for KEY in "${!LIMIT[@]}"; do
+      if [[ "${2}" =~ ${KEY//\//} ]]; then
+         echo "${LIMIT[${KEY}]}"
+         return 0
+      fi
+   done
+
+   return 1
+}
+readonly -f get_limit_for_key
+
+# @function add_result()
+# @brief This function registers a result value ($2) for the given
+# key ($1). The function does not allow to overrule an already set
+# value with the same key.
+# @param1 string key name
+# @param2 string value
+# @return int 0 on success, 1 on failure
+add_result ()
+{
+   if [ $# -ne 2 ] || \
+      is_empty "${1}" || \
+      is_empty "${2}" || \
+      ! [[ "${1}" =~ ^[[:graph:]]+$ ]] || \
+      ! [[ "${2}" =~ ^[[:print:]]+$ ]]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   local KEY="${1}"
+   local VAL="${2}"
+
+   if [[ -v "CSL_RESULT_VALUES[${KEY}]" ]]; then
+      fail "A value for '${KEY}' has already been set!"
+      return 1
+   fi
+
+   CSL_RESULT_VALUES["${KEY}"]="${VAL}"
+   return 0
+}
+readonly -f add_result
+
+# @function has_results()
+# @brief This function performs a quick check, if actually result values
+# have been recorded.
+# @return int 0 on success, 1 on failure
+has_results ()
+{
+   is_declared CSL_RESULT_VALUES || return 1
+   is_array CSL_RESULT_VALUES || return 1
+   [ "${#CSL_RESULT_VALUES[@]}" -ge 1 ] || return 1
+
+   return 0
+}
+readonly -f has_results
+
+# @function has_result()
+# @brief This function tests if a result has been recorded for the given
+# key ($1).
+# @return int 0 on success, 1 on failure
+has_result ()
+{
+   if [ $# -ne 1 ] || \
+      is_empty "${1}" || \
+      ! [[ "${1}" =~ ^[[:graph:]]+$ ]]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   has_results || return 1
+   [[ -v "CSL_RESULT_VALUES[${1}]" ]] || return 1
+
+   return 0
+}
+readonly -f has_result
+
+# @function get_result()
+# @brief This function returns the result that has been recorded for the
+# given key ($1).
+# @output string value
+# @param1 string key name
+# @return int 0 on success, 1 on failure
+get_result ()
+{
+   if [ $# -ne 1 ] || \
+      is_empty "${1}" || \
+      ! [[ "${1}" =~ ^[[:graph:]]+$ ]]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   has_result "${1}" || return 1
+
+   echo "${CSL_RESULT_VALUES[${1}]}"
+   return 0
+}
+readonly -f get_result
+
+# @function eval_results()
+# @brief This function iterates over all the recorded results and
+# evaluate their values with eval_limits(). Finally, the function
+# uses set_result_(text|code|perfdata) to set the scripts final
+# results.
+#
+# To perform your own evaluations, you may override this function
+# by specifying an user_eval_results() function in your plugin.
+# Than plugin_worker() will _not_ call eval_results(), but invokes
+# user_eval_results() instead.
+# @return 0 on success, 1 on failure
+eval_results ()
+{
+   local KEY='' VAL='' WARNING='' CRITICAL=''
+   local RESULT_TEXT='' RESULT_PERF='' RESULT_CODE=0
+   local RESULT='' RETVAL=0
+   # @desc with $KEYS_HANDLED we just keep track to later test,
+   # for which keys limits are set, but no results are available
+   # for them.
+   declare -g -a KEYS_HANDLED=()
+
+   if ! has_results; then
+      set_result_text "No plugin results are available."
+      csl_is_exit_on_no_data_critical && RESULT_CODE="${CSL_EXIT_CRITICAL}" || RESULT_CODE="${CSL_EXIT_UNKNOWN}"
+      set_result_code "${RESULT_CODE}"
+      # no perfdata gets set in this case.
+      return 0
+   fi
+
+   for KEY in "${!CSL_RESULT_VALUES[@]}"; do
+      ! is_empty "${KEY}" || continue
+      KEYS_HANDLED+=( "${KEY}" )
+      has_result "${KEY}" || continue
+
+      #
+      # check if a threshold for the specific key has actually been specified,
+      # otherwise we are going to skip it.
+      #
+      # it is enough to check against the warning-limit, as we took care in
+      # csl_validate_parameters() that a corresponding critical-limit is set too.
+      #
+      if ! key_in_array_re CSL_WARNING_LIMIT "${KEY}"; then
+         verbose "No limit set for '${KEY}'. Ignoring it."
+         continue
+      fi
+
+      #
+      # retrieve the warning- and critical-limits for the specific key.
+      #
+      WARNING="$(get_limit_for_key WARNING "${KEY}")"
+      CRITICAL="$(get_limit_for_key CRITICAL "${KEY}")"
+
+      if is_empty "${WARNING}" || is_empty "${CRITICAL}"; then
+         fail "Unable to retrieve limits for '${KEY}'!"
+         return 1
+      fi
+
+      VAL="$(get_result "${KEY}")"
+
+      #set -x
+      debug "${KEY} warning: ${WARNING}"
+      debug "${KEY} critical: ${CRITICAL}"
+
+      #set -x
+      RESULT="$(eval_limits "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL=$? || RETVAL=$?
+
+      if [ $RETVAL -gt ${RESULT_CODE} ]; then
+         RESULT_CODE="${RETVAL}"
+      fi
+
+      debug "${KEY} result text: ${RESULT}"
+      debug "${KEY} result code: ${RESULT_CODE}"
+
+      RESULT_TEXT+="${KEY}:${VAL}(${RESULT}), "
+      RESULT_PERF+="${KEY}=${VAL};${WARNING};${CRITICAL} "
+   done
+
+   #
+   # If CSL_EXIT_NO_DATA_IS_CRITICAL is set, reverse check, if for all
+   # declared limits, an input value has been found. Otherwise a missing
+   # one will lead to a critical exit-state.
+   #
+   if csl_is_exit_on_no_data_critical; then
+      for KEY in "${!CSL_WARNING_LIMIT[@]}"; do
+         in_array KEYS_HANDLED "${KEY//\//}" && continue
+         RESULT_TEXT+="${KEY}:n/a(CRITICAL), "
+         RESULT_CODE="${CSL_EXIT_CRITICAL}"
+      done
+   fi
+
+   debug "Handled keys: ${KEYS_HANDLED[*]}"
+   unset KEYS_HANDLED
+
+   if is_empty "${RESULT_TEXT}"; then
+      fail "No plugin results have been evaluated!"
+      return 1
+   fi
+
+   set_result_text "${RESULT_TEXT:0:-2}"
+   set_result_code "${RESULT_CODE}"
+   set_result_perfdata "${RESULT_PERF:0:-1}"
+}
+readonly -f eval_results
 
 #
 # </Functions>
