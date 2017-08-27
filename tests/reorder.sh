@@ -89,7 +89,7 @@ while read -r line; do
    # check if the function already appears in $TESTSEQ_DAT
    if ! grep -qsE "^${BASH_REMATCH[1]}$" ${TESTSEQ_DAT}; then
       echo
-      echo "Function '${BASH_REMATCH[1]}' is not listed in ${TESTSEQ_DAT}."
+      echo "Function '${BASH_REMATCH[1]}' is not listed in ${TESTSEQ_DAT##*/}."
       echo "Please add it on your own at the right position."
       echo
       exit 1
@@ -124,7 +124,7 @@ while read -r line; do
    # check that testfiles from 2xx and 3xx have a match in FUNC_LIST[]
    if ! in_array FUNC_LIST "^${FUNCTION_NAME}$" && \
       [[ "${GROUP}" =~ ^(2|3)xx$ ]]; then
-      echo "Have a testfile for '${FUNCTION_NAME}', but it is not in ${FUNCTIONS_SH}!"
+      echo "Have a testfile for '${FUNCTION_NAME}', but it is not in ${FUNCTIONS_SH##*/}!"
       exit 1
    fi
 
@@ -153,7 +153,7 @@ while read -r line; do
    NEW_POS="${GROUP}/${IN_GROUP_CNT}_${FUNCTION_NAME}.sh"
 
    if [ -e "${NEW_POS}" ]; then
-      echo "Quirks! It looks like there are multiple testfiles for '${FUNCTION_NAME}'."
+      echo "Quirks! It looks like there are multiple testfiles for '${FUNCTION_NAME##*/}'."
       ls -l "${ALT_POS}"
       ls -l "${NEW_POS}"
       exit 1
