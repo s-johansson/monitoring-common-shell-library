@@ -3,7 +3,7 @@
 | Tag | Value |
 | - | - |
 | Author | Andreas Unterkircher |
-| Version | 1.4.1 |
+| Version | 1.4.2 |
 | License | AGPLv3 |
 
 
@@ -1009,4 +1009,4 @@ on success, 1 on failure
 
 Link: https://stackoverflow.com/a/4025065
 
-[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 08:50:53 CEST 2017.
+[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 08:51:47 CEST 2017.
