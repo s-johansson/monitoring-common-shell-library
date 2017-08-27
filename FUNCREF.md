@@ -519,7 +519,7 @@ Type: `int`
 0 on success, 1 on failure
 
 
-## Function `cleanup`
+## Function `csl_cleanup`
 
 is a function, that would be called on soon as this script has finished. It must be set upped by using setup_cleanup_trap ().
 
@@ -753,7 +753,7 @@ Type: `int`
 
 ## Function `create_tmpdir`
 
-creates and tests for a temporary directory being created by mktemp. Furthermore it registers the temp-directory in the variable CSL_TEMP_DIRS[] that is eval'ed in case by cleanup(), to remove plugin residues. there is a hard-coded limit for max. 10 temp-directories.
+creates and tests for a temporary directory being created by mktemp. Furthermore it registers the temp-directory in the variable CSL_TEMP_DIRS[] that is eval'ed in case by csl_cleanup(), to remove plugin residues. there is a hard-coded limit for max. 10 temp-directories.
 
 *Outputs*: temp-directory
 
@@ -987,4 +987,4 @@ Type: `0`
 
 on success, 1 on failure
 
-[^1]: Created by shell-docs-gen.sh v1.2 on Sam Aug 26 12:09:04 CEST 2017.
+[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 07:23:12 CEST 2017.

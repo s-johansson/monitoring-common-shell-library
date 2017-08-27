@@ -76,9 +76,9 @@ declare -g -A CSL_USER_GETOPT_PARAMS=()
 
 #
 # on any invocation of create_tmpdir(), that one will push the name
-# of the returned temp-directory to CSL_TEMP_DIRS[]. cleanup() can
-# later take care of it and removes the temp-directories found in
-# CSL_TEMP_DIRS[] when the script finish.
+# of the returned temp-directory to CSL_TEMP_DIRS[]. csl_cleanup()
+# can later take care of it and removes the temp-directories found
+# in CSL_TEMP_DIRS[] when the script finish.
 #
 declare -a CSL_TEMP_DIRS=()
 
@@ -1057,13 +1057,13 @@ show_help ()
 }
 readonly -f show_help
 
-# @function cleanup()
+# @function csl_cleanup()
 # @brief is a function, that would be called on soon as this
 # script has finished.
 # It must be set upped by using setup_cleanup_trap ().
 # @param1 int $exit_code
 # @return int 0 on success, 1 on failure
-cleanup ()
+csl_cleanup ()
 {
    local EXITCODE=$?
 
@@ -1088,7 +1088,7 @@ cleanup ()
 
    exit $EXITCODE
 }
-readonly -f cleanup
+readonly -f csl_cleanup
 
 # @function startup()
 # @brief is the first library function, that any plugin should invoke.
@@ -1407,7 +1407,7 @@ readonly -f csl_get_long_params
 # @brief creates and tests for a temporary directory
 # being created by mktemp.
 # Furthermore it registers the temp-directory in the variable
-# CSL_TEMP_DIRS[] that is eval'ed in case by cleanup(), to
+# CSL_TEMP_DIRS[] that is eval'ed in case by csl_cleanup(), to
 # remove plugin residues.
 # there is a hard-coded limit for max. 10 temp-directories.
 # @output temp-directory
@@ -1446,7 +1446,7 @@ readonly -f create_tmpdir
 
 # @function setup_cleanup_trap()
 # registers a signal-trap for certain signals like
-# EXIT and INT, to call the cleanup() function on program-termination
+# EXIT and INT, to call the csl_cleanup() function on program-termination
 # (irrespectivly of success or failure).
 #
 # Note that the cleanup trap must be installed from the plugin.
@@ -1460,11 +1460,11 @@ setup_cleanup_trap ()
    #
    # has the cleanup trap already been installed
    #
-   if trap -p | grep -qsE "^trap[[:blank:]]--[[:blank:]]'cleanup'[[:blank:]]"; then
+   if trap -p | grep -qsE "^trap[[:blank:]]--[[:blank:]]'csl_cleanup'[[:blank:]]"; then
       return 0
    fi
 
-   trap cleanup INT QUIT TERM EXIT
+   trap csl_cleanup INT QUIT TERM EXIT
    return $?
 }
 readonly -f setup_cleanup_trap
