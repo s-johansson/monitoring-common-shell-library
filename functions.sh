@@ -1946,7 +1946,8 @@ readonly -f eval_results
 # Credits to original author Dennis Williamson @ stackoverflow (see link).
 # @param1 string version1
 # @param2 string version2
-# @return int 0 on match, 1 if version1 less than version2, 2 if version2 less than version1, 255 on error
+# @output string eq = equal,lt = less than,gt = greater than
+# @return 0 on success, 1 on failure
 # @link https://stackoverflow.com/a/4025065
 csl_compare_version ()
 {
@@ -1954,20 +1955,21 @@ csl_compare_version ()
       is_empty "${1}" || \
       is_empty "${2}"; then
       fail "Invalid parameters"
-      return 255
+      return 1
    fi
 
    if ! [[ "${1}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]]; then
       fail "Parameter 1 does not look like a version number!"
-      return 255
+      return 1
    fi
 
    if ! [[ "${2}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]]; then
       fail "Parameter 2 does not look like a version number!"
-      return 255
+      return 1
    fi
 
    if [[ "${1}" == "${2}" ]]; then
+      echo "eq"
       return 0
    fi
 
@@ -1984,9 +1986,18 @@ csl_compare_version ()
          ver2[i]=0
       fi
 
-      ((10#${ver1[i]} > 10#${ver2[i]})) && return 2
-      ((10#${ver1[i]} < 10#${ver2[i]})) && return 1
+      if ((10#${ver1[i]} > 10#${ver2[i]})); then
+         echo "gt"
+         return 0
+      fi
+
+      if ((10#${ver1[i]} < 10#${ver2[i]})); then
+         echo "lt"
+         return 0
+      fi
    done
+
+   echo "eq"
    return 0
 }
 

@@ -1,5 +1,9 @@
 # Changes in monitoring-common-shell-library
 
+# 1.4.2 (unreleased)
+
+* let csl\_version\_compare() issue output instead of using return values.
+
 # 1.4.1 (20170827)
 
 * Add csl\_version\_compare() function to check.

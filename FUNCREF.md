@@ -999,12 +999,14 @@ This function compares to version strings. Credits to original author Dennis Wil
 | *$1* | string | version1 |
 | *$2* | string | version2 |
 
+*Outputs*: string eq = equal,lt = less than,gt = greater than
+
 ***Returns***
 
-Type: `int`
+Type: `0`
 
-0 on match, 1 if version1 less than version2, 2 if version2 less than version1, 255 on error
+on success, 1 on failure
 
 Link: https://stackoverflow.com/a/4025065
 
-[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 08:36:02 CEST 2017.
+[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 08:50:53 CEST 2017.
