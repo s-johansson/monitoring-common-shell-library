@@ -3,7 +3,7 @@
 ###############################################################################
 
 
-# This file is part of monitoring-common-shell-library v1.4
+# This file is part of monitoring-common-shell-library v1.4.1
 #
 # monitoring-common-shell-library, a library of shell functions used for
 # monitoring plugins like used with (c) Nagios, (c) Icinga, etc.
@@ -23,7 +23,7 @@
 # @author Andreas Unterkircher
 # @license AGPLv3
 # @title monitoring-common-shell-library Function Reference
-# @version 1.4
+# @version 1.4.1
 
 set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
@@ -33,7 +33,7 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
 #
 # <Variables>
-readonly CSL_VERSION="1.4"
+readonly CSL_VERSION="1.4.1"
 
 #
 # remember: on the shell OK=0, FAIL!=0.
@@ -1638,7 +1638,7 @@ csl_get_version ()
 {
    [[ -v CSL_VERSION ]] || return 1
    ! is_empty "${CSL_VERSION}" || return 1
-   [[ "${CSL_VERSION}" =~ ^[[:digit:]]+\.?[[:digit:]]*$ ]] || return 1
+   [[ "${CSL_VERSION}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]] || return 1
 
    echo "${CSL_VERSION}"
    return 0
@@ -1940,6 +1940,55 @@ eval_results ()
    set_result_perfdata "${RESULT_PERF:0:-1}"
 }
 readonly -f eval_results
+
+# @function csl_compare_version()
+# @brief This function compares to version strings.
+# Credits to original author Dennis Williamson @ stackoverflow (see link).
+# @param1 string version1
+# @param2 string version2
+# @return int 0 on match, 1 if version1 less than version2, 2 if version2 less than version1, 255 on error
+# @link https://stackoverflow.com/a/4025065
+csl_compare_version ()
+{
+   if ! [ "${#}" -eq 2 ] || \
+      is_empty "${1}" || \
+      is_empty "${2}"; then
+      fail "Invalid parameters"
+      return 255
+   fi
+
+   if ! [[ "${1}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]]; then
+      fail "Parameter 1 does not look like a version number!"
+      return 255
+   fi
+
+   if ! [[ "${2}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]]; then
+      fail "Parameter 2 does not look like a version number!"
+      return 255
+   fi
+
+   if [[ "${1}" == "${2}" ]]; then
+      return 0
+   fi
+
+   local IFS=.
+   local i ver1=($1) ver2=($2)
+   # fill empty fields in ver1 with zeros
+   for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+      ver1[i]=0
+   done
+
+   for ((i=0; i<${#ver1[@]}; i++)); do
+      if ! [[ -v "ver2[${i}]" ]] || [[ -z ${ver2[i]} ]]; then
+         # fill empty fields in ver2 with zeros
+         ver2[i]=0
+      fi
+
+      ((10#${ver1[i]} > 10#${ver2[i]})) && return 2
+      ((10#${ver1[i]} < 10#${ver2[i]})) && return 1
+   done
+   return 0
+}
 
 #
 # </Functions>

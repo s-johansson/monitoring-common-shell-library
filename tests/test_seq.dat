@@ -21,6 +21,7 @@ csl_has_short_params
 csl_parse_parameters
 csl_validate_parameters
 csl_cleanup
+csl_compare_version
 
 # External-used Function Checks
 [3xx]
