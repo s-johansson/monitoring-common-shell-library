@@ -1,5 +1,9 @@
 # Changes in monitoring-common-shell-library
 
+# 1.4.1 (20170827)
+
+* Add csl\_version\_compare() function to check.
+
 # 1.4 (20170827)
 
 * Introduced CSL\_VERSION variable, to indicate the version number of the

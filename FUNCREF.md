@@ -3,7 +3,7 @@
 | Tag | Value |
 | - | - |
 | Author | Andreas Unterkircher |
-| Version | 1.4 |
+| Version | 1.4.1 |
 | License | AGPLv3 |
 
 
@@ -987,4 +987,24 @@ Type: `0`
 
 on success, 1 on failure
 
-[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 07:29:11 CEST 2017.
+
+## Function `csl_compare_version`
+
+This function compares to version strings. Credits to original author Dennis Williamson @ stackoverflow (see link).
+
+***Parameters***
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | version1 |
+| *$2* | string | version2 |
+
+***Returns***
+
+Type: `int`
+
+0 on match, 1 if version1 less than version2, 2 if version2 less than version1, 255 on error
+
+Link: https://stackoverflow.com/a/4025065
+
+[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 08:36:02 CEST 2017.
