@@ -3,7 +3,7 @@
 | Tag | Value |
 | - | - |
 | Author | Andreas Unterkircher |
-| Version | 1.3 |
+| Version | 1.4 |
 | License | AGPLv3 |
 
 
@@ -987,4 +987,4 @@ Type: `0`
 
 on success, 1 on failure
 
-[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 07:23:12 CEST 2017.
+[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 07:29:11 CEST 2017.

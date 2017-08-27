@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-# 1.4 (unreleased)
+# 1.4 (20170827)
 
 * Introduced CSL\_VERSION variable, to indicate the version number of the
   library. It can be queried by the function csl\_get\_version().
@@ -16,6 +16,7 @@
     * get\_result()
     * has\_results()
     * eval\_results()
+* add reorder.sh to automatically adjust testfiles according to test\_seq.dat
 
 # 1.3 (20170821)
 
