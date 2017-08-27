@@ -57,7 +57,7 @@ is_cmd ()
 cleanup ()
 {
    local RETVAL=${?}
-   popd >/dev/null
+   popd >/dev/null 2>&1
    exit "${RETVAL}"
 }
 
