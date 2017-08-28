@@ -1621,7 +1621,7 @@ is_array ()
    [ $# -eq 1 ] || return 1
    [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
 
-   if ! [[ "$(declare -p "${1}" 2>&1)" =~ ^declare[[:blank:]]+-(a|A)[[:blank:]]+ ]]; then
+   if ! [[ "$(declare -p "${1}" 2>&1)" =~ ^declare[[:blank:]]+-(a|A)r?[[:blank:]]+ ]]; then
       return 1
    fi
 

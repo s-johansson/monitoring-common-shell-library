@@ -11,3 +11,6 @@ TEST_ARY+=( 'bla' )
 assert_func is_array $TEST_OK $TEST_EMPTY TEST_ARY
 unset -v TEST_ARY
 assert_func is_array $TEST_FAIL $TEST_EMPTY TEST_ARY
+
+declare -a -r TEST_ARY=()
+assert_func is_array $TEST_OK $TEST_EMPTY TEST_ARY

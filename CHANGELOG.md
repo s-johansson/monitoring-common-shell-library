@@ -1,5 +1,9 @@
 # Changes in monitoring-common-shell-library
 
+# 1.4.4 (unrelease)
+
+* let is\_array() also correctly handled readonly arrays.
+
 # 1.4.3 (20170828)
 
 * add exit\_no\_data()
