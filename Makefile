@@ -21,6 +21,8 @@
 
 ###############################################################################
 
+INPUT := functions
+
 .PHONY: all clean docs test
 
 start:
@@ -37,7 +39,7 @@ start:
 docs: clean FUNCREF.md
 
 %.md:
-	shell-docs-gen.sh -i functions.sh -o $@
+	shell-docs-gen.sh -i $(INPUT).sh -o $@
 
 clean:
 	@rm -f FUNCREF.md
@@ -47,9 +49,11 @@ test:
 
 check:
 	@echo ">>> Performing syntax validation..."
-	bash -n functions.sh
+	bash -n $(INPUT).sh
 	@echo ">>> Now analysing and linting..."
-	shellcheck -s bash functions.sh
+	shellcheck -s bash $(INPUT).sh
+	@echo ">>> Now linting markdown files..."
+	find $(CURDIR) -type f -name '*.md' -execdir mdl {} \;
 	@echo ">>> This looks like a success!"
 
 all: clean check test docs
