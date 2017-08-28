@@ -2001,6 +2001,22 @@ csl_compare_version ()
    return 0
 }
 
+# @function exit_no_data()
+# @brief This function can be called to exit with the correct
+# exit-code, in case no plugin data is available. The function
+# outputs CSL_EXIT_CRITICAL if CSL_EXIT_NO_DATA_IS_CRITICAL is
+# set, otherwise it returns CSL_EXIT_UNKNOWN
+# @return int 0 on success
+# @output int CSL_EXIT_CRITICAL or CSL_EXIT_UNKNOWN
+# @example exit "$(exit_no_data)"
+exit_no_data ()
+{
+   ! csl_is_exit_on_no_data_critical || echo "${CSL_EXIT_CRITICAL}"
+
+   echo "${CSL_EXIT_UNKNOWN}"
+   return 0
+}
+
 #
 # </Functions>
 #

@@ -1,5 +1,9 @@
 # Changes in monitoring-common-shell-library
 
+# 1.4.3 (unreleased)
+
+* add exit\_no\_data()
+
 # 1.4.2 (20170827)
 
 * let csl\_version\_compare() issue output instead of using return values.

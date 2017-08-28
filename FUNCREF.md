@@ -1009,4 +1009,21 @@ on success, 1 on failure
 
 Link: https://stackoverflow.com/a/4025065
 
-[^1]: Created by shell-docs-gen.sh v1.2 on Son Aug 27 08:51:47 CEST 2017.
+
+## Function `exit_no_data`
+
+This function can be called to exit with the correct exit-code, in case no plugin data is available. The function outputs CSL_EXIT_CRITICAL if CSL_EXIT_NO_DATA_IS_CRITICAL is set, otherwise it returns CSL_EXIT_UNKNOWN
+
+*Outputs*: int CSL_EXIT_CRITICAL or CSL_EXIT_UNKNOWN
+
+***Returns***
+
+Type: `int`
+
+0 on success
+
+```
+exit "$(exit_no_data)"
+```
+
+[^1]: Created by shell-docs-gen.sh v1.2 on Mon Aug 28 07:23:35 CEST 2017.
