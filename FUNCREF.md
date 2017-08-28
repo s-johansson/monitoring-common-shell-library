@@ -3,7 +3,7 @@
 | Tag | Value |
 | - | - |
 | Author | Andreas Unterkircher |
-| Version | 1.4.3 |
+| Version | 1.4.4 |
 | License | AGPLv3 |
 
 
@@ -1010,6 +1010,19 @@ on success, 1 on failure
 Link: https://stackoverflow.com/a/4025065
 
 
+## Function `csl_require_libvers`
+
+This function checks if the current library version number is matching the requiremented version as specified in $1.
+
+*Outputs*: string lt (less-than), eq (equal), gt (greater-than)
+
+***Returns***
+
+Type: `int`
+
+0 on success, 1 on failure
+
+
 ## Function `exit_no_data`
 
 This function can be called to exit with the correct exit-code, in case no plugin data is available. The function outputs CSL_EXIT_CRITICAL if CSL_EXIT_NO_DATA_IS_CRITICAL is set, otherwise it returns CSL_EXIT_UNKNOWN
@@ -1026,4 +1039,4 @@ Type: `int`
 exit "$(exit_no_data)"
 ```
 
-[^1]: Created by shell-docs-gen.sh v1.2 on Mon Aug 28 07:39:17 CEST 2017.
+[^1]: Created by shell-docs-gen.sh v1.2 on Mon Aug 28 07:53:58 CEST 2017.

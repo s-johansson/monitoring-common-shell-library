@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-# 1.4.4 (unreleased)
+# 1.4.4 (20170828)
 
 * let is\_array() also correctly handled readonly arrays.
 * add csl_require_libvers()
