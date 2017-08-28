@@ -63,6 +63,7 @@ has_result_code
 has_result_perfdata
 has_results
 has_result_text
+has_limit
 get_help_text
 get_limit_for_key
 get_param

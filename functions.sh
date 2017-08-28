@@ -1715,6 +1715,29 @@ csl_add_limit ()
 }
 readonly -f csl_add_limit
 
+# @function has_limit()
+# @brief This function checks, if a limit has been registered for the provided
+# key ($1)
+# @param1 string key
+# @return int 0 on success, 1 on failure
+has_limit ()
+{
+   if [ $# -ne 1 ] || \
+      is_empty "${1}" || \
+      ! [[ "${1}" =~ ^[[:graph:]]+$ ]]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   # it is enough to check against the warning-limit, as we took care in
+   # csl_validate_parameters() that a corresponding critical-limit has been
+   # set too.
+   [[ -v "CSL_WARNING_LIMIT[${1}]" ]] || return 1
+
+   return 0
+}
+readonly -f has_limit
+
 # @function get_limit_for_key()
 # @brief This function look up the declared warning- or critical-limits ($1)
 # for the specified key ($2).
@@ -1850,7 +1873,7 @@ readonly -f get_result
 # @return 0 on success, 1 on failure
 eval_results ()
 {
-   local KEY='' VAL='' WARNING='' CRITICAL=''
+   local KEY='' VAL='' WARNING='' CRITICAL='' LIMIT_KEY=''
    local RESULT_TEXT='' RESULT_PERF='' RESULT_CODE=0
    local RESULT='' RETVAL=0
    # @desc with $KEYS_HANDLED we just keep track to later test,
@@ -1873,21 +1896,28 @@ eval_results ()
 
       #
       # check if a threshold for the specific key has actually been specified,
-      # otherwise we are going to skip it.
+      # otherwise we check, if there is only one limit been given at all - then
+      # it is used for all values. And if not, the value is totally skipped.
       #
       # it is enough to check against the warning-limit, as we took care in
-      # csl_validate_parameters() that a corresponding critical-limit is set too.
+      # csl_validate_parameters() that a corresponding critical-limit has
+      # been set too.
       #
-      if ! key_in_array_re CSL_WARNING_LIMIT "${KEY}"; then
-         verbose "No limit set for '${KEY}'. Ignoring it."
-         continue
+      if key_in_array_re CSL_WARNING_LIMIT "${KEY}"; then
+         LIMIT_KEY="${KEY}"
+      else
+         if ! has_limit "key0"; then
+            verbose "No limit set for '${KEY}'. Ignoring it."
+            continue
+         fi
+         LIMIT_KEY="key0"
       fi
 
       #
       # retrieve the warning- and critical-limits for the specific key.
       #
-      WARNING="$(get_limit_for_key WARNING "${KEY}")"
-      CRITICAL="$(get_limit_for_key CRITICAL "${KEY}")"
+      WARNING="$(get_limit_for_key WARNING "${LIMIT_KEY}")"
+      CRITICAL="$(get_limit_for_key CRITICAL "${LIMIT_KEY}")"
 
       if is_empty "${WARNING}" || is_empty "${CRITICAL}"; then
          fail "Unable to retrieve limits for '${KEY}'!"

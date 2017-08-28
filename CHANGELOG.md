@@ -1,9 +1,15 @@
 # Changes in monitoring-common-shell-library
 
+# 1.4.5 (unreleased)
+
+* add has\_limit()
+* let eval\_results() work correctly if only a one-for-all
+  warning or critical threshold has been specified.
+
 # 1.4.4 (20170828)
 
 * let is\_array() also correctly handled readonly arrays.
-* add csl_require_libvers()
+* add csl\_require\_libvers()
 
 # 1.4.3 (20170828)
 
