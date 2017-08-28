@@ -2001,6 +2001,35 @@ csl_compare_version ()
    return 0
 }
 
+# @function csl_require_libvers()
+# @brief This function checks if the current library version number
+# is matching the requiremented version as specified in $1.
+# @output string lt (less-than), eq (equal), gt (greater-than)
+# @return int 0 on success, 1 on failure
+csl_require_libvers ()
+{
+   if ! [ $# -eq 1 ] || \
+      is_empty "${1}" || \
+      ! [[ "${1}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   local REQ_LIB_VERS="${1}" CUR_LIB_VERS RESULT RETVAL
+
+   CUR_LIB_VERS="$(csl_get_version)"
+   [ ! -z "${CUR_LIB_VERS}" ] || return 1
+
+   RESULT="$(csl_compare_version "${CUR_LIB_VERS}" "${REQ_LIB_VERS}")"
+   RETVAL="${?}"
+
+   [ "x${RETVAL}" == "x0" ] || return 1
+   [[ "${RESULT}" =~ ^(lt|eq|gt)$ ]] || return 1
+
+   echo "${RESULT}"
+   return "${RETVAL}"
+}
+
 # @function exit_no_data()
 # @brief This function can be called to exit with the correct
 # exit-code, in case no plugin data is available. The function

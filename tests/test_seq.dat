@@ -22,6 +22,7 @@ csl_parse_parameters
 csl_validate_parameters
 csl_cleanup
 csl_compare_version
+csl_require_libvers
 
 # External-used Function Checks
 [3xx]
