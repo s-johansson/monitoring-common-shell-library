@@ -5,66 +5,54 @@
 # Requirements
 
 * Bash 4
-* GNU getopt (sudo apt-get install util-unix)
-* GNU cat (sudo apt-get install coreutils)
-* GNU bc (sudo apt-get install bc)
+* getopt (from util-linux)
+* cat (GNU core utilities)
+* mktemp (GNU core utilities)
+* GNU bc
 
-On Debian and its derivates you quickly fulfil it with:
+On Debian and its derivatives you quickly fulfill those requirements with:
 
-    sudo apt-get install bash util-unix coreutil bc
+    sudo apt-get install bash util-unix coreutils bc
+
+# Package
+
+This **monitoring-common-shell-library** is also available as Debian package (.deb). Checkout https://apt.netshadow.net to locate the package.
 
 # Integration
 
-## Including
+## Including it
 
-The easiest way to include the functionality into your monitoring plugin, **source** functions.sh.
+The easiest way, to include the libraries functionality into your monitoring plugin, is to **source** functions.sh from your plugin. This can be done by
 
     source functions.sh
 
-or in the short form
+or even in a short form
 
     . functions.sh
 
-If you have installed check-library-functions by package, functions.sh might be placed in */usr/share/monitoring-common-shell-library/functions.sh*.
+If you have installed **monitoring-common-shell-library** as a software package (eg. .deb), *functions.sh* is usually located in
 
-## Embedding
+    /usr/share/monitoring-common-shell-library/functions.sh
 
-If you do not want to carry an extra file, just **concatenate** the contents of *functions.sh* to your monitoring plugin.
+## Embedding it
 
-But note: it might be harder to maintain your plugin if you want to update the functions provided by this library.
+Another way to integrate the library into your plugin, is to *concatenate** the contents of *functions.sh* to your monitoring plugin.
 
-## Replacing or Overriding Functions
-
-You may override any of the functions provided by using the included **rename_func()**.
-
-    rename_func show_help show_help_old
-    rename_func show_help_new show_help
-
-    show_help;      # now calls your new show_help() function
-    show_help_old;	# allows to access to old show_help() function
+But note: it might be harder to maintain your plugin if you want to update the functions provided by this library. Your plugin will probably remain more slim and efficient, if you choose the way "Including it"
 
 # Functions List
 
-See the function reference in `FUNCREF.md` that is automatically generated from *functions.sh*.
+See the automatically generated *function-reference* in `FUNCREF.md`, that is automatically generated from *functions.sh*.
 
 # Automated Testing
 
-monitoring-common-shell-library has been equipped with an built-in test-suite that tries to lead the provided functions up the garden path. It has been made quiet easy to start the test procedure:
+The **monitoring-common-shell-library** has been bundled with a built-in test-suite that tries to lead the provided functions up the garden path. It might not be that perfect, but at least ensures that the quality of the library is maintained.
 
-    cd tests/
-    make
-
-In case you like it more verbose, call the test-suite with *v=1*:
-
-    make v=1
-
-Even more curious folks may enable debugging by adding *d=1* (that also enables *verbose*):
-
-    make d=1
+See `README.md` in the `tests` directory for more information.
 
 # License
 
-GNU Affero General Public License v3. See LICENSE file for more information.
+All files are licensed by **GNU Affero General Public License v3**. See `LICENSE` file for more information.
 
 # Author
 
