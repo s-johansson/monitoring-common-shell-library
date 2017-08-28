@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-# 1.4.3 (unreleased)
+# 1.4.3 (20170828)
 
 * add exit\_no\_data()
 

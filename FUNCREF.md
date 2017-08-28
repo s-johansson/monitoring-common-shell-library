@@ -3,7 +3,7 @@
 | Tag | Value |
 | - | - |
 | Author | Andreas Unterkircher |
-| Version | 1.4.2 |
+| Version | 1.4.3 |
 | License | AGPLv3 |
 
 
@@ -1026,4 +1026,4 @@ Type: `int`
 exit "$(exit_no_data)"
 ```
 
-[^1]: Created by shell-docs-gen.sh v1.2 on Mon Aug 28 07:23:35 CEST 2017.
+[^1]: Created by shell-docs-gen.sh v1.2 on Mon Aug 28 07:25:20 CEST 2017.
