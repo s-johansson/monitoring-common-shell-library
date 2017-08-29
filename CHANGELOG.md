@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-## 1.5 (unreleased)
+## 1.5 (20170829)
 
 * add has\_threshold()
 * let eval\_results() work correctly if only a one-for-all
