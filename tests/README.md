@@ -1,6 +1,6 @@
 # Automated Testing Suite for monitoring-common-shell-library
 
-# Test Organization
+## Test Organization
 
     * 1xx ... variable tests
     * 2xx ... internal function tests
@@ -8,20 +8,20 @@
 
 See also the test\_seq.dat file.
 
-# Test Conditions
+## Test Conditions
 
     * each test has to be atomic and not depend on another test
 
-# Execution
+## Execution
 
-## Simple Run
+### Simple Run
 
     make
 
-## Verbose Run
+### Verbose Run
 
     make v=1
 
-## Debug Run
+### Debug Run
 
     make d=1

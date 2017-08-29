@@ -28,9 +28,9 @@ assert_func csl_parse_parameters $TEST_OK $TEST_EMPTY --warning 5 --critical 10:
 assert_func csl_parse_parameters $TEST_OK $TEST_EMPTY --warning :5 --critical :10
 assert_func csl_parse_parameters $TEST_OK $TEST_EMPTY --warning :5 --critical 10:
 assert_func csl_parse_parameters $TEST_OK $TEST_EMPTY --warning 5: --critical 10:
-assert_func csl_parse_parameters $TEST_OK "Warning limit: 5" --warning 5 -d
-assert_func csl_parse_parameters $TEST_OK "Critical limit: 10" --critical 10 -d
-assert_func csl_parse_parameters $TEST_OK "Warning limit: 5" --warning 5 --critical 10 -d
+assert_func csl_parse_parameters $TEST_OK "Warning threshold: 5" --warning 5 -d
+assert_func csl_parse_parameters $TEST_OK "Critical threshold: 10" --critical 10 -d
+assert_func csl_parse_parameters $TEST_OK "Warning threshold: 5" --warning 5 --critical 10 -d
 
 assert_func csl_parse_parameters $TEST_FAIL "Parameters required"
 assert_func csl_parse_parameters $TEST_FAIL "invalid option" -x

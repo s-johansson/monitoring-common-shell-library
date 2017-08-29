@@ -20,14 +20,14 @@ assert_func eval_results "${TEST_OK}" "${TEST_EMPTY}"
 CSL_RESULT_VALUES+=( ['abc']='123' )
 assert_func eval_results "${TEST_FAIL}" "No[[:blank:]]plugin[[:blank:]]results[[:blank:]]have[[:blank:]]been[[:blank:]]evaluated"
 CSL_RESULT_VALUES+=( ['abc']='123' )
-declare -g CSL_WARNING_LIMIT=(
+declare -g CSL_WARNING_THRESHOLD=(
    ['abc']='5:'
 )
-assert_func eval_results "${TEST_FAIL}" "Unable[[:blank:]]to[[:blank:]]retrieve[[:blank:]]limits"
-declare -g CSL_CRITICAL_LIMIT=(
+assert_func eval_results "${TEST_FAIL}" "Unable[[:blank:]]to[[:blank:]]retrieve[[:blank:]]thresholds"
+declare -g CSL_CRITICAL_THRESHOLD=(
    ['abc']='5:'
 )
 assert_func eval_results "${TEST_OK}" "${TEST_EMPTY}"
 CSL_RESULT_VALUES=()
 assert_func eval_results "${TEST_OK}" "${TEST_EMPTY}"
-unset -v CSL_RESULT_VALUES CSL_WARNING_LIMIT CSL_CRITICAL_LIMIT
+unset -v CSL_RESULT_VALUES CSL_WARNING_THRESHOLD CSL_CRITICAL_THRESHOLD

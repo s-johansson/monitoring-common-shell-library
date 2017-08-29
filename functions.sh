@@ -69,7 +69,7 @@ readonly -a CSL_DEFAULT_PREREQ=(
    'getopt'
    'mktemp'
 )
-declare -g -A CSL_WARNING_LIMIT=() CSL_CRITICAL_LIMIT=()
+declare -g -A CSL_WARNING_THRESHOLD=() CSL_CRITICAL_THRESHOLD=()
 declare -g -a CSL_USER_PREREQ=()
 declare -g -A CSL_USER_PARAMS=()
 declare -g -A CSL_USER_GETOPT_PARAMS=()
@@ -90,10 +90,10 @@ read -r -d '' CSL_DEFAULT_HELP_TEXT <<'EOF' && true
    -d, --debug         ... enable debugging.
    -v, --verbose       ... be verbose.
 
-   -w, --warning=arg   ... warning limit, see below LIMITS section.
-   -c, --critical=arg  ... critical limit, see below LIMITS section.
+   -w, --warning=arg   ... warning threshold, see below THRESHOLDS section.
+   -c, --critical=arg  ... critical threshold, see below THRESHOLDS section.
 
-LIMITS are given similar to check_procs:
+THRESHOLDS are given similar to check_procs:
 
    * greater-than-or-equal-match (max) results in warning on:
       --warning :4
@@ -112,7 +112,7 @@ Multiple thresholds can be specified comma separated. The syntax:
 * keyX is either the exact name of the counter value to be matched, or
 a regular expression (regex) pattern.
 * Regex patterns have to be surrounded by slashes: eg. /^http_resp/
-* valX uses the above descriped LIMIT syntax. eg.
+* valX uses the above descriped THRESHOLD syntax. eg.
 
    http_status=403,^/http_resp/=5:10
 
@@ -243,42 +243,49 @@ csl_check_requirements ()
 }
 readonly -f csl_check_requirements
 
-# @function csl_get_limit_range()
+# @function csl_get_threshold_range()
 # @brief returns the provided threshold as range in the form of
 # 'MIN MAX'. In case the provided value is a single value (either
 # integer or float), then 'x MAX' is returned.
-# @param1 string $limit
+# @param1 string $threshold
 # @output string
 # @return int 0 on success, 1 on failure
-csl_get_limit_range ()
+csl_get_threshold_range ()
 {
    [ $# -eq 1 ] || return 1
    ! is_empty "${1}" || return 1
-   local LIMIT="${1}"
+   local THRESHOLD="${1}"
 
-   # for ordinary numbers as limit
-   if is_integer "${LIMIT}" || is_float "${LIMIT}"; then
-      echo "x ${LIMIT}"
+   # for ordinary numbers as threshold
+   if is_integer "${THRESHOLD}" || is_float "${THRESHOLD}"; then
+      echo "x ${THRESHOLD}"
       return 0
    fi
 
-   if ! [[ ${LIMIT} =~ ^(-?[[:digit:]]+[\.[:digit:]]*)?:(-?[[:digit:]]+[\.[:digit:]]*)?$ ]]; then
-      fail "That does not look like a limit-range at all!"
+   if ! [[ ${THRESHOLD} =~ ^(-?[[:digit:]]+[\.[:digit:]]*)?:(-?[[:digit:]]+[\.[:digit:]]*)?$ ]]; then
+      fail "That does not look like a threshold-range at all!"
       return 1
    fi
 
-   local LIMIT_MIN="x"
+   local THRESHOLD_MIN="x"
    if ! is_empty "${BASH_REMATCH[1]}"; then
-      LIMIT_MIN="${BASH_REMATCH[1]}"
+      THRESHOLD_MIN="${BASH_REMATCH[1]}"
    fi
 
-   local LIMIT_MAX="x"
+   local THRESHOLD_MAX="x"
    if ! is_empty "${BASH_REMATCH[2]}"; then
-      LIMIT_MAX="${BASH_REMATCH[2]}"
+      THRESHOLD_MAX="${BASH_REMATCH[2]}"
    fi
 
-   echo "${LIMIT_MIN} ${LIMIT_MAX}"
+   echo "${THRESHOLD_MIN} ${THRESHOLD_MAX}"
    return 0
+}
+readonly -f csl_get_threshold_range
+
+# @function csl_get_limit_range()
+csl_get_limit_range ()
+{
+   deprecate_func csl_get_threshold_range "${@}"
 }
 readonly -f csl_get_limit_range
 
@@ -388,17 +395,17 @@ is_dir ()
 }
 readonly -f is_dir
 
-# @function: eval_limits()
+# @function: eval_thresholds()
 # @brief evaluates the given value $1 against WARNING ($2) and CRITICAL ($3) thresholds.
 # @param1 string $value
 # @param2 string $warning
 # @param3 string $critical
 # @output OK|WARNING|CRITICAL|UNKNOWN
 # @return int 0|1|2|3
-eval_limits ()
+eval_thresholds ()
 {
    [ $# -eq 3 ] || \
-      { fail "eval_limits() requires 3 parameters."; return 1; }
+      { fail "eval_thresholds() requires 3 parameters."; return 1; }
 
    ( ! is_empty "${1}" && ! is_empty "${2}" && ! is_empty "${3}" ) || return 1
 
@@ -407,12 +414,12 @@ eval_limits ()
    local CRITICAL="${3}" CRIT_MIN='' CRIT_MAX=''
    local TEXT='' STATE='' MATCH=''
 
-   read -r WARN_MIN WARN_MAX < <(csl_get_limit_range "${WARNING}")
-   read -r CRIT_MIN CRIT_MAX < <(csl_get_limit_range "${CRITICAL}")
+   read -r WARN_MIN WARN_MAX < <(csl_get_threshold_range "${WARNING}")
+   read -r CRIT_MIN CRIT_MAX < <(csl_get_threshold_range "${CRITICAL}")
 
    if is_empty "${WARN_MIN}" || is_empty "${WARN_MAX}" || \
       is_empty "${CRIT_MIN}" || is_empty "${CRIT_MAX}"; then
-      fail "something went wrong on parsing limits!"
+      fail "something went wrong on parsing thresholds!"
       exit 1
    fi
 
@@ -513,6 +520,13 @@ eval_limits ()
    echo "${TEXT}"
    return ${STATE}
 }
+readonly -f eval_thresholds
+
+# @function eval_limits()
+eval_limits ()
+{
+   deprecate_func eval_thresholds "${@}"
+}
 readonly -f eval_limits
 
 # @function csl_parse_parameters()
@@ -584,12 +598,12 @@ csl_parse_parameters ()
             continue
             ;;
          '-w'|'--warning')
-            csl_add_limit WARNING "${2}"
+            csl_add_threshold WARNING "${2}"
             shift 2
             continue
             ;;
          '-c'|'--critical')
-            csl_add_limit CRITICAL "${2}"
+            csl_add_threshold CRITICAL "${2}"
             shift 2
             continue
             ;;
@@ -673,8 +687,8 @@ csl_parse_parameters ()
    #fi
    ! is_set CSL_DEBUG || debug "Debugging: enabled"
    ! is_set CSL_VERBOSE || verbose "Verbose output: enabled"
-   ! is_set CSL_WARNING_LIMIT || debug "Warning limit: ${CSL_WARNING_LIMIT[*]}"
-   ! is_set CSL_CRITICAL_LIMIT || debug "Critical limit: ${CSL_CRITICAL_LIMIT[*]}"
+   ! is_set CSL_WARNING_THRESHOLD || debug "Warning threshold: ${CSL_WARNING_THRESHOLD[*]}"
+   ! is_set CSL_CRITICAL_THRESHOLD || debug "Critical threshold: ${CSL_CRITICAL_THRESHOLD[*]}"
 }
 readonly -f csl_parse_parameters
 
@@ -727,35 +741,42 @@ is_float ()
 }
 readonly -f is_float
 
-# @function: is_valid_limit()
+# @function: is_valid_threshold()
 # @brief performs the checks on the given warning
 # and critical values and returns 0, if they are.
 # Otherwise it returns 1.
-# @param1 string $limit
+# @param1 string $threshold
 # @return int 0 on success, 1 on failure
-is_valid_limit ()
+is_valid_threshold ()
 {
    [ $# -eq 1 ] || return 1
    ! is_empty "${1}" || return 1
 
-   local LIMIT="${1}"
+   local THRESHOLD="${1}"
 
    # an integer
-   if is_integer "${LIMIT}"; then
+   if is_integer "${THRESHOLD}"; then
       return 0
    fi
 
    # a floating-point number (without exponent...)
-   if is_float "${LIMIT}"; then
+   if is_float "${THRESHOLD}"; then
       return 0
    fi
 
    # a range
-   if is_range "${LIMIT}"; then
+   if is_range "${THRESHOLD}"; then
       return 0
    fi
 
    return 1
+}
+readonly -f is_valid_threshold
+
+# @function is_valid_limit()
+is_valid_limit ()
+{
+   deprecate_func is_valid_threshold "${@}"
 }
 readonly -f is_valid_limit
 
@@ -799,48 +820,37 @@ readonly -f is_func
 csl_validate_parameters ()
 {
    #
-   # validate that warning- and critical-limits have been correctly provided.
+   # validate that warning- and critical-thresholds have been correctly provided.
    #
-   if ! is_declared CSL_WARNING_LIMIT || [ ${#CSL_WARNING_LIMIT[@]} -lt 1 ] || \
-      ! is_declared CSL_CRITICAL_LIMIT || [ ${#CSL_CRITICAL_LIMIT[@]} -lt 1 ]; then
+   if ! is_declared CSL_WARNING_THRESHOLD || [ ${#CSL_WARNING_THRESHOLD[@]} -lt 1 ] || \
+      ! is_declared CSL_CRITICAL_THRESHOLD || [ ${#CSL_CRITICAL_THRESHOLD[@]} -lt 1 ]; then
       fail "Warning and critical parameters are mandatory!"
       return 1
    fi
 
    #
-   # a quick check, that the same count of limits is present for warning- as
-   # well for critical-limits.
+   # a quick check, that the same count of thresholds is present for warning- as
+   # well for critical-thresholds.
    #
-   if [ ${#CSL_WARNING_LIMIT[@]} -ne ${#CSL_CRITICAL_LIMIT[@]} ]; then
-      fail "Warning and critical parameters contain different amount of limits (w:${#CSL_WARNING_LIMIT[@]},c:${#CSL_CRITICAL_LIMIT[@]})!"
+   if [ ${#CSL_WARNING_THRESHOLD[@]} -ne ${#CSL_CRITICAL_THRESHOLD[@]} ]; then
+      fail "Warning and critical parameters contain different amount of thresholds (w:${#CSL_WARNING_THRESHOLD[@]},c:${#CSL_CRITICAL_THRESHOLD[@]})!"
       return 1
    fi
 
    local WARN_KEY='' CRIT_KEY=''
-   for WARN_KEY in "${!CSL_WARNING_LIMIT[@]}"; do
-      if ! key_in_array CSL_CRITICAL_LIMIT "${WARN_KEY}"; then
-         fail "Warning limit key '${WARN_KEY}' does not occur in critical limits!"
+   for WARN_KEY in "${!CSL_WARNING_THRESHOLD[@]}"; do
+      if ! key_in_array CSL_CRITICAL_THRESHOLD "${WARN_KEY}"; then
+         fail "Warning threshold key '${WARN_KEY}' does not occur in critical thresholds!"
          return 1
       fi
    done
 
-   for CRIT_KEY in "${!CSL_CRITICAL_LIMIT[@]}"; do
-      if ! key_in_array CSL_WARNING_LIMIT "${WARN_KEY}"; then
-         fail "Critical limit key '${CRIT_KEY}' does not occur in warning limits!"
+   for CRIT_KEY in "${!CSL_CRITICAL_THRESHOLD[@]}"; do
+      if ! key_in_array CSL_WARNING_THRESHOLD "${WARN_KEY}"; then
+         fail "Critical threshold key '${CRIT_KEY}' does not occur in warning thresholds!"
          return 1
       fi
    done
-
-   # TODO: to remove, will be checked by csl_add_limit() already
-   #if ! is_valid_limit "${CSL_WARNING_LIMIT}"; then
-   #   fail "warning parameter contains an invalid value!"
-      #return 1
-   #fi
-
-   #if ! is_valid_limit "${CSL_CRITICAL_LIMIT}"; then
-   #   fail "critical parameter contains an invalid value!"
-   #   return 1
-   #fi
 
    local RETVAL=0
 
@@ -1409,7 +1419,7 @@ readonly -f csl_get_long_params
 # Furthermore it registers the temp-directory in the variable
 # CSL_TEMP_DIRS[] that is eval'ed in case by csl_cleanup(), to
 # remove plugin residues.
-# there is a hard-coded limit for max. 10 temp-directories.
+# there is a hard-coded threshold for max. 10 temp-directories.
 # @output temp-directory
 # @return int 0 on success, 1 on failure
 create_tmpdir ()
@@ -1644,14 +1654,14 @@ csl_get_version ()
    return 0
 }
 
-# @function csl_add_limit()
-# @brief With this function, warning- and critical-limits for certain
+# @function csl_add_threshold()
+# @brief With this function, warning- and critical-thresholds for certain
 # 'keys' are registered. A key is the text the matches a given input
 # value.
 # @param1 string Either 'WARNING' or 'CRITICAL'
 # @param2 string key name
 # @return int
-csl_add_limit ()
+csl_add_threshold ()
 {
    if [ $# -ne 2 ] || \
       is_empty "${1}" || \
@@ -1661,45 +1671,45 @@ csl_add_limit ()
       return 1
    fi
 
-   local -n TARGET="CSL_${1}_LIMIT"
-   local LIMIT="${2}"
-   local -a LIMIT_ARY=()
+   local -n TARGET="CSL_${1}_THRESHOLD"
+   local THRESHOLD="${2}"
+   local -a THRESHOLD_ARY=()
    local KEY='' VAL='' KEY_CNT=0
 
-   IFS=',' read -r -a LIMIT_ARY <<< "${LIMIT}"
+   IFS=',' read -r -a THRESHOLD_ARY <<< "${THRESHOLD}"
 
-   if ! is_array LIMIT_ARY || [ ${#LIMIT_ARY[@]} -lt 1 ]; then
+   if ! is_array THRESHOLD_ARY || [ ${#THRESHOLD_ARY[@]} -lt 1 ]; then
       fail "Invalid ${1} threshold! Check the syntax."
       exit 1
    fi
 
-   for LIMIT_COUPLE in "${LIMIT_ARY[@]}"; do
-      ! is_empty "${LIMIT_COUPLE}" || continue
+   for THRESHOLD_COUPLE in "${THRESHOLD_ARY[@]}"; do
+      ! is_empty "${THRESHOLD_COUPLE}" || continue
 
-      if ! [[ "${LIMIT_COUPLE}" =~ ^([[:graph:]]+)=([[:graph:]]+)$ ]]; then
-         #echo "SINGLE>>> ${LIMIT_COUPLE}"
-         if ! is_valid_limit "${LIMIT_COUPLE}"; then
+      if ! [[ "${THRESHOLD_COUPLE}" =~ ^([[:graph:]]+)=([[:graph:]]+)$ ]]; then
+         #echo "SINGLE>>> ${THRESHOLD_COUPLE}"
+         if ! is_valid_threshold "${THRESHOLD_COUPLE}"; then
             fail "${1} parameter contains an invalid threshold! Check the syntax."
             exit 1
          fi
 
-         # as we use an associative array in CSL_(WARNING|CRITICAL)_LIMIT, construct
+         # as we use an associative array in CSL_(WARNING|CRITICAL)_THRESHOLD, construct
          # an array key to be able to push the value to the array.
-         TARGET+=( ["key${KEY_CNT}"]="${LIMIT_COUPLE}" )
+         TARGET+=( ["key${KEY_CNT}"]="${THRESHOLD_COUPLE}" )
          ((KEY_CNT+=1))
          continue
       fi
 
       [ ${#BASH_REMATCH[@]} -eq 3 ] || continue
 
-      #IFS='=' read -r KEY VAL <<< "${LIMIT_COUPLE}"
+      #IFS='=' read -r KEY VAL <<< "${THRESHOLD_COUPLE}"
       KEY="${BASH_REMATCH[1]}"
       VAL="${BASH_REMATCH[2]}"
 
       ! is_empty KEY || continue
       ! is_empty VAL || continue
 
-      if ! is_valid_limit "${VAL}"; then
+      if ! is_valid_threshold "${VAL}"; then
          fail "${1} parameter contains an invalid threshold! Check the syntax."
          exit 1
       fi
@@ -1710,17 +1720,24 @@ csl_add_limit ()
 
    # enable for debugging, runs before DEBUG=1 has been set by csl_parse_parameters().
    #for KEY in "${!TARGET[@]}"; do
-      #echo "Limit ${1}: ${KEY}=${TARGET["${KEY}"]}"
+      #echo "Threshold ${1}: ${KEY}=${TARGET["${KEY}"]}"
    #done
+}
+readonly -f csl_add_threshold
+
+# @function csl_add_limit()
+csl_add_limit ()
+{
+   deprecate_func csl_add_threshold "${@}"
 }
 readonly -f csl_add_limit
 
-# @function has_limit()
-# @brief This function checks, if a limit has been registered for the provided
+# @function has_threshold()
+# @brief This function checks, if a threshold has been registered for the provided
 # key ($1)
 # @param1 string key
 # @return int 0 on success, 1 on failure
-has_limit ()
+has_threshold ()
 {
    if [ $# -ne 1 ] || \
       is_empty "${1}" || \
@@ -1729,23 +1746,30 @@ has_limit ()
       return 1
    fi
 
-   # it is enough to check against the warning-limit, as we took care in
-   # csl_validate_parameters() that a corresponding critical-limit has been
+   # it is enough to check against the warning-threshold, as we took care in
+   # csl_validate_parameters() that a corresponding critical-threshold has been
    # set too.
-   [[ -v "CSL_WARNING_LIMIT[${1}]" ]] || return 1
+   [[ -v "CSL_WARNING_THRESHOLD[${1}]" ]] || return 1
 
    return 0
 }
+readonly -f has_threshold
+
+# @function has_limit()
+has_limit ()
+{
+   deprecate_func has_threshold "${@}"
+}
 readonly -f has_limit
 
-# @function get_limit_for_key()
-# @brief This function look up the declared warning- or critical-limits ($1)
+# @function get_threshold_for_key()
+# @brief This function look up the declared warning- or critical-thresholds ($1)
 # for the specified key ($2).
 # @param1 string Either 'WARNING' or 'CRITICAL'
 # @param2 string key name
 # @output text threshold
 # @return int 0 on success, 1 on failure
-get_limit_for_key ()
+get_threshold_for_key ()
 {
    if [ $# -ne 2 ] || \
       is_empty "${1}" || \
@@ -1756,20 +1780,27 @@ get_limit_for_key ()
       return 1
    fi
 
-   if ! key_in_array_re "CSL_${1}_LIMIT" "${2}"; then
+   if ! key_in_array_re "CSL_${1}_THRESHOLD" "${2}"; then
       return 1
    fi
 
-   local -n LIMIT="CSL_${1}_LIMIT"
+   local -n THRESHOLD="CSL_${1}_THRESHOLD"
 
-   for KEY in "${!LIMIT[@]}"; do
+   for KEY in "${!THRESHOLD[@]}"; do
       if [[ "${2}" =~ ${KEY//\//} ]]; then
-         echo "${LIMIT[${KEY}]}"
+         echo "${THRESHOLD[${KEY}]}"
          return 0
       fi
    done
 
    return 1
+}
+readonly -f get_threshold_for_key
+
+# @function get_limit_for_key()
+get_limit_for_key ()
+{
+   deprecate_func get_threshold_for_key "${@}"
 }
 readonly -f get_limit_for_key
 
@@ -1862,7 +1893,7 @@ readonly -f get_result
 
 # @function eval_results()
 # @brief This function iterates over all the recorded results and
-# evaluate their values with eval_limits(). Finally, the function
+# evaluate their values with eval_thresholds(). Finally, the function
 # uses set_result_(text|code|perfdata) to set the scripts final
 # results.
 #
@@ -1873,11 +1904,11 @@ readonly -f get_result
 # @return 0 on success, 1 on failure
 eval_results ()
 {
-   local KEY='' VAL='' WARNING='' CRITICAL='' LIMIT_KEY=''
+   local KEY='' VAL='' WARNING='' CRITICAL='' THRESHOLD_KEY=''
    local RESULT_TEXT='' RESULT_PERF='' RESULT_CODE=0
    local RESULT='' RETVAL=0
    # @desc with $KEYS_HANDLED we just keep track to later test,
-   # for which keys limits are set, but no results are available
+   # for which keys thresholds are set, but no results are available
    # for them.
    declare -g -a KEYS_HANDLED=()
 
@@ -1896,31 +1927,31 @@ eval_results ()
 
       #
       # check if a threshold for the specific key has actually been specified,
-      # otherwise we check, if there is only one limit been given at all - then
+      # otherwise we check, if there is only one threshold been given at all - then
       # it is used for all values. And if not, the value is totally skipped.
       #
-      # it is enough to check against the warning-limit, as we took care in
-      # csl_validate_parameters() that a corresponding critical-limit has
+      # it is enough to check against the warning-threshold, as we took care in
+      # csl_validate_parameters() that a corresponding critical-threshold has
       # been set too.
       #
-      if key_in_array_re CSL_WARNING_LIMIT "${KEY}"; then
-         LIMIT_KEY="${KEY}"
+      if key_in_array_re CSL_WARNING_THRESHOLD "${KEY}"; then
+         THRESHOLD_KEY="${KEY}"
       else
-         if ! has_limit "key0"; then
-            verbose "No limit set for '${KEY}'. Ignoring it."
+         if ! has_threshold "key0"; then
+            verbose "No threshold set for '${KEY}'. Ignoring it."
             continue
          fi
-         LIMIT_KEY="key0"
+         THRESHOLD_KEY="key0"
       fi
 
       #
-      # retrieve the warning- and critical-limits for the specific key.
+      # retrieve the warning- and critical-thresholds for the specific key.
       #
-      WARNING="$(get_limit_for_key WARNING "${LIMIT_KEY}")"
-      CRITICAL="$(get_limit_for_key CRITICAL "${LIMIT_KEY}")"
+      WARNING="$(get_threshold_for_key WARNING "${THRESHOLD_KEY}")"
+      CRITICAL="$(get_threshold_for_key CRITICAL "${THRESHOLD_KEY}")"
 
       if is_empty "${WARNING}" || is_empty "${CRITICAL}"; then
-         fail "Unable to retrieve limits for '${KEY}'!"
+         fail "Unable to retrieve thresholds for '${KEY}'!"
          return 1
       fi
 
@@ -1931,7 +1962,7 @@ eval_results ()
       debug "${KEY} critical: ${CRITICAL}"
 
       #set -x
-      RESULT="$(eval_limits "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL=$? || RETVAL=$?
+      RESULT="$(eval_thresholds "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL=$? || RETVAL=$?
 
       if [ $RETVAL -gt ${RESULT_CODE} ]; then
          RESULT_CODE="${RETVAL}"
@@ -1946,11 +1977,11 @@ eval_results ()
 
    #
    # If CSL_EXIT_NO_DATA_IS_CRITICAL is set, reverse check, if for all
-   # declared limits, an input value has been found. Otherwise a missing
+   # declared thresholds, an input value has been found. Otherwise a missing
    # one will lead to a critical exit-state.
    #
    if csl_is_exit_on_no_data_critical; then
-      for KEY in "${!CSL_WARNING_LIMIT[@]}"; do
+      for KEY in "${!CSL_WARNING_THRESHOLD[@]}"; do
          in_array KEYS_HANDLED "${KEY//\//}" && continue
          RESULT_TEXT+="${KEY}:n/a(CRITICAL), "
          RESULT_CODE="${CSL_EXIT_CRITICAL}"
@@ -2074,6 +2105,27 @@ exit_no_data ()
 
    echo "${CSL_EXIT_UNKNOWN}"
    return 0
+}
+
+# @function deprecate_func()
+# @brief This function can be used to output a message when a
+# deprecated function has been called. It issues the message,
+# then invokes the replacement function given in $1 with all
+# the further parameters the deprecated function was called with.
+# @param1 string replacement-function
+# @return int the replacement-functions exit-code
+deprecate_func ()
+{
+   if [ $# -lt 2 ]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   local OLD_FUNC="${FUNCNAME[1]}"
+   local NEW_FUNC="${1}"; shift
+
+   echo "${OLD_FUNC}() is deprecated, use ${NEW_FUNC}() instead."
+   ${NEW_FUNC} "${@}"
 }
 
 #

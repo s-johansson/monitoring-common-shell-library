@@ -12,8 +12,8 @@ verbose
 csl_is_exit_on_no_data_critical
 csl_check_requirements
 csl_get_version
-csl_add_limit
-csl_get_limit_range
+csl_add_threshold
+csl_get_threshold_range
 csl_get_long_params
 csl_get_short_params
 csl_has_long_params
@@ -41,7 +41,7 @@ is_integer
 is_match
 is_range
 is_set
-is_valid_limit
+is_valid_threshold
 in_array
 in_array_re
 key_in_array
@@ -63,9 +63,9 @@ has_result_code
 has_result_perfdata
 has_results
 has_result_text
-has_limit
+has_threshold
 get_help_text
-get_limit_for_key
+get_threshold_for_key
 get_param
 get_param_value
 get_result
@@ -73,7 +73,7 @@ get_result_code
 get_result_perfdata
 get_result_text
 setup_cleanup_trap
-eval_limits
+eval_thresholds
 eval_results
 print_result
 exit_no_data

@@ -56,4 +56,4 @@ check:
 	find $(CURDIR) -type f -name '*.md' -execdir mdl {} \;
 	@echo ">>> This looks like a success!"
 
-all: clean check test docs
+all: clean docs check test

@@ -77,7 +77,7 @@ assert_equals ()
    exit 1
 }
 
-assert_limits ()
+assert_thresholds ()
 {
    local RETVAL= RESULT= EXPECT_TEXT=
    local EXPECT_CODE="${1}"; shift
@@ -89,7 +89,7 @@ assert_limits ()
       *) EXPECT_TEXT="UNKNOWN" ;;
    esac
 
-   assert_func eval_limits $EXPECT_CODE $EXPECT_TEXT "$@"
+   assert_func eval_thresholds $EXPECT_CODE $EXPECT_TEXT "$@"
    return $?
 }
 

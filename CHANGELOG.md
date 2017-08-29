@@ -1,10 +1,17 @@
 # Changes in monitoring-common-shell-library
 
-## 1.4.5 (unreleased)
+## 1.5 (unreleased)
 
-* add has\_limit()
+* add has\_threshold()
 * let eval\_results() work correctly if only a one-for-all
   warning or critical threshold has been specified.
+* use 'Threshold' instead of 'Limit'. Threshold fits better
+  in the monitoring cases.
+  All function got renamed if they had 'limit' in their
+  name and are now available by 'threshold'.
+  Calls to the deprecated functions for now stil succeed -
+  the right 'new' function gets called and a deprecation
+  note is displayed.
 
 ## 1.4.4 (20170828)
 

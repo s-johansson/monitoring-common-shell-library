@@ -78,8 +78,8 @@ ${PROGNAME}, v${VERSION}
    -d, --debug        ... enable debugging.
    -f, --file         ... use file as input instead of querying API
 
-   -w, --warning=arg  ... warning limit, see below LIMITS section.
-   -c, --critical=arg ... critical limit, see below LIMITS section.
+   -w, --warning=arg  ... warning threshold, see below THRESHOLDS section.
+   -c, --critical=arg ... critical threshold, see below THRESHOLDS section.
 
 API:
 
@@ -88,7 +88,7 @@ API:
    -p, --port=arg     ... numeric port-number of the server
                           (default: 5665)
 
-LIMITS are given similar to check_procs:
+THRESHOLDS are given similar to check_procs:
 
    * greater-than-or-equal-match (max) results in warning on:
       --warning :4
