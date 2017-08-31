@@ -1,5 +1,11 @@
 # Changes in monitoring-common-shell-library
 
+## 1.5.1 (unreleased)
+
+* bugfix: allow add\_param() to handle optional arguments
+  to parameters that are indicated by two colons (arg::).
+  Before that got rejected, as only one colon was accepted.
+
 ## 1.5 (20170829)
 
 * add has\_threshold()
