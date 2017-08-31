@@ -1,5 +1,12 @@
 # Changes in monitoring-common-shell-library
 
+## 1.6 (unreleased)
+
+* add function (get|has)\_param\_default\_value()
+* more consistent behaviour of (get|has)\_param\_\* functions in case
+  of incomplete parameters provided to these functions. Improved also
+  all the test-cases for these situations.
+
 ## 1.5.1 (2017-08-31)
 
 * bugfix: allow add\_param() to handle optional arguments

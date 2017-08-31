@@ -58,6 +58,7 @@ set_result_text
 has_help_text
 has_param
 has_param_value
+has_param_default_value
 has_result
 has_result_code
 has_result_perfdata
@@ -68,6 +69,7 @@ get_help_text
 get_threshold_for_key
 get_param
 get_param_value
+get_param_default_value
 get_result
 get_result_code
 get_result_perfdata
@@ -77,3 +79,12 @@ eval_thresholds
 eval_results
 print_result
 exit_no_data
+
+[ignore]
+deprecate_func
+csl_get_limit_range
+eval_limits
+is_valid_limit
+csl_add_limit
+has_limit
+get_limit_for_key

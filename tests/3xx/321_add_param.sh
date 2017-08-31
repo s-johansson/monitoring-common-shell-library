@@ -2,9 +2,10 @@
 
 . common.sh
 
-assert_func add_param "${TEST_FAIL}" "3 or 4 parameters are required"
-assert_func add_param "${TEST_FAIL}" "3 or 4 parameters are required" a
-assert_func add_param "${TEST_FAIL}" "3 or 4 parameters are required" a b
+assert_func add_param "${TEST_FAIL}" "Invalid parameters"
+assert_func add_param "${TEST_FAIL}" "Invalid parameters" a
+assert_func add_param "${TEST_FAIL}" "Invalid parameters" a b
+assert_func add_param "${TEST_FAIL}" "Invalid parameters" a b c d e
 assert_func add_param "${TEST_FAIL}" "given short parameter is invalid" abc b c
 assert_func add_param "${TEST_FAIL}" "given long parameter is invalid" a "b " c
 assert_func add_param "${TEST_FAIL}" "given short parameter is invalid" abc "b " c
