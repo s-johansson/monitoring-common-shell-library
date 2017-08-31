@@ -1,3 +1,9 @@
+monitoring-common-shell-library (1.5.1-1~unki.1) stretch; urgency=medium
+
+  * new upstream release v1.5.1
+
+ -- Andreas Unterkircher <unki@netshadow.net>  Thu, 31 Aug 2017 07:40:54 +0200
+
 monitoring-common-shell-library (1.5-1~unki.1) stretch; urgency=medium
 
   * new upstream release v1.5
