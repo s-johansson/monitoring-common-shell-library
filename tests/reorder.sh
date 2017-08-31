@@ -87,7 +87,7 @@ while read -r line; do
    FUNC_LIST+=( "${BASH_REMATCH[1]}" )
 
    # check if the function already appears in $TESTSEQ_DAT
-   if ! grep -qsE "^${BASH_REMATCH[1]}$" ${TESTSEQ_DAT}; then
+   if ! grep -qsE "^${BASH_REMATCH[1]}$" "${TESTSEQ_DAT}"; then
       echo
       echo "Function '${BASH_REMATCH[1]}' is not listed in ${TESTSEQ_DAT##*/}."
       echo "Please add it on your own at the right position."
@@ -114,10 +114,14 @@ while read -r line; do
       IN_GROUP_CNT="${BASH_REMATCH[1]}00"
       GROUP_LIST+=( "${GROUP}" )
       continue
+   elif [ "${line}" == "[ignore]" ]; then
+      GROUP=''
+      continue
    fi
 
    # skip lines as long as we have not entered a group
    [ ! -z "${GROUP}" ] || continue
+
    FUNCTION_NAME="${line,,}"
    ((TEST_CNT+=1))
 
