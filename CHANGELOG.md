@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-## 1.6 (unreleased)
+## 1.6 (2017-08-31)
 
 * add function (get|has)\_param\_default\_value()
 * more consistent behaviour of (get|has)\_param\_\* functions in case
