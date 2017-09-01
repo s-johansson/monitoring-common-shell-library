@@ -549,7 +549,7 @@ csl_parse_parameters ()
    fi
 
    if csl_has_short_params; then
-      TEMP=$(csl_get_short_params)
+      TEMP="$(csl_get_short_params)"
 
       if ! is_empty "${TEMP}"; then
          GETOPT_SHORT+="${TEMP}"
@@ -1213,7 +1213,7 @@ add_param ()
    fi
 
    if ! is_empty "${GETOPT_SHORT}"; then
-      if  ! [[ "${GETOPT_SHORT}" =~ ^-?([[:alnum:]]):?:?$ ]]; then
+      if  ! [[ "${GETOPT_SHORT}" =~ ^-?([[:alnum:]])(:?:?)$ ]]; then
          fail "given short parameter is invalid."
          return 1
       fi
@@ -1221,7 +1221,7 @@ add_param ()
    fi
 
    if ! is_empty "${GETOPT_LONG}"; then
-      if ! [[ "${GETOPT_LONG}" =~ ^-?-?([[:alnum:]]+):?:?$ ]]; then
+      if ! [[ "${GETOPT_LONG}" =~ ^-?-?([[:alnum:]]+)(:?:?)$ ]]; then
          fail "given long parameter is invalid."
          return 1
       fi

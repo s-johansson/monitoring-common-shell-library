@@ -1,5 +1,9 @@
 # Changes in monitoring-common-shell-library
 
+## 1.6.1 (unreleased)
+
+* bugfix: fix a regression in add\_param() introduced by f18fb510047df6e1f97114201dae8de2e4ab0934
+
 ## 1.6 (2017-08-31)
 
 * add function (get|has)\_param\_default\_value()

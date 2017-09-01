@@ -11,6 +11,15 @@ assert_func add_param "${TEST_FAIL}" "given long parameter is invalid" a "b " c
 assert_func add_param "${TEST_FAIL}" "given short parameter is invalid" abc "b " c
 assert_func add_param "${TEST_FAIL}" "at least a short or a long option name" '' '' c
 
+assert_func add_param "${TEST_OK}" "${TEST_EMPTY}" "a" '' TEST_BLA
+assert_func add_param "${TEST_OK}" "${TEST_EMPTY}" "a" 'aaa' TEST_BLA
+assert_func add_param "${TEST_OK}" "${TEST_EMPTY}" "" 'aaa' TEST_BLA
+assert_func add_param "${TEST_OK}" "${TEST_EMPTY}" "a:" '' TEST_BLA
+assert_func add_param "${TEST_OK}" "${TEST_EMPTY}" "a:" 'aaa' TEST_BLA
+assert_func add_param "${TEST_OK}" "${TEST_EMPTY}" "a:" 'aaa:' TEST_BLA
+assert_func add_param "${TEST_OK}" "${TEST_EMPTY}" "a" 'aaa:' TEST_BLA
+assert_func add_param "${TEST_OK}" "${TEST_EMPTY}" "" 'aaa:' TEST_BLA
+
 cesar_test ()
 {
    return 0
