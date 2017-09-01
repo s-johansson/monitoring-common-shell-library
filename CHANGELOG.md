@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-## 1.6.1 (unreleased)
+## 1.6.1 (2017-09-01)
 
 * bugfix: fix a regression in add\_param() introduced by f18fb510047df6e1f97114201dae8de2e4ab0934
 
