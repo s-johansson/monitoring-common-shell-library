@@ -1,5 +1,10 @@
 # Changes in monitoring-common-shell-library
 
+## 1.6.3 (unreleased)
+
+* bugfix: fix add\_param() to correctly handle required- and optional-
+  parameters
+
 ## 1.6.2 (2017-09-02)
 
 * introduce (get|has)\_param\_custom\_value() function.

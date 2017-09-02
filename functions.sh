@@ -1215,6 +1215,7 @@ add_param ()
 
    local GETOPT_SHORT="${1}"
    local GETOPT_LONG="${2}"
+   local GETOPT_HAS_ARGS=''
    local OPT_VAR="${3}"
    [ $# -eq 4 ] && local OPT_DEFAULT="${4}"
 
@@ -1229,6 +1230,7 @@ add_param ()
          return 1
       fi
       GETOPT_SHORT="${BASH_REMATCH[1]}"
+      [ ${#BASH_REMATCH[@]} -eq 3 ] && GETOPT_HAS_ARGS="${BASH_REMATCH[2]}"
    fi
 
    if ! is_empty "${GETOPT_LONG}"; then
@@ -1237,6 +1239,7 @@ add_param ()
          return 1
       fi
       GETOPT_LONG="${BASH_REMATCH[1]}"
+      [ ${#BASH_REMATCH[@]} -eq 3 ] && GETOPT_HAS_ARGS="${BASH_REMATCH[2]}"
    fi
 
    if has_param "${OPT_VAR}"; then
@@ -1246,12 +1249,12 @@ add_param ()
 
    if ! is_empty "${GETOPT_SHORT}"; then
       CSL_USER_GETOPT_PARAMS["${GETOPT_SHORT}"]="${OPT_VAR}"
-      CSL_GETOPT_SHORT+="${GETOPT_SHORT}${BASH_REMATCH[2]-}"
+      CSL_GETOPT_SHORT+="${GETOPT_SHORT}${GETOPT_HAS_ARGS}"
    fi
 
    if ! is_empty "${GETOPT_LONG}"; then
       CSL_USER_GETOPT_PARAMS["${GETOPT_LONG}"]="${OPT_VAR}"
-      CSL_GETOPT_LONG+="${GETOPT_LONG}${BASH_REMATCH[2]-},"
+      CSL_GETOPT_LONG+="${GETOPT_LONG}${GETOPT_HAS_ARGS}"
    fi
 
    # intialize the parameter with an empty value.
@@ -1262,7 +1265,7 @@ add_param ()
       CSL_USER_PARAMS_DEFAULT_VALUES["${OPT_VAR}"]="${OPT_DEFAULT}"
    fi
 
-   #echo "Added parameter ${OPT_VAR}: short:${GETOPT_SHORT-}, long:${GETOPT_LONG-}"
+   #echo "Added parameter ${OPT_VAR}: short:${GETOPT_SHORT-}${GETOPT_HAS_ARGS}, long:${GETOPT_LONG-}${GETOPT_HAS_ARGS}"
    return 0
 }
 readonly -f add_param
