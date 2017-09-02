@@ -1,5 +1,11 @@
 # Changes in monitoring-common-shell-library
 
+## 1.6.2 (unreleased)
+
+* introduce (get|has)\_param\_custom\_value() function.
+  (get|has)\_param\_value() now act as global functions and check for
+  custom _and_ default values being set.
+
 ## 1.6.1 (2017-09-01)
 
 * bugfix: fix a regression in add\_param() introduced by f18fb510047df6e1f97114201dae8de2e4ab0934

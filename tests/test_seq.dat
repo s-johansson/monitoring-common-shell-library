@@ -58,6 +58,7 @@ set_result_text
 has_help_text
 has_param
 has_param_value
+has_param_custom_value
 has_param_default_value
 has_result
 has_result_code
@@ -69,6 +70,7 @@ get_help_text
 get_threshold_for_key
 get_param
 get_param_value
+get_param_custom_value
 get_param_default_value
 get_result
 get_result_code

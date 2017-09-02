@@ -71,7 +71,8 @@ readonly -a CSL_DEFAULT_PREREQ=(
 )
 declare -g -A CSL_WARNING_THRESHOLD=() CSL_CRITICAL_THRESHOLD=()
 declare -g -a CSL_USER_PREREQ=()
-declare -g -A CSL_USER_PARAMS=()
+declare -g -a CSL_USER_PARAMS=()
+declare -g -A CSL_USER_PARAMS_VALUES=()
 declare -g -A CSL_USER_PARAMS_DEFAULT_VALUES=()
 declare -g -A CSL_USER_GETOPT_PARAMS=()
 
@@ -621,7 +622,7 @@ csl_parse_parameters ()
             local USER_OPT="${1}" OPT_VAR='' OPT_ARG='' SHIFT=1
 
             if ! [[ "${USER_OPT}" =~ ^-?-?([[:alnum:]]+)$ ]]; then
-               echo "Invalid parameter! ${USER_OPT}"
+               fail "Invalid parameter! ${USER_OPT}"
                show_help
                exit 1
             fi
@@ -630,12 +631,18 @@ csl_parse_parameters ()
 
             if ! is_declared CSL_USER_GETOPT_PARAMS || \
                ! [[ -v "CSL_USER_GETOPT_PARAMS[${USER_OPT}]" ]]; then
-               echo "Unknown parameter! ${USER_OPT}"
+               fail "Unknown parameter! ${USER_OPT}"
                show_help
                exit 1
             fi
 
             OPT_VAR="${CSL_USER_GETOPT_PARAMS[${USER_OPT}]}"
+
+            if ! has_param "${OPT_VAR}"; then
+               fail "Unknown parameter! ${OPT_VAR}"
+               show_help
+               exit 1
+            fi
 
             #
             # if the next parameter does not start with a hyphen, its
@@ -650,8 +657,12 @@ csl_parse_parameters ()
             # if the option is only meant to be a variable.
             #
             if ! is_declared_func "${OPT_VAR}"; then
-               is_empty "${OPT_ARG}" && CSL_USER_PARAMS[${OPT_VAR}]=${CSL_TRUE}
-               ! is_empty "${OPT_ARG}" && CSL_USER_PARAMS[${OPT_VAR}]="${OPT_ARG}"
+               if is_empty "${OPT_ARG}"; then
+                  CSL_USER_PARAMS_VALUES["${OPT_VAR}"]="${CSL_TRUE}"
+               else
+                  CSL_USER_PARAMS_VALUES["${OPT_VAR}"]="${OPT_ARG}"
+               fi
+
                shift $SHIFT
                unset -v USER_OPT OPT_VAR OPT_ARG SHIFT
                continue
@@ -661,7 +672,7 @@ csl_parse_parameters ()
             # or if it is handled by a function.
             #
             if ! is_func "${OPT_VAR}"; then
-               echo "No valid function '${OPT_VAR}' for parameter '${USER_OPT}'!"
+               fail "No valid function '${OPT_VAR}' for parameter '${USER_OPT}'!"
                exit 1
             fi
 
@@ -1228,7 +1239,7 @@ add_param ()
       GETOPT_LONG="${BASH_REMATCH[1]}"
    fi
 
-   if [[ -v "CSL_USER_PARAMS[${OPT_VAR}]" ]]; then
+   if has_param "${OPT_VAR}"; then
       fail "Variable ${OPT_VAR} is already declared."
       return 1
    fi
@@ -1243,8 +1254,12 @@ add_param ()
       CSL_GETOPT_LONG+="${GETOPT_LONG}${BASH_REMATCH[2]-},"
    fi
 
+   # intialize the parameter with an empty value.
+   CSL_USER_PARAMS+=( "${OPT_VAR}" )
+   CSL_USER_PARAMS_VALUES["${OPT_VAR}"]=""
+
    if is_declared OPT_DEFAULT; then
-      CSL_USER_PARAMS_DEFAULT_VALUES[${OPT_VAR}]="${OPT_DEFAULT}"
+      CSL_USER_PARAMS_DEFAULT_VALUES["${OPT_VAR}"]="${OPT_DEFAULT}"
    fi
 
    #echo "Added parameter ${OPT_VAR}: short:${GETOPT_SHORT-}, long:${GETOPT_LONG-}"
@@ -1262,7 +1277,7 @@ has_param ()
    [ $# -eq 1 ] || return 1
    ! is_empty "${1}" || return 1
 
-   if ! [[ -v "CSL_USER_PARAMS[${1}]" ]]; then
+   if ! in_array CSL_USER_PARAMS "${1}"; then
       return 1
    fi
 
@@ -1273,6 +1288,8 @@ readonly -f has_param
 # @function has_param_value()
 # @brief returns 0, if the given parameter has been defined
 # and consists of a value that is not empty. Otherwise it returns 1.
+# It also considers a default-value and returns true if that
+# one is present.
 # @param1 string $param
 # @return int 0 on success, 1 on failure
 #
@@ -1288,7 +1305,41 @@ has_param_value ()
       return 1
    fi
 
-   ! is_empty "${CSL_USER_PARAMS[${1}]}" || return 1
+   if ! has_param_custom_value "${1}"; then
+      if has_param_default_value "${1}"; then
+         return  0
+      fi
+
+      return 1
+   fi
+
+   return 0
+}
+readonly -f has_param_value
+
+# @function has_param_custom_value()
+# @brief returns 0, if the given parameter has been defined
+# and consists of a custom-value that is not empty.
+# Otherwise it returns 1.
+# @param1 string $param
+# @return int 0 on success, 1 on failure
+has_param_custom_value ()
+{
+   if [ $# -ne 1 ] || is_empty "${1}"; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   if ! has_param "${1}"; then
+      fail "There is no such parameter"
+      return 1
+   fi
+
+   [[ -v "CSL_USER_PARAMS_VALUES[${1}]" ]] || return 1
+
+   if is_empty "${CSL_USER_PARAMS_VALUES[${1}]}"; then
+      return 1
+   fi
 
    return 0
 }
@@ -1312,9 +1363,7 @@ has_param_default_value ()
       return 1
    fi
 
-   if ! [[ -v "CSL_USER_PARAMS_DEFAULT_VALUES[${1}]" ]]; then
-      return 1
-   fi
+   [[ -v "CSL_USER_PARAMS_DEFAULT_VALUES[${1}]" ]] || return 1
 
    if is_empty "${CSL_USER_PARAMS_DEFAULT_VALUES[${1}]}"; then
       return 1
@@ -1343,18 +1392,51 @@ get_param_value ()
    fi
 
    if ! has_param_value "${1}"; then
+      fail "Parameter has no value set"
+      return 1
+   fi
+
+   if ! has_param_custom_value "${1}"; then
       if ! has_param_default_value "${1}"; then
          fail "Parameter has no value set"
          return 1
       fi
+
       get_param_default_value "${1}"
       return 0
    fi
 
-   echo "${CSL_USER_PARAMS[${1}]}"
+   get_param_custom_value "${1}"
    return 0
 }
 readonly -f get_param_value
+
+# @function get_param_custom_value()
+# @brief outputs the value of a given parameter, if it has
+# been set already - in this case it returns 0. Otherwise it returns 1.
+# @param1 string $param
+# @return int 0 on success, 1 on failure
+get_param_custom_value ()
+{
+   if [ $# -ne 1 ] || is_empty "${1}"; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   if ! has_param "${1}"; then
+      fail "There is no such parameter"
+      return 1
+   fi
+
+   if ! has_param_custom_value "${1}"; then
+      fail "Parameter has no value set"
+      return 1
+   fi
+
+   echo "${CSL_USER_PARAMS_VALUES[${1}]}"
+   return 0
+}
+readonly -f get_param_custom_value
 
 # @function get_param_default_value()
 # @brief outputs the default value of a given parameter, if it has
@@ -1409,13 +1491,8 @@ get_param ()
       fi
 
       if ! has_param_value "${1}"; then
-         if ! has_param_default_value "${1}"; then
-            fail "Parameter has no value set"
-            return 1
-         fi
-
-         get_param_default_value "${1}"
-         return 0
+         fail "Parameter has no value set"
+         return 1
       fi
 
       get_param_value "${1}"
@@ -1447,7 +1524,7 @@ get_param ()
       return 0
    fi
 
-   echo "${CSL_USER_PARAMS[${KEY}]}"
+   get_param_value "${KEY}"
    return 0
 }
 readonly -f get_param
