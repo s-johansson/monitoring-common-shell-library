@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-## 1.6.3 (unreleased)
+## 1.6.3 (2017-09-02)
 
 * bugfix: fix add\_param() to correctly handle required- and optional-
   parameters
