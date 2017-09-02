@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-## 1.6.2 (unreleased)
+## 1.6.2 (2017-09-02)
 
 * introduce (get|has)\_param\_custom\_value() function.
   (get|has)\_param\_value() now act as global functions and check for

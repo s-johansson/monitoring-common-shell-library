@@ -3,7 +3,7 @@
 | Tag | Value |
 | - | - |
 | Author | Andreas Unterkircher |
-| Version | 1.6.1 |
+| Version | 1.6.2 |
 | License | AGPLv3 |
 
 ## 1. Function `is_debug`
@@ -1162,4 +1162,4 @@ Type: `int`
 
 the replacement-functions exit-code
 
-[^1]: Created by shell-docs-gen.sh v1.3.1 on Sam Sep  2 10:11:41 CEST 2017.
+[^1]: Created by shell-docs-gen.sh v1.3.1 on Sam Sep  2 10:12:53 CEST 2017.
