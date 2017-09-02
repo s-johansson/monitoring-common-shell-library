@@ -1,5 +1,10 @@
 # Changes in monitoring-common-shell-library
 
+## 1.6.4 (unreleased)
+
+* bugfix: argl, fix add\_param(), regression introduced by fe0b32e.
+  getopt long parameters need to be comma separated.
+
 ## 1.6.3 (2017-09-02)
 
 * bugfix: fix add\_param() to correctly handle required- and optional-

@@ -1254,7 +1254,7 @@ add_param ()
 
    if ! is_empty "${GETOPT_LONG}"; then
       CSL_USER_GETOPT_PARAMS["${GETOPT_LONG}"]="${OPT_VAR}"
-      CSL_GETOPT_LONG+="${GETOPT_LONG}${GETOPT_HAS_ARGS}"
+      CSL_GETOPT_LONG+="${GETOPT_LONG}${GETOPT_HAS_ARGS},"
    fi
 
    # intialize the parameter with an empty value.
