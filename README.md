@@ -11,7 +11,7 @@ be used for quickly developing a **monitoring plugin**.
 * mktemp (GNU core utilities)
 * GNU bc
 
-On Debian and its derivatives you quickly fulfill those requirements with:
+On Debiana - and its derivatives - you quickly fulfill those requirements by:
 
     sudo apt-get install bash util-unix coreutils bc
 
