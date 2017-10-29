@@ -2152,17 +2152,18 @@ eval_results ()
       fi
 
       VAL="$(get_result "${KEY}")"
+      DISPLAY_VAL="${VAL}"
 
       #
       # the retrieved result-value may contain a unit-of-measure.
       # in this, extract only the numeric value from it.
       #
-      if [[ "${VAL}" =~ ^([[:digit:]]+[\.[:digit:]]*)[[:print:]]*$ ]]; then
+      if [[ "${VAL}" =~ ^(-?[[:digit:]]+[\.[:digit:]]*)[[:print:]]*$ ]]; then
          VAL="${BASH_REMATCH[1]}"
       fi
 
       #set -x
-      debug "${KEY} value: ${VAL}"
+      debug "${KEY} value: ${VAL} (${DISPLAY_VAL})"
       debug "${KEY} warning: ${WARNING}"
       debug "${KEY} critical: ${CRITICAL}"
 
@@ -2176,8 +2177,8 @@ eval_results ()
       debug "${KEY} result text: ${RESULT}"
       debug "${KEY} result code: ${RESULT_CODE}"
 
-      RESULT_TEXT+="${KEY}:${VAL}(${RESULT}), "
-      RESULT_PERF+="${KEY}=${VAL};${WARNING};${CRITICAL} "
+      RESULT_TEXT+="${KEY}:${DISPLAY_VAL}(${RESULT}), "
+      RESULT_PERF+="${KEY}=${DISPLAY_VAL};${WARNING};${CRITICAL} "
    done
 
    #

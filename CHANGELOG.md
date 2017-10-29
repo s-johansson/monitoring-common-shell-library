@@ -3,6 +3,7 @@
 ## 1.6.6 (2017-10-29)
 
 * sanitize(), fix typo
+* eval\_resluts(), fix handling negative result-values with unit-of-measures.
 
 ## 1.6.5 (2017-10-29)
 
