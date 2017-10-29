@@ -858,7 +858,7 @@ csl_validate_parameters ()
    done
 
    for CRIT_KEY in "${!CSL_CRITICAL_THRESHOLD[@]}"; do
-      if ! key_in_array CSL_WARNING_THRESHOLD "${WARN_KEY}"; then
+      if ! key_in_array CSL_WARNING_THRESHOLD "${CRIT_KEY}"; then
          fail "Critical threshold key '${CRIT_KEY}' does not occur in warning thresholds!"
          return 1
       fi
