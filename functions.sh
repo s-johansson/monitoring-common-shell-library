@@ -2178,7 +2178,7 @@ eval_results ()
       debug "${KEY} result code: ${RESULT_CODE}"
 
       RESULT_TEXT+="${KEY}:${DISPLAY_VAL}(${RESULT}), "
-      RESULT_PERF+="${KEY}=${DISPLAY_VAL};${WARNING};${CRITICAL} "
+      RESULT_PERF+="${KEY}=${VAL};${WARNING};${CRITICAL} "
    done
 
    #
