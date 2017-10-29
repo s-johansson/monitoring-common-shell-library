@@ -1,5 +1,9 @@
 # Changes in monitoring-common-shell-library
 
+## 1.6.5 (2017-10-29)
+
+* allow result-values with unit-of-measures.
+
 ## 1.6.4 (2017-09-02)
 
 * bugfix: argl, fix add\_param(), regression introduced by fe0b32e.
