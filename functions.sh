@@ -1695,7 +1695,7 @@ sanitize ()
    # strip of any backslash sequence.
    SANI="${SANI//\\[:alnum:]/}"
    # ensure the script only contains printable characters and blanks.
-   SANI="${SANI//^+([^[:alnum][:punct:][:blank:]])$/}"
+   SANI="${SANI//^+([^[:alnum:][:punct:][:blank:]])$/}"
 
    echo "${SANI}"
    return 0
@@ -2162,6 +2162,7 @@ eval_results ()
       fi
 
       #set -x
+      debug "${KEY} value: ${VAL}"
       debug "${KEY} warning: ${WARNING}"
       debug "${KEY} critical: ${CRITICAL}"
 

@@ -1,5 +1,9 @@
 # Changes in monitoring-common-shell-library
 
+## 1.6.6 (2017-10-29)
+
+* sanitize(), fix typo
+
 ## 1.6.5 (2017-10-29)
 
 * allow result-values with unit-of-measures.
