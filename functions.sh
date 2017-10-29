@@ -851,14 +851,14 @@ csl_validate_parameters ()
 
    local WARN_KEY='' CRIT_KEY=''
    for WARN_KEY in "${!CSL_WARNING_THRESHOLD[@]}"; do
-      if ! key_in_array CSL_CRITICAL_THRESHOLD "${WARN_KEY}"; then
+      if ! key_in_array CSL_CRITICAL_THRESHOLD "$(printf '%q' "${WARN_KEY}")"; then
          fail "Warning threshold key '${WARN_KEY}' does not occur in critical thresholds!"
          return 1
       fi
    done
 
    for CRIT_KEY in "${!CSL_CRITICAL_THRESHOLD[@]}"; do
-      if ! key_in_array CSL_WARNING_THRESHOLD "${CRIT_KEY}"; then
+      if ! key_in_array CSL_WARNING_THRESHOLD "$(printf '%q' "${CRIT_KEY}")"; then
          fail "Critical threshold key '${CRIT_KEY}' does not occur in warning thresholds!"
          return 1
       fi
