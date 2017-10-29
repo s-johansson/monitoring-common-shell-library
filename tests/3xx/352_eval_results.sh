@@ -33,8 +33,8 @@ assert_func eval_results "${TEST_OK}" "${TEST_EMPTY}"
 
 declare -g -A CSL_RESULT_VALUES=(
    ['abc']='123dBmV'
-   ['def']='12.34dBmV'
-   ['ghi']='123 dBmV'
+   ['def']='-12.34dBmV'
+   ['ghi']='-123 dBmV'
    ['jkl']='12.34 dBmV'
 )
 
