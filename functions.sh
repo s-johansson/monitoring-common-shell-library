@@ -3,7 +3,7 @@
 ###############################################################################
 
 
-# This file is part of monitoring-common-shell-library v1.6.4
+# This file is part of monitoring-common-shell-library v1.6.5
 #
 # monitoring-common-shell-library, a library of shell functions used for
 # monitoring plugins like used with (c) Nagios, (c) Icinga, etc.
@@ -23,7 +23,7 @@
 # @author Andreas Unterkircher
 # @license AGPLv3
 # @title monitoring-common-shell-library Function Reference
-# @version 1.6.4
+# @version 1.6.5
 
 set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
@@ -33,7 +33,7 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
 #
 # <Variables>
-readonly CSL_VERSION="1.6.4"
+readonly CSL_VERSION="1.6.5"
 
 #
 # remember: on the shell OK=0, FAIL!=0.
@@ -2152,6 +2152,14 @@ eval_results ()
       fi
 
       VAL="$(get_result "${KEY}")"
+
+      #
+      # the retrieved result-value may contain a unit-of-measure.
+      # in this, extract only the numeric value from it.
+      #
+      if [[ "${VAL}" =~ ^([[:digit:]]+[\.[:digit:]]*)[[:print:]]*$ ]]; then
+         VAL="${BASH_REMATCH[1]}"
+      fi
 
       #set -x
       debug "${KEY} warning: ${WARNING}"
