@@ -1,5 +1,10 @@
 # Changes in monitoring-common-shell-library
 
+## 1.6.7 (2017-10-29)
+
+* csl_validate_parameters(), fix handling regexp-pattern when checking if
+  warning- and critical-threshold contains the same keys.
+
 ## 1.6.6 (2017-10-29)
 
 * sanitize(), fix typo
