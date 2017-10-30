@@ -1,5 +1,10 @@
 # Changes in monitoring-common-shell-library
 
+## 1.7.0 (2017-10-30)
+
+* allow setting default thresholds via CSL\_WARNING\_THRESHOLD\_DEFAULT and
+  CSL\_CRITICAL\_THRESHOLD\_DEFAULT.
+
 ## 1.6.8 (2017-10-29)
 
 * eval\_results(), use the unit-of-measure-free value for performance data.

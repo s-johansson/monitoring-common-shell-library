@@ -69,6 +69,7 @@ readonly -a CSL_DEFAULT_PREREQ=(
    'getopt'
    'mktemp'
 )
+
 declare -g -A CSL_WARNING_THRESHOLD=() CSL_CRITICAL_THRESHOLD=()
 declare -g -a CSL_USER_PREREQ=()
 declare -g -a CSL_USER_PARAMS=()
@@ -543,8 +544,14 @@ csl_parse_parameters ()
    local TEMP='' RETVAL=''
    local GETOPT_SHORT="${CSL_DEFAULT_GETOPT_SHORT}"
    local GETOPT_LONG="${CSL_DEFAULT_GETOPT_LONG}"
+   local NO_PARAMS_IS_OK=false
 
-   if [ $# -lt 1 ]; then
+   if is_declared CSL_WARNING_THRESHOLD_DEFAULT && ! is_empty CSL_WARNING_THRESHOLD_DEFAULT && \
+      is_declared CSL_CRITICAL_THRESHOLD_DEFAULT && ! is_empty CSL_CRITICAL_THRESHOLD_DEFAULT; then
+      NO_PARAMS_IS_OK=true
+   fi
+
+   if [ $# -lt 1 ] && ! ${NO_PARAMS_IS_OK}; then
       fail "Parameters required!"
       echo
       show_help
@@ -837,14 +844,31 @@ csl_validate_parameters ()
    #
    # validate that warning- and critical-thresholds have been correctly provided.
    #
-   if ! is_declared CSL_WARNING_THRESHOLD || [ ${#CSL_WARNING_THRESHOLD[@]} -lt 1 ] || \
-      ! is_declared CSL_CRITICAL_THRESHOLD || [ ${#CSL_CRITICAL_THRESHOLD[@]} -lt 1 ]; then
+   if ( ( ! is_declared CSL_WARNING_THRESHOLD || is_empty CSL_WARNING_THRESHOLD ) && \
+      ( ! is_declared CSL_WARNING_THRESHOLD_DEFAULT || is_empty CSL_WARNING_THRESHOLD_DEFAULT ) ) || \
+      ( ( ! is_declared CSL_CRITICAL_THRESHOLD || is_empty CSL_CRITICAL_THRESHOLD ) && \
+      ( ! is_declared CSL_CRITICAL_THRESHOLD_DEFAULT || is_empty CSL_CRITICAL_THRESHOLD_DEFAULT ) ); then
       fail "Warning and critical parameters are mandatory!"
       return 1
    fi
 
    #
-   # a quick check, that the same count of thresholds is present for warning- as
+   # if no custom thresholds for warning and critical have been set - *but* there are
+   # default values for those two present - then take this one's.
+   if ( ! is_declared CSL_WARNING_THRESHOLD || is_empty CSL_WARNING_THRESHOLD ) && \
+      ( is_declared CSL_WARNING_THRESHOLD_DEFAULT && ! is_empty CSL_WARNING_THRESHOLD_DEFAULT ); then
+      debug "using default WARNING threshold"
+      csl_add_threshold WARNING "${CSL_WARNING_THRESHOLD_DEFAULT}"
+   fi
+
+    if ( ! is_declared CSL_CRITICAL_THRESHOLD || is_empty CSL_CRITICAL_THRESHOLD ) && \
+      ( is_declared CSL_CRITICAL_THRESHOLD_DEFAULT && ! is_empty CSL_CRITICAL_THRESHOLD_DEFAULT ); then
+      debug "using default CRITICAL threshold"
+      csl_add_threshold CRITICAL "${CSL_CRITICAL_THRESHOLD_DEFAULT}"
+   fi
+
+   #
+   # a quick check, that the same count of thresholds are present for warning- as
    # well for critical-thresholds.
    #
    if [ ${#CSL_WARNING_THRESHOLD[@]} -ne ${#CSL_CRITICAL_THRESHOLD[@]} ]; then
@@ -1062,7 +1086,7 @@ readonly -f print_result
 # @brief displays the help text.
 #
 # If a plugin-specifc help-text has been set via set_help_text(),
-# that one is printed. Otherwise the libraries $CSL_DEFAULT_HELP_TEXT
+# that one is printed. Otherwise this libraries $CSL_DEFAULT_HELP_TEXT
 # is used.
 # @output plugin-helptext
 # @return int 0 on success, 1 on failure
@@ -1838,9 +1862,9 @@ is_array ()
 }
 
 # @function csl_get_version()
-# @brief This function returns the library version number as defined
-# in the variable $CSL_VERSION. Just in case, it also performs some
-# validation on the version number to ensure, not getting fooled.
+# @brief This function returns this library's version number as defined
+# in the $CSL_VERSION. Just in case, it also performs some validation on
+# the version number, to ensure not getting fooled.
 # @output string version-number
 # @return int 0 on success, 1 on failure
 csl_get_version ()
@@ -1892,6 +1916,8 @@ csl_add_threshold ()
             exit 1
          fi
 
+         debug "adding ${1} threshold: ${THRESHOLD_COUPLE}"
+
          # as we use an associative array in CSL_(WARNING|CRITICAL)_THRESHOLD, construct
          # an array key to be able to push the value to the array.
          TARGET+=( ["key${KEY_CNT}"]="${THRESHOLD_COUPLE}" )
@@ -1913,11 +1939,14 @@ csl_add_threshold ()
          exit 1
       fi
 
+      debug "adding ${1} threshold: ${KEY}=${VAL}"
+
       #echo "COUPLE>>> a ${KEY} ${VAL}"
       TARGET+=( ["${KEY}"]="${VAL}" )
    done
 
-   # enable for debugging, runs before DEBUG=1 has been set by csl_parse_parameters().
+   # enable for debugging, as this code runs before DEBUG=1 has been set
+   # by csl_parse_parameters() which would then enable debug output.
    #for KEY in "${!TARGET[@]}"; do
       #echo "Threshold ${1}: ${KEY}=${TARGET["${KEY}"]}"
    #done
@@ -2096,7 +2125,7 @@ readonly -f get_result
 # @function eval_results()
 # @brief This function iterates over all the recorded results and
 # evaluate their values with eval_thresholds(). Finally, the function
-# uses set_result_(text|code|perfdata) to set the scripts final
+# uses set_result_(text|code|perfdata) to set the plugins final
 # results.
 #
 # To perform your own evaluations, you may override this function
