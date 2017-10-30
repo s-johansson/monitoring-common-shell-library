@@ -1,5 +1,12 @@
 # Changes in monitoring-common-shell-library
 
+## 1.8.0 (unreleased)
+
+* allow text-only values and evaluating them text-based.
+* New functions introduced (see FUNCREF.md)
+  * eval\_text()
+  * is\_word()
+
 ## 1.7.0 (2017-10-30)
 
 * allow setting default thresholds via CSL\_WARNING\_THRESHOLD\_DEFAULT and

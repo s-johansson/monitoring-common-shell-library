@@ -564,6 +564,41 @@ eval_limits ()
 }
 readonly -f eval_limits
 
+# @function eval_text()
+# @brief evaluates the given text $1 against WARNING ($2) and CRITICAL ($3) thresholds.
+# @param1 string $value
+# @param2 string $warning
+# @param3 string $critical
+# @output OK|WARNING|CRITICAL|UNKNOWN
+# @return int 0|1|2|3
+eval_text()
+{
+   [ $# -eq 3 ] || \
+      { fail "eval_text() requires 3 parameters."; return 1; }
+
+   ( ! is_empty_str "${1}" && ! is_empty_str "${2}" && ! is_empty_str "${3}" ) || return 1
+
+   local VALUE="${1}"
+   local WARNING="${2}"
+   local CRITICAL="${3}"
+   local TEXT='' STATE='' MATCH=''
+
+   if [ "${VALUE}" == "${WARNING}" ]; then
+      TEXT="WARNING"
+      STATE="${CSL_EXIT_WARNING}"
+   elif [ "${VALUE}" == "${CRITICAL}" ]; then
+      TEXT="CRITICAL"
+      STATE="${CSL_EXIT_CRITICAL}"
+   else
+      TEXT="OK"
+      STATE="${CSL_EXIT_OK}"
+   fi
+
+   debug "RESULT: eval'd to ${TEXT}(${STATE})."
+   echo "${TEXT}"
+   return ${STATE}
+}
+
 # @function csl_parse_parameters()
 # @brief This function uses GNU getopt to parse the given command-line
 # parameters.
@@ -817,6 +852,11 @@ is_valid_threshold ()
 
    # a range
    if is_range "${THRESHOLD}"; then
+      return 0
+   fi
+
+   # a word
+   if is_word "${THRESHOLD}"; then
       return 0
    fi
 
@@ -1891,6 +1931,17 @@ is_array ()
    return 0
 }
 
+# @function is_word()
+# @brief This function tests if the provided string
+# contains only alpha-numeric characters.
+is_word ()
+{
+   [ $# -eq 1 ] || return 1
+   [[ "${1}" =~ ^[[:alnum:]]+$ ]] || return 1
+
+   return 0
+}
+
 # @function csl_get_version()
 # @brief This function returns this library's version number as defined
 # in the $CSL_VERSION. Just in case, it also performs some validation on
@@ -2231,7 +2282,14 @@ eval_results ()
       debug "${KEY} warning: ${WARNING}"
       debug "${KEY} critical: ${CRITICAL}"
 
-      RESULT="$(eval_thresholds "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL=$? || RETVAL=$?
+      # if the original value was consist of digits and unit-of-measure, only
+      # the digits should now be present in $VAL. If there is still text, we
+      # have to evaluate it text-based.
+      if [[ "${VAL}" =~ [[:alpha:]] ]]; then
+         RESULT="$(eval_text "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL=$? || RETVAL=$?
+      else
+         RESULT="$(eval_thresholds "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL=$? || RETVAL=$?
+      fi
 
       if [ $RETVAL -gt ${RESULT_CODE} ]; then
          RESULT_CODE="${RETVAL}"
@@ -2241,7 +2299,11 @@ eval_results ()
       debug "${KEY} result code: ${RESULT_CODE}"
 
       RESULT_TEXT+="${KEY}:${DISPLAY_VAL}(${RESULT}), "
-      RESULT_PERF+="${KEY}=${VAL};${WARNING};${CRITICAL} "
+
+      # for text-based results, we do not add performance-counters.
+      if ! [[ "${VAL}" =~ [[:alpha:]] ]]; then
+         RESULT_PERF+="${KEY}=${VAL};${WARNING};${CRITICAL} "
+      fi
    done
 
    #
