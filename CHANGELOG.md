@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-## 1.8.0 (unreleased)
+## 1.8 (2017-10-30)
 
 * allow text-only values and evaluating them text-based.
 * New functions introduced (see FUNCREF.md)
