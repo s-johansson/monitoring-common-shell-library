@@ -172,7 +172,7 @@ fail ()
 }
 readonly -f fail
 
-# @function: is_verbose()
+# @function is_verbose()
 # @brief returns 0 if verbose-logging is enabled, otherwise it returns 1.
 # @return int 0 on success, 1 on failure
 is_verbose ()
@@ -211,8 +211,8 @@ csl_is_exit_on_no_data_critical ()
 }
 readonly -f csl_is_exit_on_no_data_critical
 
-# @function: csl_check_requirements()
-# @brief: tests for other required tools. It also invokes an possible
+# @function csl_check_requirements()
+# @brief tests for other required tools. It also invokes an possible
 # plugin-specific requirement-check function called plugin_prereq().
 # @return int 0 on success, 1 on failure
 csl_check_requirements ()
@@ -307,7 +307,7 @@ is_declared ()
 }
 readonly -f is_declared
 
-# @function: is_declared_func()
+# @function is_declared_func()
 # @brief returns 0 if the provided function name refers to an
 # already declared function. Otherwise it returns 1.
 # @param1 string $var
@@ -429,7 +429,7 @@ is_dir ()
 }
 readonly -f is_dir
 
-# @function: eval_thresholds()
+# @function eval_thresholds()
 # @brief evaluates the given value $1 against WARNING ($2) and CRITICAL ($3) thresholds.
 # @param1 string $value
 # @param2 string $warning
@@ -792,7 +792,7 @@ is_float ()
 }
 readonly -f is_float
 
-# @function: is_valid_threshold()
+# @function is_valid_threshold()
 # @brief performs the checks on the given warning
 # and critical values and returns 0, if they are.
 # Otherwise it returns 1.
@@ -832,7 +832,7 @@ is_valid_limit ()
 }
 readonly -f is_valid_limit
 
-# @function: is_cmd()
+# @function is_cmd()
 # @brief returns 0, if the provided external command exists.
 # Otherwise it returns 1.
 # @param1 string $command
@@ -1205,7 +1205,7 @@ startup ()
 readonly -f startup
 
 # @function set_help_text()
-# @brief: accepts a plugin-specific help-text, that is
+# @brief accepts a plugin-specific help-text, that is
 # returned when show_help() is called.
 #
 # The text can either be provided as first parameter or being read
@@ -1732,7 +1732,7 @@ setup_cleanup_trap ()
 }
 readonly -f setup_cleanup_trap
 
-# @function: sanitize()
+# @function sanitize()
 # @brief This function tries to sanitize the provided string
 # and removes all characters from the string that are not
 # matching the provided pattern mask.
@@ -2227,12 +2227,10 @@ eval_results ()
          VAL="${BASH_REMATCH[1]}"
       fi
 
-      #set -x
       debug "${KEY} value: ${VAL} (${DISPLAY_VAL})"
       debug "${KEY} warning: ${WARNING}"
       debug "${KEY} critical: ${CRITICAL}"
 
-      #set -x
       RESULT="$(eval_thresholds "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL=$? || RETVAL=$?
 
       if [ $RETVAL -gt ${RESULT_CODE} ]; then
