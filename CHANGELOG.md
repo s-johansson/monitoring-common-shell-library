@@ -4,6 +4,9 @@
 
 * allow setting default thresholds via CSL\_WARNING\_THRESHOLD\_DEFAULT and
   CSL\_CRITICAL\_THRESHOLD\_DEFAULT.
+* is\_empty(), has been modified to check if the variable, provided as
+  parameter, has a length of zero (string- or array-length).
+* is\_empty\_str(), can be used to test the string-lenght of a text itself.
 
 ## 1.6.8 (2017-10-29)
 

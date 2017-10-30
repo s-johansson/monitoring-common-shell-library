@@ -136,7 +136,7 @@ readonly CSL_DEFAULT_HELP_TEXT
 is_debug ()
 {
    is_declared CSL_DEBUG || return 1;
-   ! is_empty "${CSL_DEBUG}" || return 1;
+   ! is_empty CSL_DEBUG || return 1;
    [ "x${CSL_DEBUG}" != "x0" ] || return 1;
 
    return 0
@@ -178,7 +178,7 @@ readonly -f fail
 is_verbose ()
 {
    is_declared CSL_VERBOSE || return 1;
-   ! is_empty "${CSL_VERBOSE}" || return 1;
+   ! is_empty CSL_VERBOSE || return 1;
    [ "x${CSL_VERBOSE}" != "x0" ] || return 1;
 
    return 0
@@ -205,7 +205,7 @@ readonly -f verbose
 csl_is_exit_on_no_data_critical ()
 {
    is_declared CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
-   ! is_empty "${CSL_EXIT_NO_DATA_IS_CRITICAL}" || return 1
+   ! is_empty CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
    ${CSL_EXIT_NO_DATA_IS_CRITICAL} || return 1
    return 0
 }
@@ -220,7 +220,7 @@ csl_check_requirements ()
    local RETVAL=0
 
    # is Bash actually used?
-   ( is_declared BASH_VERSINFO && ! is_empty "${BASH_VERSINFO[0]}" ) || \
+   ( is_declared BASH_VERSINFO && ! is_empty_str "${BASH_VERSINFO[0]}" ) || \
       { fail "Strangely BASH_VERSINFO variable is not (correctly) set!"; exit ${CSL_EXIT_CRITICAL}; }
 
    # Bash major version 4 or later is required
@@ -256,7 +256,7 @@ readonly -f csl_check_requirements
 csl_get_threshold_range ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
    local THRESHOLD="${1}"
 
    # for ordinary numbers as threshold
@@ -271,12 +271,12 @@ csl_get_threshold_range ()
    fi
 
    local THRESHOLD_MIN="x"
-   if ! is_empty "${BASH_REMATCH[1]}"; then
+   if ! is_empty_str "${BASH_REMATCH[1]}"; then
       THRESHOLD_MIN="${BASH_REMATCH[1]}"
    fi
 
    local THRESHOLD_MAX="x"
-   if ! is_empty "${BASH_REMATCH[2]}"; then
+   if ! is_empty_str "${BASH_REMATCH[2]}"; then
       THRESHOLD_MAX="${BASH_REMATCH[2]}"
    fi
 
@@ -333,7 +333,7 @@ is_set ()
 
    local PARAM
    for PARAM in "${@}"; do
-      ! is_empty "${PARAM}" || return 1;
+      ! is_empty_str "${PARAM}" || return 1;
       [ "${PARAM}" != "x" ] || return 1;
    done
 
@@ -341,19 +341,49 @@ is_set ()
 }
 readonly -f is_set
 
-# @function is_empty()
-# @brief returns 0, if the provided string has a zero length.
+# @function is_empty_str()
+# @brief returns 0, if the provided string has a length of zero.
 # Otherwise it returns 1.
 # @param1 string $string
 # @return int 0 on success, 1 on failure
-is_empty ()
+is_empty_str ()
 {
    [ $# -eq 1 ] || return 1
    [ -z "${1}" ] || return 1
 
    return 0
 }
+readonly -f is_empty_str
+
+# @function is_empty()
+# @brief returns 0, if the provided string or array variable have
+# a value of length of zero.  Otherwise it returns 1.
+# @param1 string|array $string
+# @todo remove the call to is_empty_str() by 2017-12-31 and return
+# an error if undeclared instead.
+# @return int 0 on success, 1 on failure
+is_empty ()
+{
+   [ $# -eq 1 ] || return 1
+
+   if ! is_declared "${1}"; then
+      is_empty_str "${1}"
+      return $?
+   fi
+
+   local -n VAR="${1}"
+
+   if ! is_array "${1}"; then
+      [ -z "${VAR}" ] || return 1
+      return 0
+   fi
+
+   [ "${#VAR[@]}" -eq 0 ] || return 1
+
+   return 0
+}
 readonly -f is_empty
+
 
 # @function is_match()
 # @brief invokes the Basic Calculator (bc) and provideѕ it the given $condition.
@@ -364,7 +394,7 @@ readonly -f is_empty
 is_match ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
 
    local RETVAL RESULT
 
@@ -392,7 +422,7 @@ readonly -f is_match
 is_dir ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
    [ -d "${1}" ] || return 1
 
    return 0
@@ -411,7 +441,7 @@ eval_thresholds ()
    [ $# -eq 3 ] || \
       { fail "eval_thresholds() requires 3 parameters."; return 1; }
 
-   ( ! is_empty "${1}" && ! is_empty "${2}" && ! is_empty "${3}" ) || return 1
+   ( ! is_empty_str "${1}" && ! is_empty_str "${2}" && ! is_empty_str "${3}" ) || return 1
 
    local VALUE="${1}"
    local WARNING="${2}" WARN_MIN='' WARN_MAX=''
@@ -421,8 +451,8 @@ eval_thresholds ()
    read -r WARN_MIN WARN_MAX < <(csl_get_threshold_range "${WARNING}")
    read -r CRIT_MIN CRIT_MAX < <(csl_get_threshold_range "${CRITICAL}")
 
-   if is_empty "${WARN_MIN}" || is_empty "${WARN_MAX}" || \
-      is_empty "${CRIT_MIN}" || is_empty "${CRIT_MAX}"; then
+   if is_empty_str "${WARN_MIN}" || is_empty_str "${WARN_MAX}" || \
+      is_empty_str "${CRIT_MIN}" || is_empty_str "${CRIT_MAX}"; then
       fail "something went wrong on parsing thresholds!"
       exit 1
    fi
@@ -515,7 +545,7 @@ eval_thresholds ()
       MATCH="no-match-at-all"
    fi
 
-   if is_empty "${MATCH}" || is_empty "${TEXT}" || is_empty "${STATE}"; then
+   if is_empty_str "${MATCH}" || is_empty_str "${TEXT}" || is_empty_str "${STATE}"; then
       fail "something went horribly wrong."
       exit 1
    fi
@@ -561,7 +591,7 @@ csl_parse_parameters ()
    if csl_has_short_params; then
       TEMP="$(csl_get_short_params)"
 
-      if ! is_empty "${TEMP}"; then
+      if ! is_empty_str "${TEMP}"; then
          GETOPT_SHORT+="${TEMP}"
       fi
    fi
@@ -569,7 +599,7 @@ csl_parse_parameters ()
    if csl_has_long_params; then
       TEMP=$(csl_get_long_params)
 
-      if ! is_empty "${TEMP}" ; then
+      if ! is_empty_str "${TEMP}" ; then
          GETOPT_LONG+=",${TEMP}"
       fi
    fi
@@ -578,7 +608,7 @@ csl_parse_parameters ()
    RETVAL="${?}"
 
    if [ "x${RETVAL}" != "x0" ] || \
-     is_empty "${TEMP}" || \
+     is_empty_str "${TEMP}" || \
      [[ "${TEMP}" =~ invalid[[:blank:]]option ]]; then
 
       fail "error parsing arguments, getopt returned '${RETVAL}'!"
@@ -623,7 +653,7 @@ csl_parse_parameters ()
             break
             ;;
          *)
-            if is_empty "${1}"; then
+            if is_empty_str "${1}"; then
                shift
                continue
             fi
@@ -666,7 +696,7 @@ csl_parse_parameters ()
             # if the option is only meant to be a variable.
             #
             if ! is_declared_func "${OPT_VAR}"; then
-               if is_empty "${OPT_ARG}"; then
+               if is_empty_str "${OPT_ARG}"; then
                   CSL_USER_PARAMS_VALUES["${OPT_VAR}"]="${CSL_TRUE}"
                else
                   CSL_USER_PARAMS_VALUES["${OPT_VAR}"]="${OPT_ARG}"
@@ -721,7 +751,7 @@ readonly -f csl_parse_parameters
 is_range ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
 
    if ! [[ "${1}" =~ ^(-?[[:digit:]]+[\.[:digit:]]*)?:(-?[[:digit:]]+[\.[:digit:]]*)?$ ]]; then
       return 1
@@ -740,7 +770,7 @@ readonly -f is_range
 is_integer ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
    [[ "${1}" =~ ^-?[[:digit:]]+$ ]] || return 1
 
    return 0
@@ -755,7 +785,7 @@ readonly -f is_integer
 is_float ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
    [[ "${1}" =~ ^-?[[:digit:]]+\.[[:digit:]]*$ ]] || return 1
 
    return 0
@@ -771,7 +801,7 @@ readonly -f is_float
 is_valid_threshold ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
 
    local THRESHOLD="${1}"
 
@@ -810,7 +840,7 @@ readonly -f is_valid_limit
 is_cmd ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
 
    command -v "${1}" >/dev/null 2>&1;
    return $?
@@ -825,7 +855,7 @@ readonly -f is_cmd
 is_func ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
 
    if [ "$(type -t "${1//[^a-zA-Z0-9_[:blank:][:punct:]]/}")" != "function" ]; then
       return 1
@@ -916,7 +946,7 @@ set_result_text ()
    fi
 
    if [ $# -ge 1 ]; then
-      ! is_empty "${1}" || return 1
+      ! is_empty_str "${1}" || return 1
       CSL_RESULT_TEXT="${1}"
       return 0
    fi
@@ -924,7 +954,7 @@ set_result_text ()
    # otherwise we accept whatever is passed by STDIN
    read -r -d '' -t 1 CSL_RESULT_TEXT && true
 
-   ! is_empty "${CSL_RESULT_TEXT}" || return 1
+   ! is_empty_str "${CSL_RESULT_TEXT}" || return 1
    return 0
 }
 readonly -f set_result_text
@@ -936,7 +966,7 @@ readonly -f set_result_text
 has_result_text ()
 {
    is_declared CSL_RESULT_TEXT || return 1
-   ! is_empty "${CSL_RESULT_TEXT}" || return 1
+   ! is_empty_str "${CSL_RESULT_TEXT}" || return 1
 
    return 0
 }
@@ -964,7 +994,7 @@ readonly -f get_result_text
 set_result_perfdata ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
 
    CSL_RESULT_PERFDATA="${1}"
    return 0
@@ -978,7 +1008,7 @@ readonly -f set_result_perfdata
 has_result_perfdata ()
 {
    is_declared CSL_RESULT_PERFDATA || return 1
-   ! is_empty "${CSL_RESULT_PERFDATA}" || return 1
+   ! is_empty CSL_RESULT_PERFDATA || return 1
 
    return 0
 }
@@ -1006,7 +1036,7 @@ readonly -f get_result_perfdata
 set_result_code ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
    [[ "${1}" =~ ^[[:digit:]]{1,3}$ ]] || return 1
 
    # if the current result code is already set to something
@@ -1027,7 +1057,7 @@ readonly -f set_result_code
 has_result_code ()
 {
    is_declared CSL_RESULT_CODE || return 1
-   ! is_empty "${CSL_RESULT_CODE}" || return 1
+   ! is_empty CSL_RESULT_CODE || return 1
    [[ "${CSL_RESULT_CODE}" =~ ^[[:digit:]]{1,3}$ ]] || return 1
 
    return 0
@@ -1058,7 +1088,7 @@ print_result ()
    local RESULT PERFDATA
    readonly STOP_TIME_PLUGIN="$(date +%s%3N)"
 
-   if ! is_empty "${START_TIME_PLUGIN}" && ! is_empty "${STOP_TIME_PLUGIN}"; then
+   if ! is_empty_str "${START_TIME_PLUGIN}" && ! is_empty_str "${STOP_TIME_PLUGIN}"; then
       ((DIFF_TIME_PLUGIN = STOP_TIME_PLUGIN - START_TIME_PLUGIN))
       local CYCLE_TIME=" plugin_time=${DIFF_TIME_PLUGIN}ms"
    fi
@@ -1120,13 +1150,13 @@ csl_cleanup ()
       plugin_cleanup;
    fi
 
-   if ! is_declared CSL_TEMP_DIRS || [ ${#CSL_TEMP_DIRS[@]} -lt 1 ]; then
+   if ! is_declared CSL_TEMP_DIRS || is_empty CSL_TEMP_DIRS; then
       exit $EXITCODE
    fi
 
    local CSL_TMPDIR
    for CSL_TMPDIR in "${CSL_TEMP_DIRS[@]}"; do
-      ! is_empty "${CSL_TMPDIR}" || continue
+      ! is_empty_str "${CSL_TMPDIR}" || continue
       is_dir "${CSL_TMPDIR}" || continue
       rm -rf "${CSL_TMPDIR}"
    done
@@ -1186,7 +1216,7 @@ set_help_text ()
 {
    # the text might have been provided as first parameter.
    if [ $# -ge 1 ]; then
-      ! is_empty "${1}" || return 1
+      ! is_empty_str "${1}" || return 1
       CSL_HELP_TEXT="${1}"
       return 0
    fi
@@ -1194,7 +1224,7 @@ set_help_text ()
    # otherwise we accept whatever is passed by STDIN
    read -r -d '' -t 1 CSL_HELP_TEXT && true
 
-   ! is_empty "${CSL_HELP_TEXT}" || return 1
+   ! is_empty CSL_HELP_TEXT || return 1
    return 0
 }
 readonly -f set_help_text
@@ -1206,7 +1236,7 @@ readonly -f set_help_text
 has_help_text ()
 {
    is_declared CSL_HELP_TEXT || return 1
-   ! is_empty "${CSL_HELP_TEXT}" || return 1
+   ! is_empty CSL_HELP_TEXT || return 1
 
    return 0
 }
@@ -1246,12 +1276,12 @@ add_param ()
    local OPT_VAR="${3}"
    [ $# -eq 4 ] && local OPT_DEFAULT="${4}"
 
-   if is_empty "${GETOPT_SHORT}" && is_empty "${GETOPT_LONG}"; then
+   if is_empty_str "${GETOPT_SHORT}" && is_empty_str "${GETOPT_LONG}"; then
       fail "at least a short or a long option name has to be provided."
       return 1
    fi
 
-   if ! is_empty "${GETOPT_SHORT}"; then
+   if ! is_empty_str "${GETOPT_SHORT}"; then
       if  ! [[ "${GETOPT_SHORT}" =~ ^-?([[:alnum:]])(:?:?)$ ]]; then
          fail "given short parameter is invalid."
          return 1
@@ -1260,7 +1290,7 @@ add_param ()
       [ ${#BASH_REMATCH[@]} -eq 3 ] && GETOPT_HAS_ARGS="${BASH_REMATCH[2]}"
    fi
 
-   if ! is_empty "${GETOPT_LONG}"; then
+   if ! is_empty_str "${GETOPT_LONG}"; then
       if ! [[ "${GETOPT_LONG}" =~ ^-?-?([[:alnum:]]+)(:?:?)$ ]]; then
          fail "given long parameter is invalid."
          return 1
@@ -1274,12 +1304,12 @@ add_param ()
       return 1
    fi
 
-   if ! is_empty "${GETOPT_SHORT}"; then
+   if ! is_empty_str "${GETOPT_SHORT}"; then
       CSL_USER_GETOPT_PARAMS["${GETOPT_SHORT}"]="${OPT_VAR}"
       CSL_GETOPT_SHORT+="${GETOPT_SHORT}${GETOPT_HAS_ARGS}"
    fi
 
-   if ! is_empty "${GETOPT_LONG}"; then
+   if ! is_empty_str "${GETOPT_LONG}"; then
       CSL_USER_GETOPT_PARAMS["${GETOPT_LONG}"]="${OPT_VAR}"
       CSL_GETOPT_LONG+="${GETOPT_LONG}${GETOPT_HAS_ARGS},"
    fi
@@ -1305,7 +1335,7 @@ readonly -f add_param
 has_param ()
 {
    [ $# -eq 1 ] || return 1
-   ! is_empty "${1}" || return 1
+   ! is_empty_str "${1}" || return 1
 
    if ! in_array CSL_USER_PARAMS "${1}"; then
       return 1
@@ -1325,7 +1355,7 @@ readonly -f has_param
 #
 has_param_value ()
 {
-   if [ $# -ne 1 ] || is_empty "${1}"; then
+   if [ $# -ne 1 ] || is_empty_str "${1}"; then
       fail "Invalid parameters"
       return 1
    fi
@@ -1355,7 +1385,7 @@ readonly -f has_param_value
 # @return int 0 on success, 1 on failure
 has_param_custom_value ()
 {
-   if [ $# -ne 1 ] || is_empty "${1}"; then
+   if [ $# -ne 1 ] || is_empty_str "${1}"; then
       fail "Invalid parameters"
       return 1
    fi
@@ -1367,7 +1397,7 @@ has_param_custom_value ()
 
    [[ -v "CSL_USER_PARAMS_VALUES[${1}]" ]] || return 1
 
-   if is_empty "${CSL_USER_PARAMS_VALUES[${1}]}"; then
+   if is_empty_str "${CSL_USER_PARAMS_VALUES[${1}]}"; then
       return 1
    fi
 
@@ -1383,7 +1413,7 @@ readonly -f has_param_value
 # @return int 0 on success, 1 on failure
 has_param_default_value ()
 {
-   if [ $# -ne 1 ] || is_empty "${1}"; then
+   if [ $# -ne 1 ] || is_empty_str "${1}"; then
       fail "Invalid parameters"
       return 1
    fi
@@ -1395,7 +1425,7 @@ has_param_default_value ()
 
    [[ -v "CSL_USER_PARAMS_DEFAULT_VALUES[${1}]" ]] || return 1
 
-   if is_empty "${CSL_USER_PARAMS_DEFAULT_VALUES[${1}]}"; then
+   if is_empty_str "${CSL_USER_PARAMS_DEFAULT_VALUES[${1}]}"; then
       return 1
    fi
 
@@ -1411,7 +1441,7 @@ readonly -f has_param_value
 # @return int 0 on success, 1 on failure
 get_param_value ()
 {
-   if [ $# -ne 1 ] || is_empty "${1}"; then
+   if [ $# -ne 1 ] || is_empty_str "${1}"; then
       fail "Invalid parameters"
       return 1
    fi
@@ -1448,7 +1478,7 @@ readonly -f get_param_value
 # @return int 0 on success, 1 on failure
 get_param_custom_value ()
 {
-   if [ $# -ne 1 ] || is_empty "${1}"; then
+   if [ $# -ne 1 ] || is_empty_str "${1}"; then
       fail "Invalid parameters"
       return 1
    fi
@@ -1475,7 +1505,7 @@ readonly -f get_param_custom_value
 # @return int 0 on success, 1 on failure
 get_param_default_value ()
 {
-   if [ $# -ne 1 ] || is_empty "${1}"; then
+   if [ $# -ne 1 ] || is_empty_str "${1}"; then
       fail "Invalid parameters"
       return 1
    fi
@@ -1506,7 +1536,7 @@ readonly -f get_param_default_value
 # @return int 0 on success, 1 on failure
 get_param ()
 {
-   if [ $# -ne 1 ] || is_empty "${1}"; then
+   if [ $# -ne 1 ] || is_empty_str "${1}"; then
       fail "Invalid parameters"
       return 1
    fi
@@ -1588,7 +1618,7 @@ readonly -f add_prereq
 csl_has_short_params ()
 {
    is_declared CSL_GETOPT_SHORT || return 1
-   ! is_empty "${CSL_GETOPT_SHORT}" || return 1
+   ! is_empty CSL_GETOPT_SHORT || return 1
 
    return 0
 }
@@ -1601,7 +1631,7 @@ readonly -f csl_has_short_params
 csl_has_long_params ()
 {
    is_declared CSL_GETOPT_LONG || return 1
-   ! is_empty "${CSL_GETOPT_LONG}" || return 1
+   ! is_empty CSL_GETOPT_LONG || return 1
 
    return 0
 }
@@ -1662,7 +1692,7 @@ create_tmpdir ()
       exit 1
    fi
 
-   if is_empty "${CSL_TMPDIR}"; then
+   if is_empty_str "${CSL_TMPDIR}"; then
       fail "mktemp did not return the path of the created temp-directory in /tmp."
       exit 1
    fi
@@ -1870,7 +1900,7 @@ is_array ()
 csl_get_version ()
 {
    [[ -v CSL_VERSION ]] || return 1
-   ! is_empty "${CSL_VERSION}" || return 1
+   ! is_empty CSL_VERSION || return 1
    [[ "${CSL_VERSION}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]] || return 1
 
    echo "${CSL_VERSION}"
@@ -1887,8 +1917,8 @@ csl_get_version ()
 csl_add_threshold ()
 {
    if [ $# -ne 2 ] || \
-      is_empty "${1}" || \
-      is_empty "${2}" || \
+      is_empty_str "${1}" || \
+      is_empty_str "${2}" || \
       ! [[ "${1}" =~ ^(WARNING|CRITICAL)$ ]]; then
       fail "Invalid parameters"
       return 1
@@ -1907,7 +1937,7 @@ csl_add_threshold ()
    fi
 
    for THRESHOLD_COUPLE in "${THRESHOLD_ARY[@]}"; do
-      ! is_empty "${THRESHOLD_COUPLE}" || continue
+      ! is_empty_str "${THRESHOLD_COUPLE}" || continue
 
       if ! [[ "${THRESHOLD_COUPLE}" =~ ^([[:graph:]]+)=([[:graph:]]+)$ ]]; then
          #echo "SINGLE>>> ${THRESHOLD_COUPLE}"
@@ -1931,8 +1961,8 @@ csl_add_threshold ()
       KEY="${BASH_REMATCH[1]}"
       VAL="${BASH_REMATCH[2]}"
 
-      ! is_empty KEY || continue
-      ! is_empty VAL || continue
+      ! is_empty_str "${KEY}" || continue
+      ! is_empty_str "${VAL}" || continue
 
       if ! is_valid_threshold "${VAL}"; then
          fail "${1} parameter contains an invalid threshold! Check the syntax."
@@ -1969,7 +1999,7 @@ readonly -f csl_add_limit
 has_threshold ()
 {
    if [ $# -ne 1 ] || \
-      is_empty "${1}" || \
+      is_empty_str "${1}" || \
       ! [[ "${1}" =~ ^[[:graph:]]+$ ]]; then
       fail "Invalid parameters"
       return 1
@@ -2002,8 +2032,8 @@ readonly -f has_limit
 get_threshold_for_key ()
 {
    if [ $# -ne 2 ] || \
-      is_empty "${1}" || \
-      is_empty "${2}" || \
+      is_empty_str "${1}" || \
+      is_empty_str "${2}" || \
       ! [[ "${1}" =~ ^(WARNING|CRITICAL)$ ]] || \
       ! [[ "${2}" =~ ^[[:graph:]]+$ ]]; then
       fail "Invalid parameters"
@@ -2045,8 +2075,8 @@ readonly -f get_limit_for_key
 add_result ()
 {
    if [ $# -ne 2 ] || \
-      is_empty "${1}" || \
-      is_empty "${2}" || \
+      is_empty_str "${1}" || \
+      is_empty_str "${2}" || \
       ! [[ "${1}" =~ ^[[:graph:]]+$ ]] || \
       ! [[ "${2}" =~ ^[[:print:]]+$ ]]; then
       fail "Invalid parameters"
@@ -2087,7 +2117,7 @@ readonly -f has_results
 has_result ()
 {
    if [ $# -ne 1 ] || \
-      is_empty "${1}" || \
+      is_empty_str "${1}" || \
       ! [[ "${1}" =~ ^[[:graph:]]+$ ]]; then
       fail "Invalid parameters"
       return 1
@@ -2109,7 +2139,7 @@ readonly -f has_result
 get_result ()
 {
    if [ $# -ne 1 ] || \
-      is_empty "${1}" || \
+      is_empty_str "${1}" || \
       ! [[ "${1}" =~ ^[[:graph:]]+$ ]]; then
       fail "Invalid parameters"
       return 1
@@ -2152,7 +2182,7 @@ eval_results ()
    fi
 
    for KEY in "${!CSL_RESULT_VALUES[@]}"; do
-      ! is_empty "${KEY}" || continue
+      ! is_empty_str "${KEY}" || continue
       KEYS_HANDLED+=( "${KEY}" )
       has_result "${KEY}" || continue
 
@@ -2181,7 +2211,7 @@ eval_results ()
       WARNING="$(get_threshold_for_key WARNING "${THRESHOLD_KEY}")"
       CRITICAL="$(get_threshold_for_key CRITICAL "${THRESHOLD_KEY}")"
 
-      if is_empty "${WARNING}" || is_empty "${CRITICAL}"; then
+      if is_empty_str "${WARNING}" || is_empty_str "${CRITICAL}"; then
          fail "Unable to retrieve thresholds for '${KEY}'!"
          return 1
       fi
@@ -2232,7 +2262,7 @@ eval_results ()
    debug "Handled keys: ${KEYS_HANDLED[*]}"
    unset KEYS_HANDLED
 
-   if is_empty "${RESULT_TEXT}"; then
+   if is_empty_str "${RESULT_TEXT}"; then
       fail "No plugin results have been evaluated!"
       return 1
    fi
@@ -2254,8 +2284,8 @@ readonly -f eval_results
 csl_compare_version ()
 {
    if ! [ "${#}" -eq 2 ] || \
-      is_empty "${1}" || \
-      is_empty "${2}"; then
+      is_empty_str "${1}" || \
+      is_empty_str "${2}"; then
       fail "Invalid parameters"
       return 1
    fi
@@ -2311,7 +2341,7 @@ csl_compare_version ()
 csl_require_libvers ()
 {
    if ! [ $# -eq 1 ] || \
-      is_empty "${1}" || \
+      is_empty_str "${1}" || \
       ! [[ "${1}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]]; then
       fail "Invalid parameters"
       return 1

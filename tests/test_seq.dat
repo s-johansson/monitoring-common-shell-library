@@ -34,6 +34,7 @@ is_cmd
 is_declared
 is_declared_func
 is_dir
+is_empty_str
 is_empty
 is_float
 is_func

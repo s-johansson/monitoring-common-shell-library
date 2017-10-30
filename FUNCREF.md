@@ -119,6 +119,8 @@ Type: `int`
 
 ## 9. Function `csl_get_limit_range`
 
+Todo: to be removed by 2017-12-31
+
 ## 10. Function `is_declared`
 
 returns 0 if the provided variable has been declared (that does not mean,
@@ -172,9 +174,9 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 13. Function `is_empty`
+## 13. Function `is_empty_str`
 
-returns 0, if the provided string has a zero length. Otherwise it returns 1.
+returns 0, if the provided string has a length of zero. Otherwise it returns 1.
 
 ### 13a. Parameters
 
@@ -188,17 +190,16 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 14. Function `is_match`
+## 14. Function `is_empty`
 
-invokes the Basic Calculator (bc) and provideѕ it the given $condition. If
-the condition is met, bc returns '1' - in this is_match() returns 0. Otherwise
-if the condition fails, bc will return '0', than is_match() returns 1.
+returns 0, if the provided string or array variable have a value of length
+of zero.  Otherwise it returns 1.
 
 ### 14a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $condition |
+| *$1* | string|array | $string |
 
 ### 14b. Returns
 
@@ -206,15 +207,20 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 15. Function `is_dir`
+Todo: remove the call to is_empty_str() by 2017-12-31 and return an error
+if undeclared instead.
 
-returns 0, if the given directory actually exists. Otherwise it returns 1.
+## 15. Function `is_match`
+
+invokes the Basic Calculator (bc) and provideѕ it the given $condition. If
+the condition is met, bc returns '1' - in this is_match() returns 0. Otherwise
+if the condition fails, bc will return '0', than is_match() returns 1.
 
 ### 15a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $path |
+| *$1* | string | $condition |
 
 ### 15b. Returns
 
@@ -222,11 +228,27 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 16. Function `eval_thresholds`
+## 16. Function `is_dir`
+
+returns 0, if the given directory actually exists. Otherwise it returns 1.
+
+### 16a. Parameters
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | $path |
+
+### 16b. Returns
+
+Type: `int`
+
+0 on success, 1 on failure
+
+## 17. Function `eval_thresholds`
 
 evaluates the given value $1 against WARNING ($2) and CRITICAL ($3) thresholds.
 
-### 16a. Parameters
+### 17a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
@@ -236,40 +258,25 @@ evaluates the given value $1 against WARNING ($2) and CRITICAL ($3) thresholds.
 
 *Outputs*: OK|WARNING|CRITICAL|UNKNOWN
 
-### 16b. Returns
+### 17b. Returns
 
 Type: `int`
 
 0|1|2|3
 
-## 17. Function `eval_limits`
+## 18. Function `eval_limits`
 
-## 18. Function `csl_parse_parameters`
+Todo: to be removed by 2017-12-31
+
+## 19. Function `csl_parse_parameters`
 
 This function uses GNU getopt to parse the given command-line parameters.
-
-### 18a. Parameters
-
-| ID | Type | Description |
-| - | - | - |
-| *$1* | string | $params |
-
-### 18b. Returns
-
-Type: `int`
-
-0 on success, 1 on failure
-
-## 19. Function `is_range`
-
-returns 0, if the argument given is in the form of an range. Otherwise it
-returns 1.
 
 ### 19a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $range |
+| *$1* | string | $params |
 
 ### 19b. Returns
 
@@ -277,17 +284,16 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 20. Function `is_integer`
+## 20. Function `is_range`
 
-returns 0, if the given argument is an integer number. it also accepts the
-form :[0-9] (value lower than) and [0-9]: (value greater than). Otherwise
-it returns 1.
+returns 0, if the argument given is in the form of an range. Otherwise it
+returns 1.
 
 ### 20a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $integer |
+| *$1* | string | $range |
 
 ### 20b. Returns
 
@@ -295,16 +301,17 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 21. Function `is_float`
+## 21. Function `is_integer`
 
-returns 0, if the given argument is a floating point number. Otherwise it
-returns 1.
+returns 0, if the given argument is an integer number. it also accepts the
+form :[0-9] (value lower than) and [0-9]: (value greater than). Otherwise
+it returns 1.
 
 ### 21a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $float |
+| *$1* | string | $integer |
 
 ### 21b. Returns
 
@@ -312,16 +319,16 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 22. Function `is_valid_threshold`
+## 22. Function `is_float`
 
-performs the checks on the given warning and critical values and returns 0,
-if they are. Otherwise it returns 1.
+returns 0, if the given argument is a floating point number. Otherwise it
+returns 1.
 
 ### 22a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $threshold |
+| *$1* | string | $float |
 
 ### 22b. Returns
 
@@ -329,34 +336,36 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 23. Function `is_valid_limit`
+## 23. Function `is_valid_threshold`
 
-## 24. Function `is_cmd`
+performs the checks on the given warning and critical values and returns 0,
+if they are. Otherwise it returns 1.
 
-returns 0, if the provided external command exists. Otherwise it returns 1.
-
-### 24a. Parameters
+### 23a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $command |
+| *$1* | string | $threshold |
 
-### 24b. Returns
+### 23b. Returns
 
 Type: `int`
 
 0 on success, 1 on failure
 
-## 25. Function `is_func`
+## 24. Function `is_valid_limit`
 
-returns 0, if the given function name refers an already declared
-function. Otherwise it returns 1
+Todo: to be removed by 2017-12-31
+
+## 25. Function `is_cmd`
+
+returns 0, if the provided external command exists. Otherwise it returns 1.
 
 ### 25a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $funcname |
+| *$1* | string | $command |
 
 ### 25b. Returns
 
@@ -364,10 +373,16 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 26. Function `csl_validate_parameters`
+## 26. Function `is_func`
 
-returns 0, if the given command-line parameters are valid. Otherwise it
-returns 1.
+returns 0, if the given function name refers an already declared
+function. Otherwise it returns 1
+
+### 26a. Parameters
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | $funcname |
 
 ### 26b. Returns
 
@@ -375,17 +390,10 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 27. Function `set_result_text`
+## 27. Function `csl_validate_parameters`
 
-accepts the plugin-result either as first parameter, or reads it from STDIN
-(what allows heredoc usage for example). In case of STDIN, the read-timeout
-is set to 1 seconds.
-
-### 27a. Parameters
-
-| ID | Type | Description |
-| - | - | - |
-| *$1* | string | $text |
+returns 0, if the given command-line parameters are valid. Otherwise it
+returns 1.
 
 ### 27b. Returns
 
@@ -393,9 +401,17 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 28. Function `has_result_text`
+## 28. Function `set_result_text`
 
-returns 0, if the plugin-result has already been set. Otherwise it returns 1.
+accepts the plugin-result either as first parameter, or reads it from STDIN
+(what allows heredoc usage for example). In case of STDIN, the read-timeout
+is set to 1 seconds.
+
+### 28a. Parameters
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | $text |
 
 ### 28b. Returns
 
@@ -403,12 +419,9 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 29. Function `get_result_text`
+## 29. Function `has_result_text`
 
-outputs the plugin-result, if it has already been set - in this case it
-returns 0. Otherwise it returns 1.
-
-*Outputs*: string
+returns 0, if the plugin-result has already been set. Otherwise it returns 1.
 
 ### 29b. Returns
 
@@ -416,16 +429,12 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 30. Function `set_result_perfdata`
+## 30. Function `get_result_text`
 
-accepts the plugin-perfdata as first parameter. On success it returns 0,
-otherwise 1.
+outputs the plugin-result, if it has already been set - in this case it
+returns 0. Otherwise it returns 1.
 
-### 30a. Parameters
-
-| ID | Type | Description |
-| - | - | - |
-| *$1* | string | $perfdata |
+*Outputs*: string
 
 ### 30b. Returns
 
@@ -433,9 +442,16 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 31. Function `has_result_perfdata`
+## 31. Function `set_result_perfdata`
 
-returns 0, if the plugin-perfdata has already been set. Otherwise it returns 1.
+accepts the plugin-perfdata as first parameter. On success it returns 0,
+otherwise 1.
+
+### 31a. Parameters
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | $perfdata |
 
 ### 31b. Returns
 
@@ -443,12 +459,9 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 32. Function `get_result_perfdata`
+## 32. Function `has_result_perfdata`
 
-outputs the plugin-perfdata, if it has already been set - in this case it
-returns 0. Otherwise it returns 1.
-
-*Outputs*: string
+returns 0, if the plugin-perfdata has already been set. Otherwise it returns 1.
 
 ### 32b. Returns
 
@@ -456,16 +469,12 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 33. Function `set_result_code`
+## 33. Function `get_result_perfdata`
 
-accepts the plugin-exit-code as first parameter. On success it returns 0,
-otherwise 1.
+outputs the plugin-perfdata, if it has already been set - in this case it
+returns 0. Otherwise it returns 1.
 
-### 33a. Parameters
-
-| ID | Type | Description |
-| - | - | - |
-| *$1* | string | $exit_code |
+*Outputs*: string
 
 ### 33b. Returns
 
@@ -473,9 +482,16 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 34. Function `has_result_code`
+## 34. Function `set_result_code`
 
-returns 0, if the plugin-code has already been set. Otherwise it returns 1.
+accepts the plugin-exit-code as first parameter. On success it returns 0,
+otherwise 1.
+
+### 34a. Parameters
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | $exit_code |
 
 ### 34b. Returns
 
@@ -483,12 +499,9 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 35. Function `get_result_code`
+## 35. Function `has_result_code`
 
-outputs the plugin-code, if it has already been set - in this case it returns
-0. Otherwise it returns 1.
-
-*Outputs*: string
+returns 0, if the plugin-code has already been set. Otherwise it returns 1.
 
 ### 35b. Returns
 
@@ -496,42 +509,38 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 36. Function `print_result`
+## 36. Function `get_result_code`
 
-outputs the final result as required for (c) Nagios, (c) Icinga, etc.
+outputs the plugin-code, if it has already been set - in this case it returns
+0. Otherwise it returns 1.
 
-*Outputs*: plugin-result + plugin-perfdata
+*Outputs*: string
 
 ### 36b. Returns
 
 Type: `int`
 
-plugin-code
+0 on success, 1 on failure
 
-## 37. Function `show_help`
+## 37. Function `print_result`
 
-displays the help text.  If a plugin-specifc help-text has been set
-via set_help_text(), that one is printed. Otherwise the libraries
-$CSL_DEFAULT_HELP_TEXT is used.
+outputs the final result as required for (c) Nagios, (c) Icinga, etc.
 
-*Outputs*: plugin-helptext
+*Outputs*: plugin-result + plugin-perfdata
 
 ### 37b. Returns
 
 Type: `int`
 
-0 on success, 1 on failure
+plugin-code
 
-## 38. Function `csl_cleanup`
+## 38. Function `show_help`
 
-is a function, that would be called on soon as this script has finished. It
-must be set upped by using setup_cleanup_trap ().
+displays the help text.  If a plugin-specifc help-text has been set
+via set_help_text(), that one is printed. Otherwise this libraries
+$CSL_DEFAULT_HELP_TEXT is used.
 
-### 38a. Parameters
-
-| ID | Type | Description |
-| - | - | - |
-| *$1* | int | $exit_code |
+*Outputs*: plugin-helptext
 
 ### 38b. Returns
 
@@ -539,17 +548,16 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 39. Function `startup`
+## 39. Function `csl_cleanup`
 
-is the first library function, that any plugin should invoke.
+is a function, that would be called on soon as this script has finished. It
+must be set upped by using setup_cleanup_trap ().
 
 ### 39a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $cmdline_params |
-
-*Outputs*: plugin-result + plugin-perfdata
+| *$1* | int | $exit_code |
 
 ### 39b. Returns
 
@@ -557,17 +565,17 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 40. Function `set_help_text`
+## 40. Function `startup`
 
-accepts a plugin-specific help-text, that is returned when show_help()
-is called.  The text can either be provided as first parameter or being read
-from STDIN (what allows heredoc usage for example).
+is the first library function, that any plugin should invoke.
 
 ### 40a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $text |
+| *$1* | string | $cmdline_params |
+
+*Outputs*: plugin-result + plugin-perfdata
 
 ### 40b. Returns
 
@@ -575,9 +583,17 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 41. Function `has_help_text`
+## 41. Function `set_help_text`
 
-returns 0, if a plugin-specific help-text has been set. Otherwise it returns 1.
+accepts a plugin-specific help-text, that is returned when show_help()
+is called.  The text can either be provided as first parameter or being read
+from STDIN (what allows heredoc usage for example).
+
+### 41a. Parameters
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | $text |
 
 ### 41b. Returns
 
@@ -585,12 +601,9 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 42. Function `get_help_text`
+## 42. Function `has_help_text`
 
-outputs a plugin-specific help-text, if it has been previously set by
-set_help_text(). In this case it returns 0, otherwise 1.
-
-*Outputs*: plugin-helptext
+returns 0, if a plugin-specific help-text has been set. Otherwise it returns 1.
 
 ### 42b. Returns
 
@@ -598,11 +611,24 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 43. Function `add_param`
+## 43. Function `get_help_text`
+
+outputs a plugin-specific help-text, if it has been previously set by
+set_help_text(). In this case it returns 0, otherwise 1.
+
+*Outputs*: plugin-helptext
+
+### 43b. Returns
+
+Type: `int`
+
+0 on success, 1 on failure
+
+## 44. Function `add_param`
 
 registers an additional, plugin-specific command-line-parameter.
 
-### 43a. Parameters
+### 44a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
@@ -612,34 +638,16 @@ registers an additional, plugin-specific command-line-parameter.
 arguments. |
 | *$4* | string | $opt_default default value, optional |
 
-### 43b. Returns
-
-Type: `int`
-
-0 on success, 1 on failure
-
-## 44. Function `has_param`
-
-returns 0, if the given parameter name actually is defined. Otherwise it
-returns 1.
-
-### 44a. Parameters
-
-| ID | Type | Description |
-| - | - | - |
-| *$1* | string | $param |
-
 ### 44b. Returns
 
 Type: `int`
 
 0 on success, 1 on failure
 
-## 45. Function `has_param_value`
+## 45. Function `has_param`
 
-returns 0, if the given parameter has been defined and consists of a value
-that is not empty. Otherwise it returns 1. It also considers a default-value
-and returns true if that one is present.
+returns 0, if the given parameter name actually is defined. Otherwise it
+returns 1.
 
 ### 45a. Parameters
 
@@ -651,12 +659,13 @@ and returns true if that one is present.
 
 Type: `int`
 
-0 on success, 1 on failure 
+0 on success, 1 on failure
 
-## 46. Function `has_param_custom_value`
+## 46. Function `has_param_value`
 
-returns 0, if the given parameter has been defined and consists of a
-custom-value that is not empty. Otherwise it returns 1.
+returns 0, if the given parameter has been defined and consists of a value
+that is not empty. Otherwise it returns 1. It also considers a default-value
+and returns true if that one is present.
 
 ### 46a. Parameters
 
@@ -668,12 +677,12 @@ custom-value that is not empty. Otherwise it returns 1.
 
 Type: `int`
 
-0 on success, 1 on failure
+0 on success, 1 on failure 
 
-## 47. Function `has_param_default_value`
+## 47. Function `has_param_custom_value`
 
 returns 0, if the given parameter has been defined and consists of a
-default-value that is not empty. Otherwise it returns 1.
+custom-value that is not empty. Otherwise it returns 1.
 
 ### 47a. Parameters
 
@@ -687,10 +696,10 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 48. Function `get_param_value`
+## 48. Function `has_param_default_value`
 
-outputs the value of a given parameter, if it has been set already - in this
-case it returns 0. Otherwise it returns 1.
+returns 0, if the given parameter has been defined and consists of a
+default-value that is not empty. Otherwise it returns 1.
 
 ### 48a. Parameters
 
@@ -704,7 +713,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 49. Function `get_param_custom_value`
+## 49. Function `get_param_value`
 
 outputs the value of a given parameter, if it has been set already - in this
 case it returns 0. Otherwise it returns 1.
@@ -721,10 +730,10 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 50. Function `get_param_default_value`
+## 50. Function `get_param_custom_value`
 
-outputs the default value of a given parameter, if it has been set already -
-in this case it returns 0. Otherwise it returns 1.
+outputs the value of a given parameter, if it has been set already - in this
+case it returns 0. Otherwise it returns 1.
 
 ### 50a. Parameters
 
@@ -738,11 +747,10 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 51. Function `get_param`
+## 51. Function `get_param_default_value`
 
-works similar as get_param_value(), but it also accepts the short- (eg. -w)
-and long-parameters (eg. --warning) as indirect lookup keys. On success,
-the value is printed and the function returns 0. Otherwise it returns 1.
+outputs the default value of a given parameter, if it has been set already -
+in this case it returns 0. Otherwise it returns 1.
 
 ### 51a. Parameters
 
@@ -750,25 +758,25 @@ the value is printed and the function returns 0. Otherwise it returns 1.
 | - | - | - |
 | *$1* | string | $param |
 
-*Outputs*: param-value
-
 ### 51b. Returns
 
 Type: `int`
 
 0 on success, 1 on failure
 
-## 52. Function `add_prereq`
+## 52. Function `get_param`
 
-registers a new plugin-requesit. Those are then handled in
-csl_check_requirements(). On success the function returns 0, otherwise it
-returns 1.  Multiple requesits can be registered in one step.
+works similar as get_param_value(), but it also accepts the short- (eg. -w)
+and long-parameters (eg. --warning) as indirect lookup keys. On success,
+the value is printed and the function returns 0. Otherwise it returns 1.
 
 ### 52a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
-| *$1* | string | $prereq1 $prereq2 etc. |
+| *$1* | string | $param |
+
+*Outputs*: param-value
 
 ### 52b. Returns
 
@@ -776,10 +784,17 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 53. Function `csl_has_short_params`
+## 53. Function `add_prereq`
 
-returns 0, if parameters in short form (-d -w 5...) have been given on the
-command line. Otherwise it returns 1.
+registers a new plugin-requesit. Those are then handled in
+csl_check_requirements(). On success the function returns 0, otherwise it
+returns 1.  Multiple requesits can be registered in one step.
+
+### 53a. Parameters
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | $prereq1 $prereq2 etc. |
 
 ### 53b. Returns
 
@@ -787,10 +802,10 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 54. Function `csl_has_long_params`
+## 54. Function `csl_has_short_params`
 
-returns 0, if parameters in long form (--debug --warning 5...) have been
-given on the command line. Otherwise it returns 1.
+returns 0, if parameters in short form (-d -w 5...) have been given on the
+command line. Otherwise it returns 1.
 
 ### 54b. Returns
 
@@ -798,12 +813,10 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 55. Function `csl_get_short_params`
+## 55. Function `csl_has_long_params`
 
-outputs the registered short command-line-parameters in the form as required
-by GNU getopt.
-
-*Outputs*: short-params
+returns 0, if parameters in long form (--debug --warning 5...) have been
+given on the command line. Otherwise it returns 1.
 
 ### 55b. Returns
 
@@ -811,12 +824,12 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 56. Function `csl_get_long_params`
+## 56. Function `csl_get_short_params`
 
-outputs the registered long command-line-parameters in the form as required
+outputs the registered short command-line-parameters in the form as required
 by GNU getopt.
 
-*Outputs*: long-params
+*Outputs*: short-params
 
 ### 56b. Returns
 
@@ -824,7 +837,20 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 57. Function `create_tmpdir`
+## 57. Function `csl_get_long_params`
+
+outputs the registered long command-line-parameters in the form as required
+by GNU getopt.
+
+*Outputs*: long-params
+
+### 57b. Returns
+
+Type: `int`
+
+0 on success, 1 on failure
+
+## 58. Function `create_tmpdir`
 
 creates and tests for a temporary directory being created by
 mktemp. Furthermore it registers the temp-directory in the variable
@@ -833,26 +859,26 @@ residues. there is a hard-coded threshold for max. 10 temp-directories.
 
 *Outputs*: temp-directory
 
-### 57b. Returns
-
-Type: `int`
-
-0 on success, 1 on failure
-
-## 58. Function `setup_cleanup_trap`
-
 ### 58b. Returns
 
 Type: `int`
 
 0 on success, 1 on failure
 
-## 59. Function `sanitize`
+## 59. Function `setup_cleanup_trap`
+
+### 59b. Returns
+
+Type: `int`
+
+0 on success, 1 on failure
+
+## 60. Function `sanitize`
 
 This function tries to sanitize the provided string and removes all characters
 from the string that are not matching the provided pattern mask.
 
-### 59a. Parameters
+### 60a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
@@ -860,31 +886,14 @@ from the string that are not matching the provided pattern mask.
 
 *Outputs*: string
 
-### 59b. Returns
-
-Type: `int`
-
-## 60. Function `in_array`
-
-searches the array $1 for the value given in $2. $2 may even contain a
-regular expression pattern. On success, it returns 0. Otherwise 1 is returned.
-
-### 60a. Parameters
-
-| ID | Type | Description |
-| - | - | - |
-| *$1* | string | array-name |
-| *$2* | string | needle |
-
 ### 60b. Returns
 
 Type: `int`
 
-## 61. Function `in_array_re`
+## 61. Function `in_array`
 
-This function works similar as in_array(), but uses the patterns that have
-been stored in the array $1 against the fixed string provided with $2. On
-success, it returns 0. Otherwise 1 is returned.
+searches the array $1 for the value given in $2. $2 may even contain a
+regular expression pattern. On success, it returns 0. Otherwise 1 is returned.
 
 ### 61a. Parameters
 
@@ -897,11 +906,11 @@ success, it returns 0. Otherwise 1 is returned.
 
 Type: `int`
 
-## 62. Function `key_in_array`
+## 62. Function `in_array_re`
 
-searches the associatative array $1 for the key given in $2. $2 may even
-contain a regular expression pattern. On success, it returns 0. Otherwise
-1 is returned.
+This function works similar as in_array(), but uses the patterns that have
+been stored in the array $1 against the fixed string provided with $2. On
+success, it returns 0. Otherwise 1 is returned.
 
 ### 62a. Parameters
 
@@ -914,11 +923,11 @@ contain a regular expression pattern. On success, it returns 0. Otherwise
 
 Type: `int`
 
-## 63. Function `key_in_array_re`
+## 63. Function `key_in_array`
 
-This function works similar as key_in_array(), but uses the patterns that
-have been stored in the array $1 against the fixed string provided with
-$2. On success, it returns 0. Otherwise 1 is returned.
+searches the associatative array $1 for the key given in $2. $2 may even
+contain a regular expression pattern. On success, it returns 0. Otherwise
+1 is returned.
 
 ### 63a. Parameters
 
@@ -931,78 +940,99 @@ $2. On success, it returns 0. Otherwise 1 is returned.
 
 Type: `int`
 
-## 64. Function `is_array`
+## 64. Function `key_in_array_re`
 
-This function tests if the provided array $1 is either an indexed- or an
-associative-array. If so, the function returns 0, otherwise 1.
+This function works similar as key_in_array(), but uses the patterns that
+have been stored in the array $1 against the fixed string provided with
+$2. On success, it returns 0. Otherwise 1 is returned.
 
 ### 64a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
 | *$1* | string | array-name |
+| *$2* | string | needle |
 
 ### 64b. Returns
 
 Type: `int`
 
-## 65. Function `csl_get_version`
+## 65. Function `is_array`
 
-This function returns the library version number as defined in the variable
-$CSL_VERSION. Just in case, it also performs some validation on the version
-number to ensure, not getting fooled.
+This function tests if the provided array $1 is either an indexed- or an
+associative-array. If so, the function returns 0, otherwise 1.
 
-*Outputs*: string version-number
+### 65a. Parameters
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | array-name |
 
 ### 65b. Returns
 
 Type: `int`
 
+## 66. Function `csl_get_version`
+
+This function returns this library's version number as defined in the
+$CSL_VERSION. Just in case, it also performs some validation on the version
+number, to ensure not getting fooled.
+
+*Outputs*: string version-number
+
+### 66b. Returns
+
+Type: `int`
+
 0 on success, 1 on failure
 
-## 66. Function `csl_add_threshold`
+## 67. Function `csl_add_threshold`
 
 With this function, warning- and critical-thresholds for certain 'keys'
 are registered. A key is the text the matches a given input value.
 
-### 66a. Parameters
+### 67a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
 | *$1* | string | Either 'WARNING' or 'CRITICAL' |
 | *$2* | string | key name |
 
-### 66b. Returns
+### 67b. Returns
 
 Type: `int`
 
-## 67. Function `csl_add_limit`
+## 68. Function `csl_add_limit`
 
-## 68. Function `has_threshold`
+Todo: to be removed by 2017-12-31
+
+## 69. Function `has_threshold`
 
 This function checks, if a threshold has been registered for the provided key
 ($1)
 
-### 68a. Parameters
+### 69a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
 | *$1* | string | key |
 
-### 68b. Returns
+### 69b. Returns
 
 Type: `int`
 
 0 on success, 1 on failure
 
-## 69. Function `has_limit`
+## 70. Function `has_limit`
 
-## 70. Function `get_threshold_for_key`
+Todo: to be removed by 2017-12-31
+
+## 71. Function `get_threshold_for_key`
 
 This function look up the declared warning- or critical-thresholds ($1)
 for the specified key ($2).
 
-### 70a. Parameters
+### 71a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
@@ -1011,36 +1041,27 @@ for the specified key ($2).
 
 *Outputs*: text threshold
 
-### 70b. Returns
+### 71b. Returns
 
 Type: `int`
 
 0 on success, 1 on failure
 
-## 71. Function `get_limit_for_key`
+## 72. Function `get_limit_for_key`
 
-## 72. Function `add_result`
+Todo: to be removed by 2017-12-31
+
+## 73. Function `add_result`
 
 This function registers a result value ($2) for the given key ($1). The
 function does not allow to overrule an already set value with the same key.
 
-### 72a. Parameters
+### 73a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
 | *$1* | string | key name |
 | *$2* | string | value |
-
-### 72b. Returns
-
-Type: `int`
-
-0 on success, 1 on failure
-
-## 73. Function `has_results`
-
-This function performs a quick check, if actually result values have been
-recorded.
 
 ### 73b. Returns
 
@@ -1048,9 +1069,10 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 74. Function `has_result`
+## 74. Function `has_results`
 
-This function tests if a result has been recorded for the given key ($1).
+This function performs a quick check, if actually result values have been
+recorded.
 
 ### 74b. Returns
 
@@ -1058,17 +1080,9 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 75. Function `get_result`
+## 75. Function `has_result`
 
-This function returns the result that has been recorded for the given key ($1).
-
-### 75a. Parameters
-
-| ID | Type | Description |
-| - | - | - |
-| *$1* | string | key name |
-
-*Outputs*: string value
+This function tests if a result has been recorded for the given key ($1).
 
 ### 75b. Returns
 
@@ -1076,27 +1090,45 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 76. Function `eval_results`
+## 76. Function `get_result`
+
+This function returns the result that has been recorded for the given key ($1).
+
+### 76a. Parameters
+
+| ID | Type | Description |
+| - | - | - |
+| *$1* | string | key name |
+
+*Outputs*: string value
+
+### 76b. Returns
+
+Type: `int`
+
+0 on success, 1 on failure
+
+## 77. Function `eval_results`
 
 This function iterates over all the recorded results and evaluate
 their values with eval_thresholds(). Finally, the function uses
-set_result_(text|code|perfdata) to set the scripts final results.  To perform
+set_result_(text|code|perfdata) to set the plugins final results.  To perform
 your own evaluations, you may override this function by specifying an
 user_eval_results() function in your plugin. Than plugin_worker() will _not_
 call eval_results(), but invokes user_eval_results() instead.
 
-### 76b. Returns
+### 77b. Returns
 
 Type: `0`
 
 on success, 1 on failure
 
-## 77. Function `csl_compare_version`
+## 78. Function `csl_compare_version`
 
 This function compares to version strings. Credits to original author Dennis
 Williamson @ stackoverflow (see link).
 
-### 77a. Parameters
+### 78a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
@@ -1105,7 +1137,7 @@ Williamson @ stackoverflow (see link).
 
 *Outputs*: string eq = equal,lt = less than,gt = greater than
 
-### 77b. Returns
+### 78b. Returns
 
 Type: `0`
 
@@ -1113,20 +1145,20 @@ on success, 1 on failure
 
 Link: https://stackoverflow.com/a/4025065
 
-## 78. Function `csl_require_libvers`
+## 79. Function `csl_require_libvers`
 
 This function checks if the current library version number is matching the
 requiremented version as specified in $1.
 
 *Outputs*: string lt (less-than), eq (equal), gt (greater-than)
 
-### 78b. Returns
+### 79b. Returns
 
 Type: `int`
 
 0 on success, 1 on failure
 
-## 79. Function `exit_no_data`
+## 80. Function `exit_no_data`
 
 This function can be called to exit with the correct exit-code, in case
 no plugin data is available. The function outputs CSL_EXIT_CRITICAL if
@@ -1134,7 +1166,7 @@ CSL_EXIT_NO_DATA_IS_CRITICAL is set, otherwise it returns CSL_EXIT_UNKNOWN
 
 *Outputs*: int CSL_EXIT_CRITICAL or CSL_EXIT_UNKNOWN
 
-### 79b. Returns
+### 80b. Returns
 
 Type: `int`
 
@@ -1144,22 +1176,22 @@ Type: `int`
 exit "$(exit_no_data)"
 ```
 
-## 80. Function `deprecate_func`
+## 81. Function `deprecate_func`
 
 This function can be used to output a message when a deprecated function has
 been called. It issues the message, then invokes the replacement function given
 in $1 with all the further parameters the deprecated function was called with.
 
-### 80a. Parameters
+### 81a. Parameters
 
 | ID | Type | Description |
 | - | - | - |
 | *$1* | string | replacement-function |
 
-### 80b. Returns
+### 81b. Returns
 
 Type: `int`
 
 the replacement-functions exit-code
 
-[^1]: Created by shell-docs-gen.sh v1.3.1 on Son Okt 29 19:05:19 CET 2017.
+[^1]: Created by shell-docs-gen.sh v1.4 on Mon Okt 30 09:25:41 CET 2017.
