@@ -285,6 +285,7 @@ csl_get_threshold_range ()
 readonly -f csl_get_threshold_range
 
 # @function csl_get_limit_range()
+# @todo to be removed by 2017-12-31
 csl_get_limit_range ()
 {
    deprecate_func csl_get_threshold_range "${@}"
@@ -525,6 +526,7 @@ eval_thresholds ()
 readonly -f eval_thresholds
 
 # @function eval_limits()
+# @todo to be removed by 2017-12-31
 eval_limits ()
 {
    deprecate_func eval_thresholds "${@}"
@@ -786,6 +788,7 @@ is_valid_threshold ()
 readonly -f is_valid_threshold
 
 # @function is_valid_limit()
+# @todo to be removed by 2017-12-31
 is_valid_limit ()
 {
    deprecate_func is_valid_threshold "${@}"
@@ -1922,6 +1925,7 @@ csl_add_threshold ()
 readonly -f csl_add_threshold
 
 # @function csl_add_limit()
+# @todo to be removed by 2017-12-31
 csl_add_limit ()
 {
    deprecate_func csl_add_threshold "${@}"
@@ -1952,6 +1956,7 @@ has_threshold ()
 readonly -f has_threshold
 
 # @function has_limit()
+# @todo to be removed by 2017-12-31
 has_limit ()
 {
    deprecate_func has_threshold "${@}"
@@ -1994,6 +1999,7 @@ get_threshold_for_key ()
 readonly -f get_threshold_for_key
 
 # @function get_limit_for_key()
+# @todo to be removed by 2017-12-31
 get_limit_for_key ()
 {
    deprecate_func get_threshold_for_key "${@}"
