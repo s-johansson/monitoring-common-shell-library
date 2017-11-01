@@ -1201,7 +1201,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 83. Function `deprecate_func`
+## 83. Function `_csl_deprecate_func`
 
 This function can be used to output a message when a deprecated function has
 been called. It issues the message, then invokes the replacement function given
@@ -1219,4 +1219,4 @@ Type: `int`
 
 the replacement-functions exit-code
 
-[^1]: Created by _shell-docs-gen.sh_ _v1.4.1_ on Wed Nov  1 20:18:22 UTC 2017.
+[^1]: Created by _shell-docs-gen.sh_ _v1.4.1_ on Wed Nov  1 20:20:46 UTC 2017.

@@ -473,7 +473,7 @@ readonly -f eval_thresholds
 # @todo to be removed by 2017-12-31
 eval_limits ()
 {
-   deprecate_func eval_thresholds "${@}"
+   _csl_deprecate_func eval_thresholds "${@}"
 }
 readonly -f eval_limits
 
@@ -603,7 +603,7 @@ readonly -f is_valid_threshold
 # @todo to be removed by 2017-12-31
 is_valid_limit ()
 {
-   deprecate_func is_valid_threshold "${@}"
+   _csl_deprecate_func is_valid_threshold "${@}"
 }
 readonly -f is_valid_limit
 
@@ -1553,7 +1553,7 @@ readonly -f has_threshold
 # @todo to be removed by 2017-12-31
 has_limit ()
 {
-   deprecate_func has_threshold "${@}"
+   _csl_deprecate_func has_threshold "${@}"
 }
 readonly -f has_limit
 
@@ -1596,7 +1596,7 @@ readonly -f get_threshold_for_key
 # @todo to be removed by 2017-12-31
 get_limit_for_key ()
 {
-   deprecate_func get_threshold_for_key "${@}"
+   _csl_deprecate_func get_threshold_for_key "${@}"
 }
 readonly -f get_limit_for_key
 
@@ -1936,7 +1936,7 @@ readonly -f _csl_get_threshold_range
 # @todo to be removed by 2017-12-31
 _csl_get_limit_range ()
 {
-   deprecate_func _csl_get_threshold_range "${@}"
+   _csl_deprecate_func _csl_get_threshold_range "${@}"
 }
 readonly -f _csl_get_limit_range
 
@@ -2374,7 +2374,7 @@ readonly -f _csl_add_threshold
 # @todo to be removed by 2017-12-31
 _csl_add_limit ()
 {
-   deprecate_func _csl_add_threshold "${@}"
+   _csl_deprecate_func _csl_add_threshold "${@}"
 }
 readonly -f _csl_add_limit
 
@@ -2469,14 +2469,14 @@ _csl_require_libvers ()
 }
 readonly -f _csl_require_libvers
 
-# @function deprecate_func()
+# @function _csl_deprecate_func()
 # @brief This function can be used to output a message when a
 # deprecated function has been called. It issues the message,
 # then invokes the replacement function given in $1 with all
 # the further parameters the deprecated function was called with.
 # @param1 string replacement-function
 # @return int the replacement-functions exit-code
-deprecate_func ()
+_csl_deprecate_func ()
 {
    if [ $# -lt 2 ]; then
       fail "Invalid parameters"
@@ -2489,7 +2489,7 @@ deprecate_func ()
    echo "${OLD_FUNC}() is deprecated, use ${NEW_FUNC}() instead."
    ${NEW_FUNC} "${@}"
 }
-readonly -f deprecate_func
+readonly -f _csl_deprecate_func
 
 #
 # </Functions>

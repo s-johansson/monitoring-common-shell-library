@@ -86,7 +86,7 @@ print_result
 exit_no_data
 
 [ignore]
-deprecate_func
+_csl_deprecate_func
 _csl_get_limit_range
 eval_limits
 is_valid_limit
