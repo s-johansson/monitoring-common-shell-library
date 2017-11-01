@@ -1,4 +1,4 @@
-# Makefile for check_icinga2.sh automated tests.
+# Makefile for monitoring-common-shell-library
 
 ###############################################################################
 
