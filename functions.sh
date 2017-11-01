@@ -126,9 +126,17 @@ readonly CSL_DEFAULT_HELP_TEXT
 # </Variables>
 #
 
+#
+# <Functions>
+#
 
 ###############################################################################
-
+#
+# The next section contains functions where their scope is meant to be public.
+# They are 'exported' to be accessed from the outside - best example:
+# a monitoring plugin.
+#
+###############################################################################
 
 # @function is_debug()
 # @brief returns 0 if debugging is enabled, otherwise it returns 1.
@@ -197,101 +205,6 @@ verbose ()
    echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\t${1}" >&2
 }
 readonly -f verbose
-
-# @function _csl_is_exit_on_no_data_critical()
-# @brief returns 0, if it has been choosen, that no-data-is-available is
-# a critical error. otherwise it returns 1.
-# @return int 0 on success, 1 on failure
-_csl_is_exit_on_no_data_critical ()
-{
-   is_declared CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
-   ! is_empty CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
-   ${CSL_EXIT_NO_DATA_IS_CRITICAL} || return 1
-   return 0
-}
-readonly -f _csl_is_exit_on_no_data_critical
-
-# @function _csl_check_requirements()
-# @brief tests for other required tools. It also invokes an possible
-# plugin-specific requirement-check function called plugin_prereq().
-# @return int 0 on success, 1 on failure
-_csl_check_requirements ()
-{
-   local RETVAL=0
-
-   # is Bash actually used?
-   ( is_declared BASH_VERSINFO && ! is_empty_str "${BASH_VERSINFO[0]}" ) || \
-      { fail "Strangely BASH_VERSINFO variable is not (correctly) set!"; exit ${CSL_EXIT_CRITICAL}; }
-
-   # Bash major version 4 or later is required
-   [ "${BASH_VERSINFO[0]}" -ge 4 ] || \
-      { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
-
-   # If bash major version 4 is used, the minor needs to be 3 or greater (for [[ -v ]] tests).
-   ( [ "${BASH_VERSINFO[0]}" -eq "4" ] && [ "${BASH_VERSINFO[1]}" -ge "3" ] ) || \
-      { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
-
-   local PREREQ
-
-   for PREREQ in "${CSL_DEFAULT_PREREQ[@]}" "${CSL_USER_PREREQ[@]}"; do
-      is_cmd "${PREREQ}" || { fail "Unable to locate '${PREREQ}' binary!"; return 1; }
-   done
-
-   if is_func plugin_prereq; then
-      plugin_prereq;
-      RETVAL=$?
-   fi
-
-   return $RETVAL
-}
-readonly -f _csl_check_requirements
-
-# @function _csl_get_threshold_range()
-# @brief returns the provided threshold as range in the form of
-# 'MIN MAX'. In case the provided value is a single value (either
-# integer or float), then 'x MAX' is returned.
-# @param1 string $threshold
-# @output string
-# @return int 0 on success, 1 on failure
-_csl_get_threshold_range ()
-{
-   [ $# -eq 1 ] || return 1
-   ! is_empty_str "${1}" || return 1
-   local THRESHOLD="${1}"
-
-   # for ordinary numbers as threshold
-   if is_integer "${THRESHOLD}" || is_float "${THRESHOLD}"; then
-      echo "x ${THRESHOLD}"
-      return 0
-   fi
-
-   if ! [[ ${THRESHOLD} =~ ^(-?[[:digit:]]+[\.[:digit:]]*)?:(-?[[:digit:]]+[\.[:digit:]]*)?$ ]]; then
-      fail "That does not look like a threshold-range at all!"
-      return 1
-   fi
-
-   local THRESHOLD_MIN="x"
-   if ! is_empty_str "${BASH_REMATCH[1]}"; then
-      THRESHOLD_MIN="${BASH_REMATCH[1]}"
-   fi
-
-   local THRESHOLD_MAX="x"
-   if ! is_empty_str "${BASH_REMATCH[2]}"; then
-      THRESHOLD_MAX="${BASH_REMATCH[2]}"
-   fi
-
-   echo "${THRESHOLD_MIN} ${THRESHOLD_MAX}"
-   return 0
-}
-readonly -f _csl_get_threshold_range
-
-# @function _csl_get_limit_range()
-# @todo to be removed by 2017-12-31
-_csl_get_limit_range ()
-{
-   deprecate_func _csl_get_threshold_range "${@}"
-}
-readonly -f _csl_get_limit_range
 
 # @function is_declared()
 # @brief returns 0 if the provided variable has been declared (that
@@ -598,185 +511,7 @@ eval_text()
    echo "${TEXT}"
    return ${STATE}
 }
-
-# @function _csl_parse_parameters()
-# @brief This function uses GNU getopt to parse the given command-line
-# parameters.
-# @param1 string $params
-# @return int 0 on success, 1 on failure
-_csl_parse_parameters ()
-{
-   local TEMP='' RETVAL=''
-   local GETOPT_SHORT="${CSL_DEFAULT_GETOPT_SHORT}"
-   local GETOPT_LONG="${CSL_DEFAULT_GETOPT_LONG}"
-   local NO_PARAMS_IS_OK=false
-
-   if is_declared CSL_WARNING_THRESHOLD_DEFAULT && ! is_empty CSL_WARNING_THRESHOLD_DEFAULT && \
-      is_declared CSL_CRITICAL_THRESHOLD_DEFAULT && ! is_empty CSL_CRITICAL_THRESHOLD_DEFAULT; then
-      NO_PARAMS_IS_OK=true
-   fi
-
-   if [ $# -lt 1 ] && ! ${NO_PARAMS_IS_OK}; then
-      fail "Parameters required!"
-      echo
-      show_help
-      exit 1
-   fi
-
-   if _csl_has_short_params; then
-      TEMP="$(_csl_get_short_params)"
-
-      if ! is_empty_str "${TEMP}"; then
-         GETOPT_SHORT+="${TEMP}"
-      fi
-   fi
-
-   if _csl_has_long_params; then
-      TEMP=$(_csl_get_long_params)
-
-      if ! is_empty_str "${TEMP}" ; then
-         GETOPT_LONG+=",${TEMP}"
-      fi
-   fi
-
-   TEMP=$(getopt -n "${FUNCNAME[0]}" -o "${GETOPT_SHORT}" --long "${GETOPT_LONG}" -- "${@}")
-   RETVAL="${?}"
-
-   if [ "x${RETVAL}" != "x0" ] || \
-     is_empty_str "${TEMP}" || \
-     [[ "${TEMP}" =~ invalid[[:blank:]]option ]]; then
-
-      fail "error parsing arguments, getopt returned '${RETVAL}'!"
-      exit 1
-   fi
-
-   debug "Parameters: ${TEMP}"
-
-   # add the parsed parameters back to the positional parameters.
-   eval set -- "${TEMP}"
-   unset -v TEMP
-
-   while true; do
-      #ARGSPARSED=1
-      case "${1}" in
-         '-h'|'--help')
-            show_help
-            exit 0
-            ;;
-         '-d'|'--debug')
-            readonly CSL_DEBUG=1
-            shift
-            continue
-            ;;
-         '-v'|'--verbose')
-            readonly CSL_VERBOSE=1
-            shift
-            continue
-            ;;
-         '-w'|'--warning')
-            _csl_add_threshold WARNING "${2}"
-            shift 2
-            continue
-            ;;
-         '-c'|'--critical')
-            _csl_add_threshold CRITICAL "${2}"
-            shift 2
-            continue
-            ;;
-         '--')
-            shift
-            break
-            ;;
-         *)
-            if is_empty_str "${1}"; then
-               shift
-               continue
-            fi
-
-            local USER_OPT="${1}" OPT_VAR='' OPT_ARG='' SHIFT=1
-
-            if ! [[ "${USER_OPT}" =~ ^-?-?([[:alnum:]]+)$ ]]; then
-               fail "Invalid parameter! ${USER_OPT}"
-               show_help
-               exit 1
-            fi
-
-            USER_OPT="${BASH_REMATCH[1]}"
-
-            if ! is_declared CSL_USER_GETOPT_PARAMS || \
-               ! [[ -v "CSL_USER_GETOPT_PARAMS[${USER_OPT}]" ]]; then
-               fail "Unknown parameter! ${USER_OPT}"
-               show_help
-               exit 1
-            fi
-
-            OPT_VAR="${CSL_USER_GETOPT_PARAMS[${USER_OPT}]}"
-
-            if ! has_param "${OPT_VAR}"; then
-               fail "Unknown parameter! ${OPT_VAR}"
-               show_help
-               exit 1
-            fi
-
-            #
-            # if the next parameter does not start with a hyphen, its
-            # most probably an argument to the $1 positional parameter.
-            #
-            if [ $# -ge 2 ] && [[ "${2}" =~ ^[^-] ]]; then
-               OPT_ARG="${2}"
-               SHIFT=2
-            fi
-
-            #
-            # if the option is only meant to be a variable.
-            #
-            if ! is_declared_func "${OPT_VAR}"; then
-               if is_empty_str "${OPT_ARG}"; then
-                  CSL_USER_PARAMS_VALUES["${OPT_VAR}"]="${CSL_TRUE}"
-               else
-                  CSL_USER_PARAMS_VALUES["${OPT_VAR}"]="${OPT_ARG}"
-               fi
-
-               shift $SHIFT
-               unset -v USER_OPT OPT_VAR OPT_ARG SHIFT
-               continue
-            fi
-
-            #
-            # or if it is handled by a function.
-            #
-            if ! is_func "${OPT_VAR}"; then
-               fail "No valid function '${OPT_VAR}' for parameter '${USER_OPT}'!"
-               exit 1
-            fi
-
-            ${OPT_VAR} "${OPT_ARG}"
-            RETVAL=$?
-
-            if [ "x${RETVAL}" != "x0" ]; then
-               fail "Parameter function '${OPT_VAR}' exited non-zero: ${RETVAL}"
-               exit 1
-            fi
-
-            shift $SHIFT
-            unset -v USER_OPT OPT_VAR OPT_ARG SHIFT
-            continue
-            ;;
-      esac
-   done
-
-   #if [ -z "${ARGSPARSED}" ] || [ -z "${MODE}" ]; then
-   #   echo "Invalid parameter(s)!"
-   #   echo
-   #   show_help
-   #   exit 1
-   #fi
-   ! is_set CSL_DEBUG || debug "Debugging: enabled"
-   ! is_set CSL_VERBOSE || verbose "Verbose output: enabled"
-   ! is_set CSL_WARNING_THRESHOLD || debug "Warning threshold: ${CSL_WARNING_THRESHOLD[*]}"
-   ! is_set CSL_CRITICAL_THRESHOLD || debug "Critical threshold: ${CSL_CRITICAL_THRESHOLD[*]}"
-}
-readonly -f _csl_parse_parameters
+readonly -f eval_text
 
 # @function is_range()
 # @brief returns 0, if the argument given is in the form of an range.
@@ -904,72 +639,6 @@ is_func ()
    return 0
 }
 readonly -f is_func
-
-# @function _csl_validate_parameters()
-# @brief returns 0, if the given command-line parameters are
-# valid. Otherwise it returns 1.
-# @return int 0 on success, 1 on failure
-_csl_validate_parameters ()
-{
-   #
-   # validate that warning- and critical-thresholds have been correctly provided.
-   #
-   if ( ( ! is_declared CSL_WARNING_THRESHOLD || is_empty CSL_WARNING_THRESHOLD ) && \
-      ( ! is_declared CSL_WARNING_THRESHOLD_DEFAULT || is_empty CSL_WARNING_THRESHOLD_DEFAULT ) ) || \
-      ( ( ! is_declared CSL_CRITICAL_THRESHOLD || is_empty CSL_CRITICAL_THRESHOLD ) && \
-      ( ! is_declared CSL_CRITICAL_THRESHOLD_DEFAULT || is_empty CSL_CRITICAL_THRESHOLD_DEFAULT ) ); then
-      fail "Warning and critical parameters are mandatory!"
-      return 1
-   fi
-
-   #
-   # if no custom thresholds for warning and critical have been set - *but* there are
-   # default values for those two present - then take this one's.
-   if ( ! is_declared CSL_WARNING_THRESHOLD || is_empty CSL_WARNING_THRESHOLD ) && \
-      ( is_declared CSL_WARNING_THRESHOLD_DEFAULT && ! is_empty CSL_WARNING_THRESHOLD_DEFAULT ); then
-      debug "using default WARNING threshold"
-      _csl_add_threshold WARNING "${CSL_WARNING_THRESHOLD_DEFAULT}"
-   fi
-
-    if ( ! is_declared CSL_CRITICAL_THRESHOLD || is_empty CSL_CRITICAL_THRESHOLD ) && \
-      ( is_declared CSL_CRITICAL_THRESHOLD_DEFAULT && ! is_empty CSL_CRITICAL_THRESHOLD_DEFAULT ); then
-      debug "using default CRITICAL threshold"
-      _csl_add_threshold CRITICAL "${CSL_CRITICAL_THRESHOLD_DEFAULT}"
-   fi
-
-   #
-   # a quick check, that the same count of thresholds are present for warning- as
-   # well for critical-thresholds.
-   #
-   if [ ${#CSL_WARNING_THRESHOLD[@]} -ne ${#CSL_CRITICAL_THRESHOLD[@]} ]; then
-      fail "Warning and critical parameters contain different amount of thresholds (w:${#CSL_WARNING_THRESHOLD[@]},c:${#CSL_CRITICAL_THRESHOLD[@]})!"
-      return 1
-   fi
-
-   local WARN_KEY='' CRIT_KEY=''
-   for WARN_KEY in "${!CSL_WARNING_THRESHOLD[@]}"; do
-      if ! key_in_array CSL_CRITICAL_THRESHOLD "$(printf '%q' "${WARN_KEY}")"; then
-         fail "Warning threshold key '${WARN_KEY}' does not occur in critical thresholds!"
-         return 1
-      fi
-   done
-
-   for CRIT_KEY in "${!CSL_CRITICAL_THRESHOLD[@]}"; do
-      if ! key_in_array CSL_WARNING_THRESHOLD "$(printf '%q' "${CRIT_KEY}")"; then
-         fail "Critical threshold key '${CRIT_KEY}' does not occur in warning thresholds!"
-         return 1
-      fi
-   done
-
-   local RETVAL=0
-
-   if is_func plugin_params_validate; then
-      plugin_params_validate;
-      RETVAL=$?
-   fi
-
-   return $RETVAL
-}
 
 # @function set_result_text()
 # @brief accepts the plugin-result either as first parameter,
@@ -1175,39 +844,6 @@ show_help ()
    echo
 }
 readonly -f show_help
-
-# @function _csl_cleanup()
-# @brief is a function, that would be called on soon as this
-# script has finished.
-# It must be set upped by using setup_cleanup_trap ().
-# @param1 int $exit_code
-# @return int 0 on success, 1 on failure
-_csl_cleanup ()
-{
-   local EXITCODE=$?
-
-   if is_func plugin_cleanup; then
-      plugin_cleanup;
-   fi
-
-   if ! is_declared CSL_TEMP_DIRS || is_empty CSL_TEMP_DIRS; then
-      exit $EXITCODE
-   fi
-
-   local CSL_TMPDIR
-   for CSL_TMPDIR in "${CSL_TEMP_DIRS[@]}"; do
-      ! is_empty_str "${CSL_TMPDIR}" || continue
-      is_dir "${CSL_TMPDIR}" || continue
-      rm -rf "${CSL_TMPDIR}"
-   done
-
-   if is_func plugin_params; then
-      plugin_params;
-   fi
-
-   exit $EXITCODE
-}
-readonly -f _csl_cleanup
 
 # @function startup()
 # @brief is the first library function, that any plugin should invoke.
@@ -1651,61 +1287,6 @@ add_prereq ()
 }
 readonly -f add_prereq
 
-# @function _csl_has_short_params()
-# @brief returns 0, if parameters in short form (-d -w 5...)
-# have been given on the command line. Otherwise it returns 1.
-# @return int 0 on success, 1 on failure
-_csl_has_short_params ()
-{
-   is_declared CSL_GETOPT_SHORT || return 1
-   ! is_empty CSL_GETOPT_SHORT || return 1
-
-   return 0
-}
-readonly -f _csl_has_short_params
-
-# @function _csl_has_long_params()
-# @brief returns 0, if parameters in long form (--debug --warning 5...)
-#  have been given on the command line. Otherwise it returns 1.
-# @return int 0 on success, 1 on failure
-_csl_has_long_params ()
-{
-   is_declared CSL_GETOPT_LONG || return 1
-   ! is_empty CSL_GETOPT_LONG || return 1
-
-   return 0
-}
-readonly -f _csl_has_long_params
-
-# @function _csl_get_short_params()
-# @brief outputs the registered short command-line-parameters
-# in the form as required by GNU getopt.
-# @output short-params
-# @return int 0 on success, 1 on failure
-_csl_get_short_params ()
-{
-   _csl_has_short_params || return 1
-
-   echo "${CSL_GETOPT_SHORT}"
-   return 0
-}
-readonly -f _csl_get_short_params
-
-# @function _csl_get_long_params()
-# @brief outputs the registered long command-line-parameters
-# in the form as required by GNU getopt.
-# @output long-params
-# @return int 0 on success, 1 on failure
-_csl_get_long_params ()
-{
-   _csl_has_long_params || return 1
-
-   # remove the trailing comma from the end of the string.
-   echo "${CSL_GETOPT_LONG:0:-1}"
-   return 0
-}
-readonly -f _csl_get_long_params
-
 # @function create_tmpdir()
 # @brief creates and tests for a temporary directory
 # being created by mktemp.
@@ -1825,6 +1406,7 @@ in_array ()
 
    return 1
 }
+readonly -f in_array
 
 # @function in_array_re()
 # @brief This function works similar as in_array(), but uses the
@@ -1930,6 +1512,7 @@ is_array ()
 
    return 0
 }
+readonly -f is_array
 
 # @function is_word()
 # @brief This function tests if the provided string
@@ -1941,106 +1524,7 @@ is_word ()
 
    return 0
 }
-
-# @function _csl_get_version()
-# @brief This function returns this library's version number as defined
-# in the $CSL_VERSION. Just in case, it also performs some validation on
-# the version number, to ensure not getting fooled.
-# @output string version-number
-# @return int 0 on success, 1 on failure
-_csl_get_version ()
-{
-   [[ -v CSL_VERSION ]] || return 1
-   ! is_empty CSL_VERSION || return 1
-   [[ "${CSL_VERSION}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]] || return 1
-
-   echo "${CSL_VERSION}"
-   return 0
-}
-
-# @function _csl_add_threshold()
-# @brief With this function, warning- and critical-thresholds for certain
-# 'keys' are registered. A key is the text the matches a given input
-# value.
-# @param1 string Either 'WARNING' or 'CRITICAL'
-# @param2 string key name
-# @return int
-_csl_add_threshold ()
-{
-   if [ $# -ne 2 ] || \
-      is_empty_str "${1}" || \
-      is_empty_str "${2}" || \
-      ! [[ "${1}" =~ ^(WARNING|CRITICAL)$ ]]; then
-      fail "Invalid parameters"
-      return 1
-   fi
-
-   local -n TARGET="CSL_${1}_THRESHOLD"
-   local THRESHOLD="${2}"
-   local -a THRESHOLD_ARY=()
-   local KEY='' VAL='' KEY_CNT=0
-
-   IFS=',' read -r -a THRESHOLD_ARY <<< "${THRESHOLD}"
-
-   if ! is_array THRESHOLD_ARY || [ ${#THRESHOLD_ARY[@]} -lt 1 ]; then
-      fail "Invalid ${1} threshold! Check the syntax."
-      exit 1
-   fi
-
-   for THRESHOLD_COUPLE in "${THRESHOLD_ARY[@]}"; do
-      ! is_empty_str "${THRESHOLD_COUPLE}" || continue
-
-      if ! [[ "${THRESHOLD_COUPLE}" =~ ^([[:graph:]]+)=([[:graph:]]+)$ ]]; then
-         #echo "SINGLE>>> ${THRESHOLD_COUPLE}"
-         if ! is_valid_threshold "${THRESHOLD_COUPLE}"; then
-            fail "${1} parameter contains an invalid threshold! Check the syntax."
-            exit 1
-         fi
-
-         debug "adding ${1} threshold: ${THRESHOLD_COUPLE}"
-
-         # as we use an associative array in CSL_(WARNING|CRITICAL)_THRESHOLD, construct
-         # an array key to be able to push the value to the array.
-         TARGET+=( ["key${KEY_CNT}"]="${THRESHOLD_COUPLE}" )
-         ((KEY_CNT+=1))
-         continue
-      fi
-
-      [ ${#BASH_REMATCH[@]} -eq 3 ] || continue
-
-      #IFS='=' read -r KEY VAL <<< "${THRESHOLD_COUPLE}"
-      KEY="${BASH_REMATCH[1]}"
-      VAL="${BASH_REMATCH[2]}"
-
-      ! is_empty_str "${KEY}" || continue
-      ! is_empty_str "${VAL}" || continue
-
-      if ! is_valid_threshold "${VAL}"; then
-         fail "${1} parameter contains an invalid threshold! Check the syntax."
-         exit 1
-      fi
-
-      debug "adding ${1} threshold: ${KEY}=${VAL}"
-
-      #echo "COUPLE>>> a ${KEY} ${VAL}"
-      TARGET+=( ["${KEY}"]="${VAL}" )
-   done
-
-   # enable for debugging, as this code runs before DEBUG=1 has been set
-   # by _csl_parse_parameters() which would then enable debug output.
-   #for KEY in "${!TARGET[@]}"; do
-      #echo "Threshold ${1}: ${KEY}=${TARGET["${KEY}"]}"
-   #done
-}
-readonly -f _csl_add_threshold
-
-# @function _csl_add_limit()
-# @todo to be removed by 2017-12-31
-_csl_add_limit ()
-{
-   deprecate_func _csl_add_threshold "${@}"
-}
-readonly -f _csl_add_limit
+readonly -f is_word
 
 # @function has_threshold()
 # @brief This function checks, if a threshold has been registered for the provided
@@ -2333,6 +1817,567 @@ eval_results ()
 }
 readonly -f eval_results
 
+# @function exit_no_data()
+# @brief This function can be called to exit with the correct
+# exit-code, in case no plugin data is available. The function
+# outputs CSL_EXIT_CRITICAL if CSL_EXIT_NO_DATA_IS_CRITICAL is
+# set, otherwise it returns CSL_EXIT_UNKNOWN
+# @return int 0 on success
+# @output int CSL_EXIT_CRITICAL or CSL_EXIT_UNKNOWN
+# @example exit "$(exit_no_data)"
+exit_no_data ()
+{
+   ! _csl_is_exit_on_no_data_critical || echo "${CSL_EXIT_CRITICAL}"
+
+   echo "${CSL_EXIT_UNKNOWN}"
+   return 0
+}
+readonly -f exit_no_data
+
+###############################################################################
+#
+#
+# Functions which scope is meant to be private - those are for value to this
+# library only. Usually there is no reason to access those functions from
+# external.
+#
+# To indicate this private context, those functions are prefixed by '_csl_'.
+#
+###############################################################################
+
+# @function _csl_is_exit_on_no_data_critical()
+# @brief returns 0, if it has been choosen, that no-data-is-available is
+# a critical error. otherwise it returns 1.
+# @return int 0 on success, 1 on failure
+_csl_is_exit_on_no_data_critical ()
+{
+   is_declared CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
+   ! is_empty CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
+   ${CSL_EXIT_NO_DATA_IS_CRITICAL} || return 1
+   return 0
+}
+readonly -f _csl_is_exit_on_no_data_critical
+
+# @function _csl_check_requirements()
+# @brief tests for other required tools. It also invokes an possible
+# plugin-specific requirement-check function called plugin_prereq().
+# @return int 0 on success, 1 on failure
+_csl_check_requirements ()
+{
+   local RETVAL=0
+
+   # is Bash actually used?
+   ( is_declared BASH_VERSINFO && ! is_empty_str "${BASH_VERSINFO[0]}" ) || \
+      { fail "Strangely BASH_VERSINFO variable is not (correctly) set!"; exit ${CSL_EXIT_CRITICAL}; }
+
+   # Bash major version 4 or later is required
+   [ "${BASH_VERSINFO[0]}" -ge 4 ] || \
+      { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
+
+   # If bash major version 4 is used, the minor needs to be 3 or greater (for [[ -v ]] tests).
+   ( [ "${BASH_VERSINFO[0]}" -eq "4" ] && [ "${BASH_VERSINFO[1]}" -ge "3" ] ) || \
+      { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
+
+   local PREREQ
+
+   for PREREQ in "${CSL_DEFAULT_PREREQ[@]}" "${CSL_USER_PREREQ[@]}"; do
+      is_cmd "${PREREQ}" || { fail "Unable to locate '${PREREQ}' binary!"; return 1; }
+   done
+
+   if is_func plugin_prereq; then
+      plugin_prereq;
+      RETVAL=$?
+   fi
+
+   return $RETVAL
+}
+readonly -f _csl_check_requirements
+
+# @function _csl_get_threshold_range()
+# @brief returns the provided threshold as range in the form of
+# 'MIN MAX'. In case the provided value is a single value (either
+# integer or float), then 'x MAX' is returned.
+# @param1 string $threshold
+# @output string
+# @return int 0 on success, 1 on failure
+_csl_get_threshold_range ()
+{
+   [ $# -eq 1 ] || return 1
+   ! is_empty_str "${1}" || return 1
+   local THRESHOLD="${1}"
+
+   # for ordinary numbers as threshold
+   if is_integer "${THRESHOLD}" || is_float "${THRESHOLD}"; then
+      echo "x ${THRESHOLD}"
+      return 0
+   fi
+
+   if ! [[ ${THRESHOLD} =~ ^(-?[[:digit:]]+[\.[:digit:]]*)?:(-?[[:digit:]]+[\.[:digit:]]*)?$ ]]; then
+      fail "That does not look like a threshold-range at all!"
+      return 1
+   fi
+
+   local THRESHOLD_MIN="x"
+   if ! is_empty_str "${BASH_REMATCH[1]}"; then
+      THRESHOLD_MIN="${BASH_REMATCH[1]}"
+   fi
+
+   local THRESHOLD_MAX="x"
+   if ! is_empty_str "${BASH_REMATCH[2]}"; then
+      THRESHOLD_MAX="${BASH_REMATCH[2]}"
+   fi
+
+   echo "${THRESHOLD_MIN} ${THRESHOLD_MAX}"
+   return 0
+}
+readonly -f _csl_get_threshold_range
+
+# @function _csl_get_limit_range()
+# @todo to be removed by 2017-12-31
+_csl_get_limit_range ()
+{
+   deprecate_func _csl_get_threshold_range "${@}"
+}
+readonly -f _csl_get_limit_range
+
+
+
+# @function _csl_parse_parameters()
+# @brief This function uses GNU getopt to parse the given command-line
+# parameters.
+# @param1 string $params
+# @return int 0 on success, 1 on failure
+_csl_parse_parameters ()
+{
+   local TEMP='' RETVAL=''
+   local GETOPT_SHORT="${CSL_DEFAULT_GETOPT_SHORT}"
+   local GETOPT_LONG="${CSL_DEFAULT_GETOPT_LONG}"
+   local NO_PARAMS_IS_OK=false
+
+   if is_declared CSL_WARNING_THRESHOLD_DEFAULT && ! is_empty CSL_WARNING_THRESHOLD_DEFAULT && \
+      is_declared CSL_CRITICAL_THRESHOLD_DEFAULT && ! is_empty CSL_CRITICAL_THRESHOLD_DEFAULT; then
+      NO_PARAMS_IS_OK=true
+   fi
+
+   if [ $# -lt 1 ] && ! ${NO_PARAMS_IS_OK}; then
+      fail "Parameters required!"
+      echo
+      show_help
+      exit 1
+   fi
+
+   if _csl_has_short_params; then
+      TEMP="$(_csl_get_short_params)"
+
+      if ! is_empty_str "${TEMP}"; then
+         GETOPT_SHORT+="${TEMP}"
+      fi
+   fi
+
+   if _csl_has_long_params; then
+      TEMP=$(_csl_get_long_params)
+
+      if ! is_empty_str "${TEMP}" ; then
+         GETOPT_LONG+=",${TEMP}"
+      fi
+   fi
+
+   TEMP=$(getopt -n "${FUNCNAME[0]}" -o "${GETOPT_SHORT}" --long "${GETOPT_LONG}" -- "${@}")
+   RETVAL="${?}"
+
+   if [ "x${RETVAL}" != "x0" ] || \
+     is_empty_str "${TEMP}" || \
+     [[ "${TEMP}" =~ invalid[[:blank:]]option ]]; then
+
+      fail "error parsing arguments, getopt returned '${RETVAL}'!"
+      exit 1
+   fi
+
+   debug "Parameters: ${TEMP}"
+
+   # add the parsed parameters back to the positional parameters.
+   eval set -- "${TEMP}"
+   unset -v TEMP
+
+   while true; do
+      #ARGSPARSED=1
+      case "${1}" in
+         '-h'|'--help')
+            show_help
+            exit 0
+            ;;
+         '-d'|'--debug')
+            readonly CSL_DEBUG=1
+            shift
+            continue
+            ;;
+         '-v'|'--verbose')
+            readonly CSL_VERBOSE=1
+            shift
+            continue
+            ;;
+         '-w'|'--warning')
+            _csl_add_threshold WARNING "${2}"
+            shift 2
+            continue
+            ;;
+         '-c'|'--critical')
+            _csl_add_threshold CRITICAL "${2}"
+            shift 2
+            continue
+            ;;
+         '--')
+            shift
+            break
+            ;;
+         *)
+            if is_empty_str "${1}"; then
+               shift
+               continue
+            fi
+
+            local USER_OPT="${1}" OPT_VAR='' OPT_ARG='' SHIFT=1
+
+            if ! [[ "${USER_OPT}" =~ ^-?-?([[:alnum:]]+)$ ]]; then
+               fail "Invalid parameter! ${USER_OPT}"
+               show_help
+               exit 1
+            fi
+
+            USER_OPT="${BASH_REMATCH[1]}"
+
+            if ! is_declared CSL_USER_GETOPT_PARAMS || \
+               ! [[ -v "CSL_USER_GETOPT_PARAMS[${USER_OPT}]" ]]; then
+               fail "Unknown parameter! ${USER_OPT}"
+               show_help
+               exit 1
+            fi
+
+            OPT_VAR="${CSL_USER_GETOPT_PARAMS[${USER_OPT}]}"
+
+            if ! has_param "${OPT_VAR}"; then
+               fail "Unknown parameter! ${OPT_VAR}"
+               show_help
+               exit 1
+            fi
+
+            #
+            # if the next parameter does not start with a hyphen, its
+            # most probably an argument to the $1 positional parameter.
+            #
+            if [ $# -ge 2 ] && [[ "${2}" =~ ^[^-] ]]; then
+               OPT_ARG="${2}"
+               SHIFT=2
+            fi
+
+            #
+            # if the option is only meant to be a variable.
+            #
+            if ! is_declared_func "${OPT_VAR}"; then
+               if is_empty_str "${OPT_ARG}"; then
+                  CSL_USER_PARAMS_VALUES["${OPT_VAR}"]="${CSL_TRUE}"
+               else
+                  CSL_USER_PARAMS_VALUES["${OPT_VAR}"]="${OPT_ARG}"
+               fi
+
+               shift $SHIFT
+               unset -v USER_OPT OPT_VAR OPT_ARG SHIFT
+               continue
+            fi
+
+            #
+            # or if it is handled by a function.
+            #
+            if ! is_func "${OPT_VAR}"; then
+               fail "No valid function '${OPT_VAR}' for parameter '${USER_OPT}'!"
+               exit 1
+            fi
+
+            ${OPT_VAR} "${OPT_ARG}"
+            RETVAL=$?
+
+            if [ "x${RETVAL}" != "x0" ]; then
+               fail "Parameter function '${OPT_VAR}' exited non-zero: ${RETVAL}"
+               exit 1
+            fi
+
+            shift $SHIFT
+            unset -v USER_OPT OPT_VAR OPT_ARG SHIFT
+            continue
+            ;;
+      esac
+   done
+
+   #if [ -z "${ARGSPARSED}" ] || [ -z "${MODE}" ]; then
+   #   echo "Invalid parameter(s)!"
+   #   echo
+   #   show_help
+   #   exit 1
+   #fi
+   ! is_set CSL_DEBUG || debug "Debugging: enabled"
+   ! is_set CSL_VERBOSE || verbose "Verbose output: enabled"
+   ! is_set CSL_WARNING_THRESHOLD || debug "Warning threshold: ${CSL_WARNING_THRESHOLD[*]}"
+   ! is_set CSL_CRITICAL_THRESHOLD || debug "Critical threshold: ${CSL_CRITICAL_THRESHOLD[*]}"
+}
+readonly -f _csl_parse_parameters
+
+# @function _csl_validate_parameters()
+# @brief returns 0, if the given command-line parameters are
+# valid. Otherwise it returns 1.
+# @return int 0 on success, 1 on failure
+_csl_validate_parameters ()
+{
+   #
+   # validate that warning- and critical-thresholds have been correctly provided.
+   #
+   if ( ( ! is_declared CSL_WARNING_THRESHOLD || is_empty CSL_WARNING_THRESHOLD ) && \
+      ( ! is_declared CSL_WARNING_THRESHOLD_DEFAULT || is_empty CSL_WARNING_THRESHOLD_DEFAULT ) ) || \
+      ( ( ! is_declared CSL_CRITICAL_THRESHOLD || is_empty CSL_CRITICAL_THRESHOLD ) && \
+      ( ! is_declared CSL_CRITICAL_THRESHOLD_DEFAULT || is_empty CSL_CRITICAL_THRESHOLD_DEFAULT ) ); then
+      fail "Warning and critical parameters are mandatory!"
+      return 1
+   fi
+
+   #
+   # if no custom thresholds for warning and critical have been set - *but* there are
+   # default values for those two present - then take this one's.
+   if ( ! is_declared CSL_WARNING_THRESHOLD || is_empty CSL_WARNING_THRESHOLD ) && \
+      ( is_declared CSL_WARNING_THRESHOLD_DEFAULT && ! is_empty CSL_WARNING_THRESHOLD_DEFAULT ); then
+      debug "using default WARNING threshold"
+      _csl_add_threshold WARNING "${CSL_WARNING_THRESHOLD_DEFAULT}"
+   fi
+
+    if ( ! is_declared CSL_CRITICAL_THRESHOLD || is_empty CSL_CRITICAL_THRESHOLD ) && \
+      ( is_declared CSL_CRITICAL_THRESHOLD_DEFAULT && ! is_empty CSL_CRITICAL_THRESHOLD_DEFAULT ); then
+      debug "using default CRITICAL threshold"
+      _csl_add_threshold CRITICAL "${CSL_CRITICAL_THRESHOLD_DEFAULT}"
+   fi
+
+   #
+   # a quick check, that the same count of thresholds are present for warning- as
+   # well for critical-thresholds.
+   #
+   if [ ${#CSL_WARNING_THRESHOLD[@]} -ne ${#CSL_CRITICAL_THRESHOLD[@]} ]; then
+      fail "Warning and critical parameters contain different amount of thresholds (w:${#CSL_WARNING_THRESHOLD[@]},c:${#CSL_CRITICAL_THRESHOLD[@]})!"
+      return 1
+   fi
+
+   local WARN_KEY='' CRIT_KEY=''
+   for WARN_KEY in "${!CSL_WARNING_THRESHOLD[@]}"; do
+      if ! key_in_array CSL_CRITICAL_THRESHOLD "$(printf '%q' "${WARN_KEY}")"; then
+         fail "Warning threshold key '${WARN_KEY}' does not occur in critical thresholds!"
+         return 1
+      fi
+   done
+
+   for CRIT_KEY in "${!CSL_CRITICAL_THRESHOLD[@]}"; do
+      if ! key_in_array CSL_WARNING_THRESHOLD "$(printf '%q' "${CRIT_KEY}")"; then
+         fail "Critical threshold key '${CRIT_KEY}' does not occur in warning thresholds!"
+         return 1
+      fi
+   done
+
+   local RETVAL=0
+
+   if is_func plugin_params_validate; then
+      plugin_params_validate;
+      RETVAL=$?
+   fi
+
+   return $RETVAL
+}
+readonly -f _csl_validate_parameters
+
+
+# @function _csl_cleanup()
+# @brief is a function, that would be called on soon as this
+# script has finished.
+# It must be set upped by using setup_cleanup_trap ().
+# @param1 int $exit_code
+# @return int 0 on success, 1 on failure
+_csl_cleanup ()
+{
+   local EXITCODE=$?
+
+   if is_func plugin_cleanup; then
+      plugin_cleanup;
+   fi
+
+   if ! is_declared CSL_TEMP_DIRS || is_empty CSL_TEMP_DIRS; then
+      exit $EXITCODE
+   fi
+
+   local CSL_TMPDIR
+   for CSL_TMPDIR in "${CSL_TEMP_DIRS[@]}"; do
+      ! is_empty_str "${CSL_TMPDIR}" || continue
+      is_dir "${CSL_TMPDIR}" || continue
+      rm -rf "${CSL_TMPDIR}"
+   done
+
+   if is_func plugin_params; then
+      plugin_params;
+   fi
+
+   exit $EXITCODE
+}
+readonly -f _csl_cleanup
+
+# @function _csl_has_short_params()
+# @brief returns 0, if parameters in short form (-d -w 5...)
+# have been given on the command line. Otherwise it returns 1.
+# @return int 0 on success, 1 on failure
+_csl_has_short_params ()
+{
+   is_declared CSL_GETOPT_SHORT || return 1
+   ! is_empty CSL_GETOPT_SHORT || return 1
+
+   return 0
+}
+readonly -f _csl_has_short_params
+
+# @function _csl_has_long_params()
+# @brief returns 0, if parameters in long form (--debug --warning 5...)
+#  have been given on the command line. Otherwise it returns 1.
+# @return int 0 on success, 1 on failure
+_csl_has_long_params ()
+{
+   is_declared CSL_GETOPT_LONG || return 1
+   ! is_empty CSL_GETOPT_LONG || return 1
+
+   return 0
+}
+readonly -f _csl_has_long_params
+
+# @function _csl_get_short_params()
+# @brief outputs the registered short command-line-parameters
+# in the form as required by GNU getopt.
+# @output short-params
+# @return int 0 on success, 1 on failure
+_csl_get_short_params ()
+{
+   _csl_has_short_params || return 1
+
+   echo "${CSL_GETOPT_SHORT}"
+   return 0
+}
+readonly -f _csl_get_short_params
+
+# @function _csl_get_long_params()
+# @brief outputs the registered long command-line-parameters
+# in the form as required by GNU getopt.
+# @output long-params
+# @return int 0 on success, 1 on failure
+_csl_get_long_params ()
+{
+   _csl_has_long_params || return 1
+
+   # remove the trailing comma from the end of the string.
+   echo "${CSL_GETOPT_LONG:0:-1}"
+   return 0
+}
+readonly -f _csl_get_long_params
+
+# @function _csl_get_version()
+# @brief This function returns this library's version number as defined
+# in the $CSL_VERSION. Just in case, it also performs some validation on
+# the version number, to ensure not getting fooled.
+# @output string version-number
+# @return int 0 on success, 1 on failure
+_csl_get_version ()
+{
+   [[ -v CSL_VERSION ]] || return 1
+   ! is_empty CSL_VERSION || return 1
+   [[ "${CSL_VERSION}" =~ ^[[:digit:]]+(\.[[:digit:]]+)*$ ]] || return 1
+
+   echo "${CSL_VERSION}"
+   return 0
+}
+readonly -f _csl_get_version
+
+# @function _csl_add_threshold()
+# @brief With this function, warning- and critical-thresholds for certain
+# 'keys' are registered. A key is the text the matches a given input
+# value.
+# @param1 string Either 'WARNING' or 'CRITICAL'
+# @param2 string key name
+# @return int
+_csl_add_threshold ()
+{
+   if [ $# -ne 2 ] || \
+      is_empty_str "${1}" || \
+      is_empty_str "${2}" || \
+      ! [[ "${1}" =~ ^(WARNING|CRITICAL)$ ]]; then
+      fail "Invalid parameters"
+      return 1
+   fi
+
+   local -n TARGET="CSL_${1}_THRESHOLD"
+   local THRESHOLD="${2}"
+   local -a THRESHOLD_ARY=()
+   local KEY='' VAL='' KEY_CNT=0
+
+   IFS=',' read -r -a THRESHOLD_ARY <<< "${THRESHOLD}"
+
+   if ! is_array THRESHOLD_ARY || [ ${#THRESHOLD_ARY[@]} -lt 1 ]; then
+      fail "Invalid ${1} threshold! Check the syntax."
+      exit 1
+   fi
+
+   for THRESHOLD_COUPLE in "${THRESHOLD_ARY[@]}"; do
+      ! is_empty_str "${THRESHOLD_COUPLE}" || continue
+
+      if ! [[ "${THRESHOLD_COUPLE}" =~ ^([[:graph:]]+)=([[:graph:]]+)$ ]]; then
+         #echo "SINGLE>>> ${THRESHOLD_COUPLE}"
+         if ! is_valid_threshold "${THRESHOLD_COUPLE}"; then
+            fail "${1} parameter contains an invalid threshold! Check the syntax."
+            exit 1
+         fi
+
+         debug "adding ${1} threshold: ${THRESHOLD_COUPLE}"
+
+         # as we use an associative array in CSL_(WARNING|CRITICAL)_THRESHOLD, construct
+         # an array key to be able to push the value to the array.
+         TARGET+=( ["key${KEY_CNT}"]="${THRESHOLD_COUPLE}" )
+         ((KEY_CNT+=1))
+         continue
+      fi
+
+      [ ${#BASH_REMATCH[@]} -eq 3 ] || continue
+
+      #IFS='=' read -r KEY VAL <<< "${THRESHOLD_COUPLE}"
+      KEY="${BASH_REMATCH[1]}"
+      VAL="${BASH_REMATCH[2]}"
+
+      ! is_empty_str "${KEY}" || continue
+      ! is_empty_str "${VAL}" || continue
+
+      if ! is_valid_threshold "${VAL}"; then
+         fail "${1} parameter contains an invalid threshold! Check the syntax."
+         exit 1
+      fi
+
+      debug "adding ${1} threshold: ${KEY}=${VAL}"
+
+      #echo "COUPLE>>> a ${KEY} ${VAL}"
+      TARGET+=( ["${KEY}"]="${VAL}" )
+   done
+
+   # enable for debugging, as this code runs before DEBUG=1 has been set
+   # by _csl_parse_parameters() which would then enable debug output.
+   #for KEY in "${!TARGET[@]}"; do
+      #echo "Threshold ${1}: ${KEY}=${TARGET["${KEY}"]}"
+   #done
+}
+readonly -f _csl_add_threshold
+
+# @function _csl_add_limit()
+# @todo to be removed by 2017-12-31
+_csl_add_limit ()
+{
+   deprecate_func _csl_add_threshold "${@}"
+}
+readonly -f _csl_add_limit
+
 # @function _csl_compare_version()
 # @brief This function compares to version strings.
 # Credits to original author Dennis Williamson @ stackoverflow (see link).
@@ -2392,6 +2437,7 @@ _csl_compare_version ()
    echo "eq"
    return 0
 }
+readonly -f _csl_compare_version
 
 # @function _csl_require_libvers()
 # @brief This function checks if the current library version number
@@ -2421,22 +2467,7 @@ _csl_require_libvers ()
    echo "${RESULT}"
    return "${RETVAL}"
 }
-
-# @function exit_no_data()
-# @brief This function can be called to exit with the correct
-# exit-code, in case no plugin data is available. The function
-# outputs CSL_EXIT_CRITICAL if CSL_EXIT_NO_DATA_IS_CRITICAL is
-# set, otherwise it returns CSL_EXIT_UNKNOWN
-# @return int 0 on success
-# @output int CSL_EXIT_CRITICAL or CSL_EXIT_UNKNOWN
-# @example exit "$(exit_no_data)"
-exit_no_data ()
-{
-   ! _csl_is_exit_on_no_data_critical || echo "${CSL_EXIT_CRITICAL}"
-
-   echo "${CSL_EXIT_UNKNOWN}"
-   return 0
-}
+readonly -f _csl_require_libvers
 
 # @function deprecate_func()
 # @brief This function can be used to output a message when a
@@ -2458,6 +2489,7 @@ deprecate_func ()
    echo "${OLD_FUNC}() is deprecated, use ${NEW_FUNC}() instead."
    ${NEW_FUNC} "${@}"
 }
+readonly -f deprecate_func
 
 #
 # </Functions>

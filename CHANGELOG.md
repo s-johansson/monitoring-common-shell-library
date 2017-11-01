@@ -3,6 +3,7 @@
 ## 1.9 (unreleased)
 
 * rename all _csl\__ functions to _\_csl\__
+* code reorganization
 
 ## 1.8 (2017-10-30)
 
