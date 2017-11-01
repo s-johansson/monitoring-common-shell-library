@@ -9,20 +9,20 @@ is_debug
 is_verbose
 debug
 verbose
-csl_is_exit_on_no_data_critical
-csl_check_requirements
-csl_get_version
-csl_add_threshold
-csl_get_threshold_range
-csl_get_long_params
-csl_get_short_params
-csl_has_long_params
-csl_has_short_params
-csl_parse_parameters
-csl_validate_parameters
-csl_cleanup
-csl_compare_version
-csl_require_libvers
+_csl_is_exit_on_no_data_critical
+_csl_check_requirements
+_csl_get_version
+_csl_add_threshold
+_csl_get_threshold_range
+_csl_get_long_params
+_csl_get_short_params
+_csl_has_long_params
+_csl_has_short_params
+_csl_parse_parameters
+_csl_validate_parameters
+_csl_cleanup
+_csl_compare_version
+_csl_require_libvers
 
 # External-used Function Checks
 [3xx]
@@ -39,6 +39,7 @@ is_empty
 is_float
 is_func
 is_integer
+is_word
 is_match
 is_range
 is_set
@@ -78,6 +79,7 @@ get_result_code
 get_result_perfdata
 get_result_text
 setup_cleanup_trap
+eval_text
 eval_thresholds
 eval_results
 print_result
@@ -85,9 +87,9 @@ exit_no_data
 
 [ignore]
 deprecate_func
-csl_get_limit_range
+_csl_get_limit_range
 eval_limits
 is_valid_limit
-csl_add_limit
+_csl_add_limit
 has_limit
 get_limit_for_key
