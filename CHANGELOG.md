@@ -1,5 +1,9 @@
 # Changes in monitoring-common-shell-library
 
+## 1.9 (unreleased)
+
+* rename all _csl\__ functions to _\_csl\__
+
 ## 1.8 (2017-10-30)
 
 * allow text-only values and evaluating them text-based.

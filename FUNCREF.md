@@ -75,7 +75,7 @@ output is sent to STDERR!
 
 Type: `int`
 
-## 6. Function `csl_is_exit_on_no_data_critical`
+## 6. Function `_csl_is_exit_on_no_data_critical`
 
 returns 0, if it has been choosen, that no-data-is-available is a critical
 error. otherwise it returns 1.
@@ -86,7 +86,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 7. Function `csl_check_requirements`
+## 7. Function `_csl_check_requirements`
 
 tests for other required tools. It also invokes an possible plugin-specific
 requirement-check function called plugin_prereq().
@@ -97,7 +97,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 8. Function `csl_get_threshold_range`
+## 8. Function `_csl_get_threshold_range`
 
 returns the provided threshold as range in the form of 'MIN MAX'. In case
 the provided value is a single value (either integer or float), then 'x MAX'
@@ -117,7 +117,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 9. Function `csl_get_limit_range`
+## 9. Function `_csl_get_limit_range`
 
 Todo: to be removed by 2017-12-31
 
@@ -288,7 +288,7 @@ Type: `int`
 
 0|1|2|3
 
-## 20. Function `csl_parse_parameters`
+## 20. Function `_csl_parse_parameters`
 
 This function uses GNU getopt to parse the given command-line parameters.
 
@@ -410,7 +410,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 28. Function `csl_validate_parameters`
+## 28. Function `_csl_validate_parameters`
 
 returns 0, if the given command-line parameters are valid. Otherwise it
 returns 1.
@@ -568,7 +568,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 40. Function `csl_cleanup`
+## 40. Function `_csl_cleanup`
 
 is a function, that would be called on soon as this script has finished. It
 must be set upped by using setup_cleanup_trap ().
@@ -807,7 +807,7 @@ Type: `int`
 ## 54. Function `add_prereq`
 
 registers a new plugin-requesit. Those are then handled in
-csl_check_requirements(). On success the function returns 0, otherwise it
+_csl_check_requirements(). On success the function returns 0, otherwise it
 returns 1.  Multiple requesits can be registered in one step.
 
 ### 54a. Parameters
@@ -822,7 +822,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 55. Function `csl_has_short_params`
+## 55. Function `_csl_has_short_params`
 
 returns 0, if parameters in short form (-d -w 5...) have been given on the
 command line. Otherwise it returns 1.
@@ -833,7 +833,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 56. Function `csl_has_long_params`
+## 56. Function `_csl_has_long_params`
 
 returns 0, if parameters in long form (--debug --warning 5...) have been
 given on the command line. Otherwise it returns 1.
@@ -844,7 +844,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 57. Function `csl_get_short_params`
+## 57. Function `_csl_get_short_params`
 
 outputs the registered short command-line-parameters in the form as required
 by GNU getopt.
@@ -857,7 +857,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 58. Function `csl_get_long_params`
+## 58. Function `_csl_get_long_params`
 
 outputs the registered long command-line-parameters in the form as required
 by GNU getopt.
@@ -874,7 +874,7 @@ Type: `int`
 
 creates and tests for a temporary directory being created by
 mktemp. Furthermore it registers the temp-directory in the variable
-CSL_TEMP_DIRS[] that is eval'ed in case by csl_cleanup(), to remove plugin
+CSL_TEMP_DIRS[] that is eval'ed in case by _csl_cleanup(), to remove plugin
 residues. there is a hard-coded threshold for max. 10 temp-directories.
 
 *Outputs*: temp-directory
@@ -997,7 +997,7 @@ Type: `int`
 This function tests if the provided string contains only alpha-numeric
 characters.
 
-## 68. Function `csl_get_version`
+## 68. Function `_csl_get_version`
 
 This function returns this library's version number as defined in the
 $CSL_VERSION. Just in case, it also performs some validation on the version
@@ -1011,7 +1011,7 @@ Type: `int`
 
 0 on success, 1 on failure
 
-## 69. Function `csl_add_threshold`
+## 69. Function `_csl_add_threshold`
 
 With this function, warning- and critical-thresholds for certain 'keys'
 are registered. A key is the text the matches a given input value.
@@ -1027,7 +1027,7 @@ are registered. A key is the text the matches a given input value.
 
 Type: `int`
 
-## 70. Function `csl_add_limit`
+## 70. Function `_csl_add_limit`
 
 Todo: to be removed by 2017-12-31
 
@@ -1148,7 +1148,7 @@ Type: `0`
 
 on success, 1 on failure
 
-## 80. Function `csl_compare_version`
+## 80. Function `_csl_compare_version`
 
 This function compares to version strings. Credits to original author Dennis
 Williamson @ stackoverflow (see link).
@@ -1170,7 +1170,7 @@ on success, 1 on failure
 
 Link: https://stackoverflow.com/a/4025065
 
-## 81. Function `csl_require_libvers`
+## 81. Function `_csl_require_libvers`
 
 This function checks if the current library version number is matching the
 requiremented version as specified in $1.
@@ -1219,4 +1219,4 @@ Type: `int`
 
 the replacement-functions exit-code
 
-[^1]: Created by shell-docs-gen.sh v1.4 on Mon Okt 30 19:37:48 CET 2017.
+[^1]: Created by _shell-docs-gen.sh_ _v1.4.1_ on Wed Nov  1 06:30:43 UTC 2017.

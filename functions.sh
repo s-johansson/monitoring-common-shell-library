@@ -79,7 +79,7 @@ declare -g -A CSL_USER_GETOPT_PARAMS=()
 
 #
 # on any invocation of create_tmpdir(), that one will push the name
-# of the returned temp-directory to CSL_TEMP_DIRS[]. csl_cleanup()
+# of the returned temp-directory to CSL_TEMP_DIRS[]. _csl_cleanup()
 # can later take care of it and removes the temp-directories found
 # in CSL_TEMP_DIRS[] when the script finish.
 #
@@ -198,24 +198,24 @@ verbose ()
 }
 readonly -f verbose
 
-# @function csl_is_exit_on_no_data_critical()
+# @function _csl_is_exit_on_no_data_critical()
 # @brief returns 0, if it has been choosen, that no-data-is-available is
 # a critical error. otherwise it returns 1.
 # @return int 0 on success, 1 on failure
-csl_is_exit_on_no_data_critical ()
+_csl_is_exit_on_no_data_critical ()
 {
    is_declared CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
    ! is_empty CSL_EXIT_NO_DATA_IS_CRITICAL || return 1
    ${CSL_EXIT_NO_DATA_IS_CRITICAL} || return 1
    return 0
 }
-readonly -f csl_is_exit_on_no_data_critical
+readonly -f _csl_is_exit_on_no_data_critical
 
-# @function csl_check_requirements()
+# @function _csl_check_requirements()
 # @brief tests for other required tools. It also invokes an possible
 # plugin-specific requirement-check function called plugin_prereq().
 # @return int 0 on success, 1 on failure
-csl_check_requirements ()
+_csl_check_requirements ()
 {
    local RETVAL=0
 
@@ -244,16 +244,16 @@ csl_check_requirements ()
 
    return $RETVAL
 }
-readonly -f csl_check_requirements
+readonly -f _csl_check_requirements
 
-# @function csl_get_threshold_range()
+# @function _csl_get_threshold_range()
 # @brief returns the provided threshold as range in the form of
 # 'MIN MAX'. In case the provided value is a single value (either
 # integer or float), then 'x MAX' is returned.
 # @param1 string $threshold
 # @output string
 # @return int 0 on success, 1 on failure
-csl_get_threshold_range ()
+_csl_get_threshold_range ()
 {
    [ $# -eq 1 ] || return 1
    ! is_empty_str "${1}" || return 1
@@ -283,15 +283,15 @@ csl_get_threshold_range ()
    echo "${THRESHOLD_MIN} ${THRESHOLD_MAX}"
    return 0
 }
-readonly -f csl_get_threshold_range
+readonly -f _csl_get_threshold_range
 
-# @function csl_get_limit_range()
+# @function _csl_get_limit_range()
 # @todo to be removed by 2017-12-31
-csl_get_limit_range ()
+_csl_get_limit_range ()
 {
-   deprecate_func csl_get_threshold_range "${@}"
+   deprecate_func _csl_get_threshold_range "${@}"
 }
-readonly -f csl_get_limit_range
+readonly -f _csl_get_limit_range
 
 # @function is_declared()
 # @brief returns 0 if the provided variable has been declared (that
@@ -448,8 +448,8 @@ eval_thresholds ()
    local CRITICAL="${3}" CRIT_MIN='' CRIT_MAX=''
    local TEXT='' STATE='' MATCH=''
 
-   read -r WARN_MIN WARN_MAX < <(csl_get_threshold_range "${WARNING}")
-   read -r CRIT_MIN CRIT_MAX < <(csl_get_threshold_range "${CRITICAL}")
+   read -r WARN_MIN WARN_MAX < <(_csl_get_threshold_range "${WARNING}")
+   read -r CRIT_MIN CRIT_MAX < <(_csl_get_threshold_range "${CRITICAL}")
 
    if is_empty_str "${WARN_MIN}" || is_empty_str "${WARN_MAX}" || \
       is_empty_str "${CRIT_MIN}" || is_empty_str "${CRIT_MAX}"; then
@@ -599,12 +599,12 @@ eval_text()
    return ${STATE}
 }
 
-# @function csl_parse_parameters()
+# @function _csl_parse_parameters()
 # @brief This function uses GNU getopt to parse the given command-line
 # parameters.
 # @param1 string $params
 # @return int 0 on success, 1 on failure
-csl_parse_parameters ()
+_csl_parse_parameters ()
 {
    local TEMP='' RETVAL=''
    local GETOPT_SHORT="${CSL_DEFAULT_GETOPT_SHORT}"
@@ -623,16 +623,16 @@ csl_parse_parameters ()
       exit 1
    fi
 
-   if csl_has_short_params; then
-      TEMP="$(csl_get_short_params)"
+   if _csl_has_short_params; then
+      TEMP="$(_csl_get_short_params)"
 
       if ! is_empty_str "${TEMP}"; then
          GETOPT_SHORT+="${TEMP}"
       fi
    fi
 
-   if csl_has_long_params; then
-      TEMP=$(csl_get_long_params)
+   if _csl_has_long_params; then
+      TEMP=$(_csl_get_long_params)
 
       if ! is_empty_str "${TEMP}" ; then
          GETOPT_LONG+=",${TEMP}"
@@ -674,12 +674,12 @@ csl_parse_parameters ()
             continue
             ;;
          '-w'|'--warning')
-            csl_add_threshold WARNING "${2}"
+            _csl_add_threshold WARNING "${2}"
             shift 2
             continue
             ;;
          '-c'|'--critical')
-            csl_add_threshold CRITICAL "${2}"
+            _csl_add_threshold CRITICAL "${2}"
             shift 2
             continue
             ;;
@@ -776,7 +776,7 @@ csl_parse_parameters ()
    ! is_set CSL_WARNING_THRESHOLD || debug "Warning threshold: ${CSL_WARNING_THRESHOLD[*]}"
    ! is_set CSL_CRITICAL_THRESHOLD || debug "Critical threshold: ${CSL_CRITICAL_THRESHOLD[*]}"
 }
-readonly -f csl_parse_parameters
+readonly -f _csl_parse_parameters
 
 # @function is_range()
 # @brief returns 0, if the argument given is in the form of an range.
@@ -905,11 +905,11 @@ is_func ()
 }
 readonly -f is_func
 
-# @function csl_validate_parameters()
+# @function _csl_validate_parameters()
 # @brief returns 0, if the given command-line parameters are
 # valid. Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
-csl_validate_parameters ()
+_csl_validate_parameters ()
 {
    #
    # validate that warning- and critical-thresholds have been correctly provided.
@@ -928,13 +928,13 @@ csl_validate_parameters ()
    if ( ! is_declared CSL_WARNING_THRESHOLD || is_empty CSL_WARNING_THRESHOLD ) && \
       ( is_declared CSL_WARNING_THRESHOLD_DEFAULT && ! is_empty CSL_WARNING_THRESHOLD_DEFAULT ); then
       debug "using default WARNING threshold"
-      csl_add_threshold WARNING "${CSL_WARNING_THRESHOLD_DEFAULT}"
+      _csl_add_threshold WARNING "${CSL_WARNING_THRESHOLD_DEFAULT}"
    fi
 
     if ( ! is_declared CSL_CRITICAL_THRESHOLD || is_empty CSL_CRITICAL_THRESHOLD ) && \
       ( is_declared CSL_CRITICAL_THRESHOLD_DEFAULT && ! is_empty CSL_CRITICAL_THRESHOLD_DEFAULT ); then
       debug "using default CRITICAL threshold"
-      csl_add_threshold CRITICAL "${CSL_CRITICAL_THRESHOLD_DEFAULT}"
+      _csl_add_threshold CRITICAL "${CSL_CRITICAL_THRESHOLD_DEFAULT}"
    fi
 
    #
@@ -1135,7 +1135,7 @@ print_result ()
 
    if ! has_result_text || ! has_result_code; then
       echo "Plugin state is UNKNOWN!"
-      ! csl_is_exit_on_no_data_critical || exit ${CSL_EXIT_CRITICAL}
+      ! _csl_is_exit_on_no_data_critical || exit ${CSL_EXIT_CRITICAL}
       exit ${CSL_EXIT_UNKNOWN}
    fi
 
@@ -1176,13 +1176,13 @@ show_help ()
 }
 readonly -f show_help
 
-# @function csl_cleanup()
+# @function _csl_cleanup()
 # @brief is a function, that would be called on soon as this
 # script has finished.
 # It must be set upped by using setup_cleanup_trap ().
 # @param1 int $exit_code
 # @return int 0 on success, 1 on failure
-csl_cleanup ()
+_csl_cleanup ()
 {
    local EXITCODE=$?
 
@@ -1207,7 +1207,7 @@ csl_cleanup ()
 
    exit $EXITCODE
 }
-readonly -f csl_cleanup
+readonly -f _csl_cleanup
 
 # @function startup()
 # @brief is the first library function, that any plugin should invoke.
@@ -1218,12 +1218,12 @@ startup ()
 {
    readonly START_TIME_PLUGIN="$(date +%s%3N)"
 
-   csl_check_requirements || \
-      { echo "csl_check_requirements() returned non-zero!"; exit 1; }
-   csl_parse_parameters "${@}" || \
-      { echo "csl_parse_parameters() returned non-zero!"; exit 1; }
-   csl_validate_parameters || \
-      { echo "csl_validate_parameters() returned non-zero!"; exit 1; }
+   _csl_check_requirements || \
+      { echo "_csl_check_requirements() returned non-zero!"; exit 1; }
+   _csl_parse_parameters "${@}" || \
+      { echo "_csl_parse_parameters() returned non-zero!"; exit 1; }
+   _csl_validate_parameters || \
+      { echo "_csl_validate_parameters() returned non-zero!"; exit 1; }
 
    if is_func plugin_startup; then
       plugin_startup;
@@ -1631,7 +1631,7 @@ readonly -f get_param
 
 # @function add_prereq()
 # @brief registers a new plugin-requesit. Those are
-# then handled in csl_check_requirements(). On success
+# then handled in _csl_check_requirements(). On success
 # the function returns 0, otherwise it returns 1.
 #
 # Multiple requesits can be registered in one step.
@@ -1651,66 +1651,66 @@ add_prereq ()
 }
 readonly -f add_prereq
 
-# @function csl_has_short_params()
+# @function _csl_has_short_params()
 # @brief returns 0, if parameters in short form (-d -w 5...)
 # have been given on the command line. Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
-csl_has_short_params ()
+_csl_has_short_params ()
 {
    is_declared CSL_GETOPT_SHORT || return 1
    ! is_empty CSL_GETOPT_SHORT || return 1
 
    return 0
 }
-readonly -f csl_has_short_params
+readonly -f _csl_has_short_params
 
-# @function csl_has_long_params()
+# @function _csl_has_long_params()
 # @brief returns 0, if parameters in long form (--debug --warning 5...)
 #  have been given on the command line. Otherwise it returns 1.
 # @return int 0 on success, 1 on failure
-csl_has_long_params ()
+_csl_has_long_params ()
 {
    is_declared CSL_GETOPT_LONG || return 1
    ! is_empty CSL_GETOPT_LONG || return 1
 
    return 0
 }
-readonly -f csl_has_long_params
+readonly -f _csl_has_long_params
 
-# @function csl_get_short_params()
+# @function _csl_get_short_params()
 # @brief outputs the registered short command-line-parameters
 # in the form as required by GNU getopt.
 # @output short-params
 # @return int 0 on success, 1 on failure
-csl_get_short_params ()
+_csl_get_short_params ()
 {
-   csl_has_short_params || return 1
+   _csl_has_short_params || return 1
 
    echo "${CSL_GETOPT_SHORT}"
    return 0
 }
-readonly -f csl_get_short_params
+readonly -f _csl_get_short_params
 
-# @function csl_get_long_params()
+# @function _csl_get_long_params()
 # @brief outputs the registered long command-line-parameters
 # in the form as required by GNU getopt.
 # @output long-params
 # @return int 0 on success, 1 on failure
-csl_get_long_params ()
+_csl_get_long_params ()
 {
-   csl_has_long_params || return 1
+   _csl_has_long_params || return 1
 
    # remove the trailing comma from the end of the string.
    echo "${CSL_GETOPT_LONG:0:-1}"
    return 0
 }
-readonly -f csl_get_long_params
+readonly -f _csl_get_long_params
 
 # @function create_tmpdir()
 # @brief creates and tests for a temporary directory
 # being created by mktemp.
 # Furthermore it registers the temp-directory in the variable
-# CSL_TEMP_DIRS[] that is eval'ed in case by csl_cleanup(), to
+# CSL_TEMP_DIRS[] that is eval'ed in case by _csl_cleanup(), to
 # remove plugin residues.
 # there is a hard-coded threshold for max. 10 temp-directories.
 # @output temp-directory
@@ -1749,7 +1749,7 @@ readonly -f create_tmpdir
 
 # @function setup_cleanup_trap()
 # registers a signal-trap for certain signals like
-# EXIT and INT, to call the csl_cleanup() function on program-termination
+# EXIT and INT, to call the _csl_cleanup() function on program-termination
 # (irrespectivly of success or failure).
 #
 # Note that the cleanup trap must be installed from the plugin.
@@ -1763,11 +1763,11 @@ setup_cleanup_trap ()
    #
    # has the cleanup trap already been installed
    #
-   if trap -p | grep -qsE "^trap[[:blank:]]--[[:blank:]]'csl_cleanup'[[:blank:]]"; then
+   if trap -p | grep -qsE "^trap[[:blank:]]--[[:blank:]]'_csl_cleanup'[[:blank:]]"; then
       return 0
    fi
 
-   trap csl_cleanup INT QUIT TERM EXIT
+   trap _csl_cleanup INT QUIT TERM EXIT
    return $?
 }
 readonly -f setup_cleanup_trap
@@ -1942,13 +1942,13 @@ is_word ()
    return 0
 }
 
-# @function csl_get_version()
+# @function _csl_get_version()
 # @brief This function returns this library's version number as defined
 # in the $CSL_VERSION. Just in case, it also performs some validation on
 # the version number, to ensure not getting fooled.
 # @output string version-number
 # @return int 0 on success, 1 on failure
-csl_get_version ()
+_csl_get_version ()
 {
    [[ -v CSL_VERSION ]] || return 1
    ! is_empty CSL_VERSION || return 1
@@ -1958,14 +1958,14 @@ csl_get_version ()
    return 0
 }
 
-# @function csl_add_threshold()
+# @function _csl_add_threshold()
 # @brief With this function, warning- and critical-thresholds for certain
 # 'keys' are registered. A key is the text the matches a given input
 # value.
 # @param1 string Either 'WARNING' or 'CRITICAL'
 # @param2 string key name
 # @return int
-csl_add_threshold ()
+_csl_add_threshold ()
 {
    if [ $# -ne 2 ] || \
       is_empty_str "${1}" || \
@@ -2027,20 +2027,20 @@ csl_add_threshold ()
    done
 
    # enable for debugging, as this code runs before DEBUG=1 has been set
-   # by csl_parse_parameters() which would then enable debug output.
+   # by _csl_parse_parameters() which would then enable debug output.
    #for KEY in "${!TARGET[@]}"; do
       #echo "Threshold ${1}: ${KEY}=${TARGET["${KEY}"]}"
    #done
 }
-readonly -f csl_add_threshold
+readonly -f _csl_add_threshold
 
-# @function csl_add_limit()
+# @function _csl_add_limit()
 # @todo to be removed by 2017-12-31
-csl_add_limit ()
+_csl_add_limit ()
 {
-   deprecate_func csl_add_threshold "${@}"
+   deprecate_func _csl_add_threshold "${@}"
 }
-readonly -f csl_add_limit
+readonly -f _csl_add_limit
 
 # @function has_threshold()
 # @brief This function checks, if a threshold has been registered for the provided
@@ -2057,7 +2057,7 @@ has_threshold ()
    fi
 
    # it is enough to check against the warning-threshold, as we took care in
-   # csl_validate_parameters() that a corresponding critical-threshold has been
+   # _csl_validate_parameters() that a corresponding critical-threshold has been
    # set too.
    [[ -v "CSL_WARNING_THRESHOLD[${1}]" ]] || return 1
 
@@ -2226,7 +2226,7 @@ eval_results ()
 
    if ! has_results; then
       set_result_text "No plugin results are available."
-      csl_is_exit_on_no_data_critical && RESULT_CODE="${CSL_EXIT_CRITICAL}" || RESULT_CODE="${CSL_EXIT_UNKNOWN}"
+      _csl_is_exit_on_no_data_critical && RESULT_CODE="${CSL_EXIT_CRITICAL}" || RESULT_CODE="${CSL_EXIT_UNKNOWN}"
       set_result_code "${RESULT_CODE}"
       # no perfdata gets set in this case.
       return 0
@@ -2243,7 +2243,7 @@ eval_results ()
       # it is used for all values. And if not, the value is totally skipped.
       #
       # it is enough to check against the warning-threshold, as we took care in
-      # csl_validate_parameters() that a corresponding critical-threshold has
+      # _csl_validate_parameters() that a corresponding critical-threshold has
       # been set too.
       #
       if key_in_array_re CSL_WARNING_THRESHOLD "${KEY}"; then
@@ -2311,7 +2311,7 @@ eval_results ()
    # declared thresholds, an input value has been found. Otherwise a missing
    # one will lead to a critical exit-state.
    #
-   if csl_is_exit_on_no_data_critical; then
+   if _csl_is_exit_on_no_data_critical; then
       for KEY in "${!CSL_WARNING_THRESHOLD[@]}"; do
          in_array KEYS_HANDLED "${KEY//\//}" && continue
          RESULT_TEXT+="${KEY}:n/a(CRITICAL), "
@@ -2333,7 +2333,7 @@ eval_results ()
 }
 readonly -f eval_results
 
-# @function csl_compare_version()
+# @function _csl_compare_version()
 # @brief This function compares to version strings.
 # Credits to original author Dennis Williamson @ stackoverflow (see link).
 # @param1 string version1
@@ -2341,7 +2341,7 @@ readonly -f eval_results
 # @output string eq = equal,lt = less than,gt = greater than
 # @return 0 on success, 1 on failure
 # @link https://stackoverflow.com/a/4025065
-csl_compare_version ()
+_csl_compare_version ()
 {
    if ! [ "${#}" -eq 2 ] || \
       is_empty_str "${1}" || \
@@ -2393,12 +2393,12 @@ csl_compare_version ()
    return 0
 }
 
-# @function csl_require_libvers()
+# @function _csl_require_libvers()
 # @brief This function checks if the current library version number
 # is matching the requiremented version as specified in $1.
 # @output string lt (less-than), eq (equal), gt (greater-than)
 # @return int 0 on success, 1 on failure
-csl_require_libvers ()
+_csl_require_libvers ()
 {
    if ! [ $# -eq 1 ] || \
       is_empty_str "${1}" || \
@@ -2409,10 +2409,10 @@ csl_require_libvers ()
 
    local REQ_LIB_VERS="${1}" CUR_LIB_VERS RESULT RETVAL
 
-   CUR_LIB_VERS="$(csl_get_version)"
+   CUR_LIB_VERS="$(_csl_get_version)"
    [ ! -z "${CUR_LIB_VERS}" ] || return 1
 
-   RESULT="$(csl_compare_version "${CUR_LIB_VERS}" "${REQ_LIB_VERS}")"
+   RESULT="$(_csl_compare_version "${CUR_LIB_VERS}" "${REQ_LIB_VERS}")"
    RETVAL="${?}"
 
    [ "x${RETVAL}" == "x0" ] || return 1
@@ -2432,7 +2432,7 @@ csl_require_libvers ()
 # @example exit "$(exit_no_data)"
 exit_no_data ()
 {
-   ! csl_is_exit_on_no_data_critical || echo "${CSL_EXIT_CRITICAL}"
+   ! _csl_is_exit_on_no_data_critical || echo "${CSL_EXIT_CRITICAL}"
 
    echo "${CSL_EXIT_UNKNOWN}"
    return 0
