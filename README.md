@@ -74,6 +74,11 @@ portable and efficient if you choose the way "Including it".
 See the automatically generated *function-reference* in [./FUNCREF.md](FUNCREF.md),
 that is automatically generated from `functions.sh`.
 
+## Development
+
+If you want to extend the **monitoring-common-shell-library** and contribute your
+changes to this project, please obey [./CODING.md](CODING.md).
+
 ## Automated Testing
 
 The **monitoring-common-shell-library** has been written along with a test-suite,
