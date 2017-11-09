@@ -33,60 +33,144 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
 #
 # <Variables>
+#
 readonly CSL_VERSION="1.8"
 
-#
-# remember: on the shell OK=0, FAIL!=0.
-#
+readonly CSL_TRUE=true
+readonly CSL_FALSE=false
+
 readonly CSL_EXIT_OK=0
 readonly CSL_EXIT_WARNING=1
 readonly CSL_EXIT_CRITICAL=2
 readonly CSL_EXIT_UNKNOWN=3
-
-readonly CSL_TRUE=true
-readonly CSL_FALSE=false
 
 #
 # declare & reset variables, just in case they are already set...
 #
 
 # @var CSL_EXIT_NO_DATA_IS_CRITICAL
-# @desc if set to true, no result-data is treated as CRITICAL instead
-# of exiting with UNKNOWN.
+# @description if set to true, no result-data being set until
+# the end of the script (actually until print_result() is
+# invoked), will be treated as CRITICAL instead of exiting
+# with state UNKNOWN.
 declare -g CSL_EXIT_NO_DATA_IS_CRITICAL="${CSL_FALSE}"
 
-declare -g CSL_DEBUG='' CSL_VERBOSE=''
-declare -g CSL_RESULT_CODE='' CSL_RESULT_TEXT='' CSL_RESULT_PERFDATA=''
+# @var CSL_DEBUG
+# @description if set to true, debugging output will be enabled.
+declare -g CSL_DEBUG="${CSL_FALSE}"
+
+# @var CSL_VERBOSE
+# @description if set to true, verbose console output will be enabled.
+declare -g CSL_VERBOSE="${CSL_FALSE}"
+
+# @var CSL_RESULT_CODE
+# @description this variable will held the final plugin-exit code.
+declare -g CSL_RESULT_CODE=''
+
+# @var CSL_RESULT_TEXT
+# @description this variable will held the final plugin-text output.
+declare -g CSL_RESULT_TEXT=''
+
+# @var CSL_RESULT_PERFDATA
+# @description this variable will held the final plugin-performance data.
+declare -g CSL_RESULT_PERFDATA=''
+
+# @var CSL_RESULT_VALUES
+# @description this associatative array will be filled by the plugin with
+# the read measurement values, and later be read to evaluate the
+# plugins result.
 declare -A CSL_RESULT_VALUES=()
 
-declare -g CSL_GETOPT_SHORT='' CSL_GETOPT_LONG=''
+# @var CSL_GETOPT_SHORT
+# @description this variable gets filled with plugin-specific getopt short
+# parameters.
+declare -g CSL_GETOPT_SHORT=''
+
+# @var CSL_GETOPT_LONG
+# @description this variable gets filled with plugin-specific getopt long
+# parameters.
+declare -g CSL_GETOPT_LONG=''
+
+# @var CSL_DEFAULT_GETOPT_SHORT
+# @description this variable contains the minimum set of getopt short
+# parameters to be used as command-line parameters.
 readonly CSL_DEFAULT_GETOPT_SHORT='c:dhvw:'
+
+# @var CSL_DEFAULT_GETOPT_LONG
+# @description this variable contains the minimum set of getopt long
+# parameters to be used as command-line parameters.
 readonly CSL_DEFAULT_GETOPT_LONG='critical:,debug,help,verbose,warning:'
 
+# @var CSL_DEFAULT_PREREQ
+# @description this variable helds the minimum set of external program
+# dependencies, this library requires. additional plugin-specific
+# can be added by `add_prereq`.
+# * bc, for threshold evaluation
+# * cat, 
 readonly -a CSL_DEFAULT_PREREQ=(
    'bc'
    'getopt'
    'mktemp'
 )
 
-declare -g -A CSL_WARNING_THRESHOLD=() CSL_CRITICAL_THRESHOLD=()
+# @var CSL_WARNING_THRESHOLD
+# @description this associatative array helds the plugin-specific warning
+# thresholds and gets filled by the command-line parameter --warning (-w).
+declare -g -A CSL_WARNING_THRESHOLD=()
+# @var CSL_CRITICAL_THRESHOLD
+# @description this associatative array helds the plugin-specific critical
+# thresholds and gets filled by the command-line parameter --critical (-c).
+declare -g -A CSL_CRITICAL_THRESHOLD=()
+
+# @var CSL_USER_PREREQ
+# @description this index array helds the plugin-specific external dependencies.
+# This variable is best to be filled with `add_reqreq`. In the end, these
+# requirements will be merged with those specified in CSL_DEFAULT_PREREQ.
 declare -g -a CSL_USER_PREREQ=()
+
+# @var CSL_USER_PARAMS
+# @description this index array helds the plugin-specific getopt parameters.
+# This variable is best to be filled with `add_params` to register
+# an additional parameter with its short- and long-option.
 declare -g -a CSL_USER_PARAMS=()
+
+# @var CSL_USER_PARAMS_VALUES
+# @description this associatative array helds the values of plugin-specific
+# getopt parameters that have been specified on the command-line as
+# arguments to getopt parameters.
 declare -g -A CSL_USER_PARAMS_VALUES=()
+
+# @var CSL_USER_PARAMS_DEFAULT_VALUES
+# @description this associatative array helds the default-values of plugin-
+# specific getopt parameters that have been registered as getopt
+# parameters. If no arguments are given to a specific getopt parameter,
 declare -g -A CSL_USER_PARAMS_DEFAULT_VALUES=()
+
+# @var CSL_USER_GETOPT_PARAMS
+# @description this associatative array acts as fast lookup table from
+# a specific getopt parameter (long or short), to the actually
+# defined CSL_USER_PARAMS.
 declare -g -A CSL_USER_GETOPT_PARAMS=()
 
-#
-# on any invocation of create_tmpdir(), that one will push the name
-# of the returned temp-directory to CSL_TEMP_DIRS[]. _csl_cleanup()
-# can later take care of it and removes the temp-directories found
-# in CSL_TEMP_DIRS[] when the script finish.
-#
+# @var CSL_TEMP_DIRS
+# @description this index array will be filled on any on any invocation of
+# `create_tmpdir`, as that one will push the name of the created
+# temp-directory to this variable. Later, `_csl_cleanup` will read
+# this variable to take care of removing the previously created
+# temporary directories, when the script finisheѕ.
 declare -a CSL_TEMP_DIRS=()
 
+# @var CSL_HELP_TEXT
+# @description this variable heldѕ the plugin-specific help-text that can
+# be set using `set_help_text` and overrules the libraries own
+# help-text defined in CSL_DEFAULT_HELP_TEXT.
 declare -g CSL_HELP_TEXT=''
-# the '&& true' is required as read exits non-zero on reaching end-of-file
+
+# @var CSL_DEFAULT_HELP_TEXT
+# @description this variable helds the libraries own default help-text. It
+# can be overwritten by `set_help_text`.
 declare -g CSL_DEFAULT_HELP_TEXT=''
+# the '&& true' is required as read exits non-zero on reaching end-of-file
 read -r -d '' CSL_DEFAULT_HELP_TEXT <<'EOF' && true
    -h, --help          ... help
    -d, --debug         ... enable debugging.
@@ -1330,7 +1414,7 @@ create_tmpdir ()
 readonly -f create_tmpdir
 
 # @function setup_cleanup_trap()
-# registers a signal-trap for certain signals like
+# @brief registers a signal-trap for certain signals like
 # EXIT and INT, to call the _csl_cleanup() function on program-termination
 # (irrespectivly of success or failure).
 #
@@ -1706,7 +1790,7 @@ eval_results ()
    local KEY='' VAL='' WARNING='' CRITICAL='' THRESHOLD_KEY=''
    local RESULT_TEXT='' RESULT_PERF='' RESULT_CODE=0
    local RESULT='' RETVAL=0
-   # @desc with $KEYS_HANDLED we just keep track to later test,
+   # @description with $KEYS_HANDLED we just keep track to later test,
    # for which keys thresholds are set, but no results are available
    # for them.
    declare -g -a KEYS_HANDLED=()
