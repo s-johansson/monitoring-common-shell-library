@@ -65,7 +65,6 @@ readonly CSL_DEFAULT_GETOPT_LONG='critical:,debug,help,verbose,warning:'
 
 readonly -a CSL_DEFAULT_PREREQ=(
    'bc'
-   'cat'
    'getopt'
    'mktemp'
 )

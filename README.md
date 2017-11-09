@@ -21,7 +21,6 @@ Some plugins that use the **monitoring-common-shell-library**:
 
 * Bash 4
 * getopt (from _util-linux_)
-* cat (from _GNU core utilities_)
 * mktemp (from _GNU core utilities_)
 * GNU bc
 
