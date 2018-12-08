@@ -7,7 +7,7 @@
 # monitoring-common-shell-library, a library of shell functions used for
 # monitoring plugins like used with (c) Nagios, (c) Icinga, etc.
 #
-# Copyright (C) 2017, Andreas Unterkircher <unki@netshadow.net>
+# Copyright (C) 2017-2018, Andreas Unterkircher <unki@netshadow.net>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
