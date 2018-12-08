@@ -96,4 +96,4 @@ See [./LICENSE](LICENSE) file for more information.
 
 ## Author
 
-(c) 2017 Andreas Unterkircher <unki@netshadow.net>
+(c) 2017-2018 Andreas Unterkircher <unki@netshadow.net>
