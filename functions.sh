@@ -3,7 +3,7 @@
 ###############################################################################
 
 
-# This file is part of monitoring-common-shell-library v1.8
+# This file is part of monitoring-common-shell-library v1.9
 #
 # monitoring-common-shell-library, a library of shell functions used for
 # monitoring plugins like used with (c) Nagios, (c) Icinga, etc.
@@ -23,7 +23,7 @@
 # @author Andreas Unterkircher
 # @license AGPLv3
 # @title monitoring-common-shell-library Function Reference
-# @version 1.8
+# @version 1.9
 
 set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
@@ -37,7 +37,7 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
 # @var CSL_VERSION
 # @description the library major and minor version number
-readonly CSL_VERSION="1.8"
+readonly CSL_VERSION="1.9"
 
 # @var CSL_TRUE
 readonly CSL_TRUE=true
@@ -174,11 +174,11 @@ declare -g -A CSL_USER_GETOPT_PARAMS=()
 # `create_tmpdir`, as that one will push the name of the created
 # temp-directory to this variable. Later, `_csl_cleanup` will read
 # this variable to take care of removing the previously created
-# temporary directories, when the script finisheѕ.
+# temporary directories, when the script terminates.
 declare -a CSL_TEMP_DIRS=()
 
 # @var CSL_HELP_TEXT
-# @description this variable heldѕ the plugin-specific help-text that can
+# @description this variable helds the plugin-specific help-text that can
 # be set using `set_help_text` and overrules the libraries own
 # help-text defined in CSL_DEFAULT_HELP_TEXT.
 declare -g CSL_HELP_TEXT=''
@@ -397,7 +397,7 @@ readonly -f is_empty
 
 
 # @function is_match()
-# @brief invokes the Basic Calculator (bc) and provideѕ it the given $condition.
+# @brief invokes the Basic Calculator (bc) and provides it the given $condition.
 # If the condition is met, bc returns '1' - in this is_match() returns 0.
 # Otherwise if the condition fails, bc will return '0', than is_match() returns 1.
 # @param1 string $condition
@@ -1437,7 +1437,7 @@ readonly -f create_tmpdir
 # As mostly these libraries functions will be called within a subshell
 # (eg. $(create_tmpdir)), the trap would only life within the context
 # of this subshell and would immediately be fired as soon as create_tmpdir()
-# finish.
+# terminates.
 # @return int 0 on success, 1 on failure
 setup_cleanup_trap ()
 {
@@ -2301,7 +2301,7 @@ readonly -f _csl_validate_parameters
 
 # @function _csl_cleanup()
 # @brief is a function, that would be called on soon as this
-# script has finished.
+# script has terminated.
 # It must be set upped by using setup_cleanup_trap ().
 # @param1 int $exit_code
 # @return int 0 on success, 1 on failure
@@ -2522,6 +2522,7 @@ _csl_compare_version ()
    fi
 
    local IFS=.
+   # shellcheck disable=SC2206
    local i ver1=($1) ver2=($2)
    # fill empty fields in ver1 with zeros
    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do

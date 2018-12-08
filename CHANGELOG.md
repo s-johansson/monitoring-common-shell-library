@@ -1,6 +1,6 @@
 # Changes in monitoring-common-shell-library
 
-## 1.9 (unreleased)
+## 1.9 (2018-12-08)
 
 * rename all CSL-internal functions from `csl\_*` to `_csl_*`
 * code reorganization
