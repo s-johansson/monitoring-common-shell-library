@@ -21,7 +21,6 @@ Some plugins that use the **monitoring-common-shell-library**:
 
 * Bash 4
 * getopt (from _util-linux_)
-* cat (from _GNU core utilities_)
 * mktemp (from _GNU core utilities_)
 * GNU bc
 
@@ -73,6 +72,11 @@ portable and efficient if you choose the way "Including it".
 
 See the automatically generated *function-reference* in [./FUNCREF.md](FUNCREF.md),
 that is automatically generated from `functions.sh`.
+
+## Development
+
+If you want to extend the **monitoring-common-shell-library** and contribute your
+changes to this project, please obey [./CODING.md](CODING.md).
 
 ## Automated Testing
 

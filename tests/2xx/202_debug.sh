@@ -2,7 +2,8 @@
 
 . common.sh
 
-CSL_DEBUG=1
+CSL_DEBUG=true
 RESULT=$(debug "bla" 2>&1)
 assert_equals "${RESULT}" "^main\(\[$(((LINENO-1)))\]\):[[:blank:]]+bla$"
-unset -v CSL_DEBUG RESULT
+CSL_DEBUG=false
+unset -v RESULT

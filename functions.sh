@@ -33,61 +33,161 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
 #
 # <Variables>
+#
+
+# @var CSL_VERSION
+# @description the library major and minor version number
 readonly CSL_VERSION="1.8"
 
-#
-# remember: on the shell OK=0, FAIL!=0.
-#
-readonly CSL_EXIT_OK=0
-readonly CSL_EXIT_WARNING=1
-readonly CSL_EXIT_CRITICAL=2
-readonly CSL_EXIT_UNKNOWN=3
-
+# @var CSL_TRUE
 readonly CSL_TRUE=true
+# @var CSL_FALSE
 readonly CSL_FALSE=false
+
+# @var CSL_EXIT_OK
+readonly CSL_EXIT_OK=0
+# @var CSL_EXIT_WARNING
+readonly CSL_EXIT_WARNING=1
+# @var CSL_EXIT_CRITICAL
+readonly CSL_EXIT_CRITICAL=2
+# @var CSL_EXIT_UNKNOWN
+readonly CSL_EXIT_UNKNOWN=3
 
 #
 # declare & reset variables, just in case they are already set...
 #
 
 # @var CSL_EXIT_NO_DATA_IS_CRITICAL
-# @desc if set to true, no result-data is treated as CRITICAL instead
-# of exiting with UNKNOWN.
+# @description if set to true, no result-data being set until
+# the end of the script (actually until print_result() is
+# invoked), will be treated as CRITICAL instead of exiting
+# with state UNKNOWN.
+# @example CSL_EXIT_NO_DATA_IS_CRITICAL=true -> exits CRITICAL
+# CSL_EXIT_NO_DATA_IS_CRITICAL=false -> exits UNKNOWN
 declare -g CSL_EXIT_NO_DATA_IS_CRITICAL="${CSL_FALSE}"
 
-declare -g CSL_DEBUG='' CSL_VERBOSE=''
-declare -g CSL_RESULT_CODE='' CSL_RESULT_TEXT='' CSL_RESULT_PERFDATA=''
+# @var CSL_DEBUG
+# @description if set to true, debugging output will be enabled.
+# @example CSL_DEBUG=false -> debugging disabled
+# CSL_DEBUG=true -> debugging enabled
+declare -g CSL_DEBUG="${CSL_FALSE}"
+
+# @var CSL_VERBOSE
+# @description if set to true, verbose console output will be enabled.
+# @example CSL_VERBOSE=false -> verbose output disabled
+# CSL_VERBOSE=true -> verbose output enabled
+declare -g CSL_VERBOSE="${CSL_FALSE}"
+
+# @var CSL_RESULT_CODE
+# @description this variable will held the final plugin-exit code.
+declare -g CSL_RESULT_CODE=''
+
+# @var CSL_RESULT_TEXT
+# @description this variable will held the final plugin-text output.
+declare -g CSL_RESULT_TEXT=''
+
+# @var CSL_RESULT_PERFDATA
+# @description this variable will held the final plugin-performance data.
+declare -g CSL_RESULT_PERFDATA=''
+
+# @var CSL_RESULT_VALUES
+# @description this associatative array will be filled by the plugin with
+# the read measurement values, and later be read to evaluate the
+# plugins result.
 declare -A CSL_RESULT_VALUES=()
 
-declare -g CSL_GETOPT_SHORT='' CSL_GETOPT_LONG=''
+# @var CSL_GETOPT_SHORT
+# @description this variable gets filled with plugin-specific getopt short
+# parameters.
+declare -g CSL_GETOPT_SHORT=''
+
+# @var CSL_GETOPT_LONG
+# @description this variable gets filled with plugin-specific getopt long
+# parameters.
+declare -g CSL_GETOPT_LONG=''
+
+# @var CSL_DEFAULT_GETOPT_SHORT
+# @description this variable contains the minimum set of getopt short
+# parameters to be used as command-line parameters.
 readonly CSL_DEFAULT_GETOPT_SHORT='c:dhvw:'
+
+# @var CSL_DEFAULT_GETOPT_LONG
+# @description this variable contains the minimum set of getopt long
+# parameters to be used as command-line parameters.
 readonly CSL_DEFAULT_GETOPT_LONG='critical:,debug,help,verbose,warning:'
 
+# @var CSL_DEFAULT_PREREQ
+# @description this variable helds the minimum set of external program
+# dependencies, this library requires. additional plugin-specific
+# can be added by `add_prereq`.
+# * bc, for threshold evaluation.
+# * getopt, for (advanced) command-line parameter parsing.
+# * mktemp, to create temporary directories.
 readonly -a CSL_DEFAULT_PREREQ=(
    'bc'
-   'cat'
    'getopt'
    'mktemp'
 )
 
-declare -g -A CSL_WARNING_THRESHOLD=() CSL_CRITICAL_THRESHOLD=()
+# @var CSL_WARNING_THRESHOLD
+# @description this associatative array helds the plugin-specific warning
+# thresholds and gets filled by the command-line parameter --warning (-w).
+declare -g -A CSL_WARNING_THRESHOLD=()
+
+# @var CSL_CRITICAL_THRESHOLD
+# @description this associatative array helds the plugin-specific critical
+# thresholds and gets filled by the command-line parameter --critical (-c).
+declare -g -A CSL_CRITICAL_THRESHOLD=()
+
+# @var CSL_USER_PREREQ
+# @description this index array helds the plugin-specific external dependencies.
+# This variable is best to be filled with `add_reqreq`. In the end, these
+# requirements will be merged with those specified in CSL_DEFAULT_PREREQ.
 declare -g -a CSL_USER_PREREQ=()
+
+# @var CSL_USER_PARAMS
+# @description this index array helds the plugin-specific getopt parameters.
+# This variable is best to be filled with `add_params` to register
+# an additional parameter with its short- and long-option.
 declare -g -a CSL_USER_PARAMS=()
+
+# @var CSL_USER_PARAMS_VALUES
+# @description this associatative array helds the values of plugin-specific
+# getopt parameters that have been specified on the command-line as
+# arguments to getopt parameters.
 declare -g -A CSL_USER_PARAMS_VALUES=()
+
+# @var CSL_USER_PARAMS_DEFAULT_VALUES
+# @description this associatative array helds the default-values of plugin-
+# specific getopt parameters that have been registered as getopt
+# parameters. If no arguments are given to a specific getopt parameter,
 declare -g -A CSL_USER_PARAMS_DEFAULT_VALUES=()
+
+# @var CSL_USER_GETOPT_PARAMS
+# @description this associatative array acts as fast lookup table from
+# a specific getopt parameter (long or short), to the actually
+# defined CSL_USER_PARAMS.
 declare -g -A CSL_USER_GETOPT_PARAMS=()
 
-#
-# on any invocation of create_tmpdir(), that one will push the name
-# of the returned temp-directory to CSL_TEMP_DIRS[]. _csl_cleanup()
-# can later take care of it and removes the temp-directories found
-# in CSL_TEMP_DIRS[] when the script finish.
-#
+# @var CSL_TEMP_DIRS
+# @description this index array will be filled on any on any invocation of
+# `create_tmpdir`, as that one will push the name of the created
+# temp-directory to this variable. Later, `_csl_cleanup` will read
+# this variable to take care of removing the previously created
+# temporary directories, when the script finisheѕ.
 declare -a CSL_TEMP_DIRS=()
 
+# @var CSL_HELP_TEXT
+# @description this variable heldѕ the plugin-specific help-text that can
+# be set using `set_help_text` and overrules the libraries own
+# help-text defined in CSL_DEFAULT_HELP_TEXT.
 declare -g CSL_HELP_TEXT=''
-# the '&& true' is required as read exits non-zero on reaching end-of-file
+
+# @var CSL_DEFAULT_HELP_TEXT
+# @description this variable helds the libraries own default help-text. It
+# can be overwritten by `set_help_text`.
 declare -g CSL_DEFAULT_HELP_TEXT=''
+# the '&& true' is required as read exits non-zero on reaching end-of-file
 read -r -d '' CSL_DEFAULT_HELP_TEXT <<'EOF' && true
    -h, --help          ... help
    -d, --debug         ... enable debugging.
@@ -144,8 +244,7 @@ readonly CSL_DEFAULT_HELP_TEXT
 is_debug ()
 {
    is_declared CSL_DEBUG || return 1;
-   ! is_empty CSL_DEBUG || return 1;
-   [ "x${CSL_DEBUG}" != "x0" ] || return 1;
+   [ ${CSL_DEBUG} == ${CSL_TRUE} ] || return 1
 
    return 0
 }
@@ -163,7 +262,7 @@ debug ()
 {
    is_debug || return 0;
 
-   echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\t${1}" >&2
+   echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\\t${1}" >&2
 }
 readonly -f debug
 
@@ -176,7 +275,7 @@ readonly -f debug
 # @return int
 fail ()
 {
-   echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\t${1}"
+   echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\\t${1}"
 }
 readonly -f fail
 
@@ -186,8 +285,7 @@ readonly -f fail
 is_verbose ()
 {
    is_declared CSL_VERBOSE || return 1;
-   ! is_empty CSL_VERBOSE || return 1;
-   [ "x${CSL_VERBOSE}" != "x0" ] || return 1;
+   [ ${CSL_VERBOSE} == ${CSL_TRUE} ] || return 1
 
    return 0
 }
@@ -202,7 +300,7 @@ verbose ()
 {
    is_verbose || return 0;
 
-   echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\t${1}" >&2
+   echo -e "${FUNCNAME[1]}([${BASH_LINENO[0]}]):\\t${1}" >&2
 }
 readonly -f verbose
 
@@ -216,7 +314,7 @@ is_declared ()
 {
    [ $# -eq 1 ] || return 1
    declare -p "${1}" &> /dev/null
-   return $?
+   return "${?}"
 }
 readonly -f is_declared
 
@@ -229,7 +327,7 @@ is_declared_func ()
 {
    [ $# -eq 1 ] || return 1
    declare -p -f "${1}" &> /dev/null
-   return $?
+   return "${?}"
 }
 readonly -f is_declared_func
 
@@ -281,7 +379,7 @@ is_empty ()
 
    if ! is_declared "${1}"; then
       is_empty_str "${1}"
-      return $?
+      return "${?}"
    fi
 
    local -n VAR="${1}"
@@ -471,6 +569,7 @@ readonly -f eval_thresholds
 
 # @function eval_limits()
 # @todo to be removed by 2017-12-31
+# @deprecated true
 eval_limits ()
 {
    _csl_deprecate_func eval_thresholds "${@}"
@@ -601,6 +700,7 @@ readonly -f is_valid_threshold
 
 # @function is_valid_limit()
 # @todo to be removed by 2017-12-31
+# @deprecated true
 is_valid_limit ()
 {
    _csl_deprecate_func is_valid_threshold "${@}"
@@ -618,7 +718,7 @@ is_cmd ()
    ! is_empty_str "${1}" || return 1
 
    command -v "${1}" >/dev/null 2>&1;
-   return $?
+   return "${?}"
 }
 readonly -f is_cmd
 
@@ -1306,7 +1406,7 @@ create_tmpdir ()
    fi
 
    CSL_TMPDIR="$(mktemp -d -p /tmp csl.XXXXXX)"
-   RETVAL=$?
+   RETVAL="${?}"
 
    if [ "x${RETVAL}" != "x0" ]; then
       fail "mktemp exited non-zero!";
@@ -1329,7 +1429,7 @@ create_tmpdir ()
 readonly -f create_tmpdir
 
 # @function setup_cleanup_trap()
-# registers a signal-trap for certain signals like
+# @brief registers a signal-trap for certain signals like
 # EXIT and INT, to call the _csl_cleanup() function on program-termination
 # (irrespectivly of success or failure).
 #
@@ -1344,12 +1444,13 @@ setup_cleanup_trap ()
    #
    # has the cleanup trap already been installed
    #
-   if trap -p | grep -qsE "^trap[[:blank:]]--[[:blank:]]'_csl_cleanup'[[:blank:]]"; then
+   #if trap -p | grep -qsE "^trap[[:blank:]]--[[:blank:]]'_csl_cleanup'[[:blank:]]"; then
+   if [[ "$(trap -p)" =~ ^trap[[:blank:]]--[[:blank:]]'_csl_cleanup'[[:blank:]] ]]; then
       return 0
    fi
 
    trap _csl_cleanup INT QUIT TERM EXIT
-   return $?
+   return "${?}"
 }
 readonly -f setup_cleanup_trap
 
@@ -1551,6 +1652,7 @@ readonly -f has_threshold
 
 # @function has_limit()
 # @todo to be removed by 2017-12-31
+# @deprecated true
 has_limit ()
 {
    _csl_deprecate_func has_threshold "${@}"
@@ -1594,6 +1696,7 @@ readonly -f get_threshold_for_key
 
 # @function get_limit_for_key()
 # @todo to be removed by 2017-12-31
+# @deprecated true
 get_limit_for_key ()
 {
    _csl_deprecate_func get_threshold_for_key "${@}"
@@ -1703,7 +1806,7 @@ eval_results ()
    local KEY='' VAL='' WARNING='' CRITICAL='' THRESHOLD_KEY=''
    local RESULT_TEXT='' RESULT_PERF='' RESULT_CODE=0
    local RESULT='' RETVAL=0
-   # @desc with $KEYS_HANDLED we just keep track to later test,
+   # @description with $KEYS_HANDLED we just keep track to later test,
    # for which keys thresholds are set, but no results are available
    # for them.
    declare -g -a KEYS_HANDLED=()
@@ -1770,9 +1873,9 @@ eval_results ()
       # the digits should now be present in $VAL. If there is still text, we
       # have to evaluate it text-based.
       if [[ "${VAL}" =~ [[:alpha:]] ]]; then
-         RESULT="$(eval_text "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL=$? || RETVAL=$?
+         RESULT="$(eval_text "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL="${?}" || RETVAL="${?}"
       else
-         RESULT="$(eval_thresholds "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL=$? || RETVAL=$?
+         RESULT="$(eval_thresholds "${VAL}" "${WARNING}" "${CRITICAL}")" && RETVAL="${?}" || RETVAL="${?}"
       fi
 
       if [ $RETVAL -gt ${RESULT_CODE} ]; then
@@ -1867,16 +1970,22 @@ _csl_check_requirements ()
    local RETVAL=0
 
    # is Bash actually used?
-   ( is_declared BASH_VERSINFO && ! is_empty_str "${BASH_VERSINFO[0]}" ) || \
-      { fail "Strangely BASH_VERSINFO variable is not (correctly) set!"; exit ${CSL_EXIT_CRITICAL}; }
+   if ! is_declared BASH_VERSINFO || is_empty_str "${BASH_VERSINFO[0]}"; then
+      fail "Strangely BASH_VERSINFO variable is not (correctly) set!"
+      exit ${CSL_EXIT_CRITICAL}
+   fi
 
    # Bash major version 4 or later is required
-   [ "${BASH_VERSINFO[0]}" -ge 4 ] || \
-      { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
+   if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+      fail "BASH version 4.3 or greater is required!"
+      return ${CSL_EXIT_CRITICAL}
+   fi
 
    # If bash major version 4 is used, the minor needs to be 3 or greater (for [[ -v ]] tests).
-   ( [ "${BASH_VERSINFO[0]}" -eq "4" ] && [ "${BASH_VERSINFO[1]}" -ge "3" ] ) || \
-      { fail "BASH version 4.3 or greater is required!"; return ${CSL_EXIT_CRITICAL}; }
+   if [ "${BASH_VERSINFO[0]}" -eq "4" ] && [ "${BASH_VERSINFO[1]}" -lt "3" ]; then
+      fail "BASH version 4.3 or greater is required!"
+      return ${CSL_EXIT_CRITICAL}
+   fi
 
    local PREREQ
 
@@ -1886,7 +1995,7 @@ _csl_check_requirements ()
 
    if is_func plugin_prereq; then
       plugin_prereq;
-      RETVAL=$?
+      RETVAL="${?}"
    fi
 
    return $RETVAL
@@ -1934,6 +2043,7 @@ readonly -f _csl_get_threshold_range
 
 # @function _csl_get_limit_range()
 # @todo to be removed by 2017-12-31
+# @deprecated true
 _csl_get_limit_range ()
 {
    _csl_deprecate_func _csl_get_threshold_range "${@}"
@@ -2007,12 +2117,12 @@ _csl_parse_parameters ()
             exit 0
             ;;
          '-d'|'--debug')
-            readonly CSL_DEBUG=1
+            CSL_DEBUG="${CSL_TRUE}"
             shift
             continue
             ;;
          '-v'|'--verbose')
-            readonly CSL_VERBOSE=1
+            CSL_VERBOSE="${CSL_TRUE}"
             shift
             continue
             ;;
@@ -2094,7 +2204,7 @@ _csl_parse_parameters ()
             fi
 
             ${OPT_VAR} "${OPT_ARG}"
-            RETVAL=$?
+            RETVAL="${?}"
 
             if [ "x${RETVAL}" != "x0" ]; then
                fail "Parameter function '${OPT_VAR}' exited non-zero: ${RETVAL}"
@@ -2114,8 +2224,8 @@ _csl_parse_parameters ()
    #   show_help
    #   exit 1
    #fi
-   ! is_set CSL_DEBUG || debug "Debugging: enabled"
-   ! is_set CSL_VERBOSE || verbose "Verbose output: enabled"
+   ! is_debug || debug "Debugging: enabled"
+   ! is_verbose || verbose "Verbose output: enabled"
    ! is_set CSL_WARNING_THRESHOLD || debug "Warning threshold: ${CSL_WARNING_THRESHOLD[*]}"
    ! is_set CSL_CRITICAL_THRESHOLD || debug "Critical threshold: ${CSL_CRITICAL_THRESHOLD[*]}"
 }
@@ -2181,7 +2291,7 @@ _csl_validate_parameters ()
 
    if is_func plugin_params_validate; then
       plugin_params_validate;
-      RETVAL=$?
+      RETVAL="${?}"
    fi
 
    return $RETVAL
@@ -2197,7 +2307,7 @@ readonly -f _csl_validate_parameters
 # @return int 0 on success, 1 on failure
 _csl_cleanup ()
 {
-   local EXITCODE=$?
+   local EXITCODE="${?}"
 
    if is_func plugin_cleanup; then
       plugin_cleanup;
@@ -2362,7 +2472,7 @@ _csl_add_threshold ()
       TARGET+=( ["${KEY}"]="${VAL}" )
    done
 
-   # enable for debugging, as this code runs before DEBUG=1 has been set
+   # enable for debugging, as this code runs before CSL_DEBUG=true has been set
    # by _csl_parse_parameters() which would then enable debug output.
    #for KEY in "${!TARGET[@]}"; do
       #echo "Threshold ${1}: ${KEY}=${TARGET["${KEY}"]}"
@@ -2372,6 +2482,7 @@ readonly -f _csl_add_threshold
 
 # @function _csl_add_limit()
 # @todo to be removed by 2017-12-31
+# @deprecated true
 _csl_add_limit ()
 {
    _csl_deprecate_func _csl_add_threshold "${@}"
@@ -2476,7 +2587,7 @@ readonly -f _csl_require_libvers
 # the further parameters the deprecated function was called with.
 # @param1 string replacement-function
 # @return int the replacement-functions exit-code
-_csl_deprecate_func ()
+function _csl_deprecate_func ()
 {
    if [ $# -lt 2 ]; then
       fail "Invalid parameters"
