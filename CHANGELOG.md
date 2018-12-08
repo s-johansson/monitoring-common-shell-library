@@ -2,7 +2,7 @@
 
 ## 1.9 (unreleased)
 
-* rename all _csl\__ functions to _\_csl\__
+* rename all CSL-internal functions from `csl\_*` to `_csl_*`
 * code reorganization
 
 ## 1.8 (2017-10-30)
