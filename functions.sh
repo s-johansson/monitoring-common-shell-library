@@ -2436,15 +2436,6 @@ _csl_add_threshold ()
 }
 readonly -f _csl_add_threshold
 
-# @function _csl_add_limit()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-_csl_add_limit ()
-{
-   _csl_deprecate_func _csl_add_threshold "${@}"
-}
-readonly -f _csl_add_limit
-
 # @function _csl_compare_version()
 # @brief This function compares to version strings.
 # Credits to original author Dennis Williamson @ stackoverflow (see link).
