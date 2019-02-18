@@ -370,16 +370,13 @@ readonly -f is_empty_str
 # @brief returns 0, if the provided string or array variable have
 # a value of length of zero.  Otherwise it returns 1.
 # @param1 string|array $string
-# @todo remove the call to is_empty_str() by 2017-12-31 and return
-# an error if undeclared instead.
 # @return int 0 on success, 1 on failure
 is_empty ()
 {
    [ $# -eq 1 ] || return 1
 
    if ! is_declared "${1}"; then
-      is_empty_str "${1}"
-      return "${?}"
+      return 1
    fi
 
    local -n VAR="${1}"
