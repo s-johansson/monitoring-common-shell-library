@@ -1674,15 +1674,6 @@ get_threshold_for_key ()
 }
 readonly -f get_threshold_for_key
 
-# @function get_limit_for_key()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-get_limit_for_key ()
-{
-   _csl_deprecate_func get_threshold_for_key "${@}"
-}
-readonly -f get_limit_for_key
-
 # @function add_result()
 # @brief This function registers a result value ($2) for the given
 # key ($1). The function does not allow to overrule an already set
