@@ -946,7 +946,8 @@ show_help ()
 readonly -f show_help
 
 # @function startup()
-# @brief is the first library function, that any plugin should invoke.
+# @brief is the first library function, that a this library consuming plugin
+# should invoke.
 # @param1 string $cmdline_params
 # @output plugin-result + plugin-perfdata
 # @return int 0 on success, 1 on failure
@@ -967,7 +968,7 @@ startup ()
 
    if ! is_declared_func plugin_worker || ! is_func plugin_worker; then
       fail "There is no plugin_worker() function defined by your plugin!"
-      return 1
+      exit 1
    fi
 
    plugin_worker "${@}" || \
@@ -2323,10 +2324,6 @@ _csl_cleanup ()
       is_dir "${CSL_TMPDIR}" || continue
       rm -rf "${CSL_TMPDIR}"
    done
-
-   if is_func plugin_params; then
-      plugin_params;
-   fi
 
    exit $EXITCODE
 }
