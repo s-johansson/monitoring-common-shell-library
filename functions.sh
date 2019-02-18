@@ -1639,15 +1639,6 @@ has_threshold ()
 }
 readonly -f has_threshold
 
-# @function has_limit()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-has_limit ()
-{
-   _csl_deprecate_func has_threshold "${@}"
-}
-readonly -f has_limit
-
 # @function get_threshold_for_key()
 # @brief This function look up the declared warning- or critical-thresholds ($1)
 # for the specified key ($2).
