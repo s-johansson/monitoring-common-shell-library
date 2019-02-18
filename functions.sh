@@ -1450,8 +1450,12 @@ setup_cleanup_trap ()
       return 0
    fi
 
-   trap _csl_cleanup INT QUIT TERM EXIT
-   return "${?}"
+   if ! trap _csl_cleanup INT QUIT TERM EXIT; then
+      fail "Failure installing cleanup-trap! Trap command exited non-zero (${?})."
+      exit 1
+   fi
+
+   return 0
 }
 readonly -f setup_cleanup_trap
 
