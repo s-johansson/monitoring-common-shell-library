@@ -556,7 +556,9 @@ eval_thresholds ()
       MATCH="no-match-at-all"
    fi
 
-   if is_empty_str "${MATCH}" || is_empty_str "${TEXT}" || is_empty_str "${STATE}"; then
+   if is_empty_str "${MATCH}" \
+      || is_empty_str "${TEXT}" \
+      || is_empty_str "${STATE}"; then
       fail "something went horribly wrong."
       exit 1
    fi
@@ -697,15 +699,6 @@ is_valid_threshold ()
    return 1
 }
 readonly -f is_valid_threshold
-
-# @function is_valid_limit()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-is_valid_limit ()
-{
-   _csl_deprecate_func is_valid_threshold "${@}"
-}
-readonly -f is_valid_limit
 
 # @function is_cmd()
 # @brief returns 0, if the provided external command exists.
