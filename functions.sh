@@ -569,15 +569,6 @@ eval_thresholds ()
 }
 readonly -f eval_thresholds
 
-# @function eval_limits()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-eval_limits ()
-{
-   _csl_deprecate_func eval_thresholds "${@}"
-}
-readonly -f eval_limits
-
 # @function eval_text()
 # @brief evaluates the given text $1 against WARNING ($2) and CRITICAL ($3) thresholds.
 # @param1 string $value
