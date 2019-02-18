@@ -1,9 +1,11 @@
 # Changes in monitoring-common-shell-library
 
-## 1.9.1 (unreleased)
+## 1.9.1 (2019-02-18)
 
 * fix create\_tmpdir() not correctly internally recording the
   create tmpdir - and thus not clean it up later on termination.
+* remove deprecated function
+* code cleanup
 
 ## 1.9 (2018-12-08)
 
