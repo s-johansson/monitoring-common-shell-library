@@ -2012,17 +2012,6 @@ _csl_get_threshold_range ()
 }
 readonly -f _csl_get_threshold_range
 
-# @function _csl_get_limit_range()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-_csl_get_limit_range ()
-{
-   _csl_deprecate_func _csl_get_threshold_range "${@}"
-}
-readonly -f _csl_get_limit_range
-
-
-
 # @function _csl_parse_parameters()
 # @brief This function uses GNU getopt to parse the given command-line
 # parameters.
