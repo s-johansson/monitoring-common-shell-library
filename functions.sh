@@ -3,12 +3,12 @@
 ###############################################################################
 
 
-# This file is part of monitoring-common-shell-library v1.9
+# This file is part of monitoring-common-shell-library v1.9.1
 #
 # monitoring-common-shell-library, a library of shell functions used for
 # monitoring plugins like used with (c) Nagios, (c) Icinga, etc.
 #
-# Copyright (C) 2017-2018, Andreas Unterkircher <unki@netshadow.net>
+# Copyright (C) 2017-2019, Andreas Unterkircher <unki@netshadow.net>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -23,7 +23,7 @@
 # @author Andreas Unterkircher
 # @license AGPLv3
 # @title monitoring-common-shell-library Function Reference
-# @version 1.9
+# @version 1.9.1
 
 set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
@@ -37,7 +37,7 @@ set -u -e -o pipefail  # exit-on-error, error on undeclared variables.
 
 # @var CSL_VERSION
 # @description the library major and minor version number
-readonly CSL_VERSION="1.9"
+readonly CSL_VERSION="1.9.1"
 
 # @var CSL_TRUE
 readonly CSL_TRUE=true
@@ -370,16 +370,13 @@ readonly -f is_empty_str
 # @brief returns 0, if the provided string or array variable have
 # a value of length of zero.  Otherwise it returns 1.
 # @param1 string|array $string
-# @todo remove the call to is_empty_str() by 2017-12-31 and return
-# an error if undeclared instead.
 # @return int 0 on success, 1 on failure
 is_empty ()
 {
    [ $# -eq 1 ] || return 1
 
    if ! is_declared "${1}"; then
-      is_empty_str "${1}"
-      return "${?}"
+      return 1
    fi
 
    local -n VAR="${1}"
@@ -556,7 +553,9 @@ eval_thresholds ()
       MATCH="no-match-at-all"
    fi
 
-   if is_empty_str "${MATCH}" || is_empty_str "${TEXT}" || is_empty_str "${STATE}"; then
+   if is_empty_str "${MATCH}" \
+      || is_empty_str "${TEXT}" \
+      || is_empty_str "${STATE}"; then
       fail "something went horribly wrong."
       exit 1
    fi
@@ -566,15 +565,6 @@ eval_thresholds ()
    return ${STATE}
 }
 readonly -f eval_thresholds
-
-# @function eval_limits()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-eval_limits ()
-{
-   _csl_deprecate_func eval_thresholds "${@}"
-}
-readonly -f eval_limits
 
 # @function eval_text()
 # @brief evaluates the given text $1 against WARNING ($2) and CRITICAL ($3) thresholds.
@@ -697,15 +687,6 @@ is_valid_threshold ()
    return 1
 }
 readonly -f is_valid_threshold
-
-# @function is_valid_limit()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-is_valid_limit ()
-{
-   _csl_deprecate_func is_valid_threshold "${@}"
-}
-readonly -f is_valid_limit
 
 # @function is_cmd()
 # @brief returns 0, if the provided external command exists.
@@ -946,7 +927,8 @@ show_help ()
 readonly -f show_help
 
 # @function startup()
-# @brief is the first library function, that any plugin should invoke.
+# @brief is the first library function, that a this library consuming plugin
+# should invoke.
 # @param1 string $cmdline_params
 # @output plugin-result + plugin-perfdata
 # @return int 0 on success, 1 on failure
@@ -967,7 +949,7 @@ startup ()
 
    if ! is_declared_func plugin_worker || ! is_func plugin_worker; then
       fail "There is no plugin_worker() function defined by your plugin!"
-      return 1
+      exit 1
    fi
 
    plugin_worker "${@}" || \
@@ -1405,11 +1387,8 @@ create_tmpdir ()
       exit 1
    fi
 
-   CSL_TMPDIR="$(mktemp -d -p /tmp csl.XXXXXX)"
-   RETVAL="${?}"
-
-   if [ "x${RETVAL}" != "x0" ]; then
-      fail "mktemp exited non-zero!";
+   if ! CSL_TMPDIR="$(mktemp -d -p /tmp csl.XXXXXX)"; then
+      fail "mktemp exited non-zero (${?})!";
       exit 1
    fi
 
@@ -1423,7 +1402,7 @@ create_tmpdir ()
       exit 1
    fi
 
-   CSL_TEMP_DIRS=( "${CSL_TMPDIR}" )
+   CSL_TEMP_DIRS+=( "${CSL_TMPDIR}" )
    echo "${CSL_TMPDIR}"
 }
 readonly -f create_tmpdir
@@ -1449,8 +1428,12 @@ setup_cleanup_trap ()
       return 0
    fi
 
-   trap _csl_cleanup INT QUIT TERM EXIT
-   return "${?}"
+   if ! trap _csl_cleanup INT QUIT TERM EXIT; then
+      fail "Failure installing cleanup-trap! Trap command exited non-zero (${?})."
+      exit 1
+   fi
+
+   return 0
 }
 readonly -f setup_cleanup_trap
 
@@ -1650,15 +1633,6 @@ has_threshold ()
 }
 readonly -f has_threshold
 
-# @function has_limit()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-has_limit ()
-{
-   _csl_deprecate_func has_threshold "${@}"
-}
-readonly -f has_limit
-
 # @function get_threshold_for_key()
 # @brief This function look up the declared warning- or critical-thresholds ($1)
 # for the specified key ($2).
@@ -1693,15 +1667,6 @@ get_threshold_for_key ()
    return 1
 }
 readonly -f get_threshold_for_key
-
-# @function get_limit_for_key()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-get_limit_for_key ()
-{
-   _csl_deprecate_func get_threshold_for_key "${@}"
-}
-readonly -f get_limit_for_key
 
 # @function add_result()
 # @brief This function registers a result value ($2) for the given
@@ -2041,17 +2006,6 @@ _csl_get_threshold_range ()
 }
 readonly -f _csl_get_threshold_range
 
-# @function _csl_get_limit_range()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-_csl_get_limit_range ()
-{
-   _csl_deprecate_func _csl_get_threshold_range "${@}"
-}
-readonly -f _csl_get_limit_range
-
-
-
 # @function _csl_parse_parameters()
 # @brief This function uses GNU getopt to parse the given command-line
 # parameters.
@@ -2324,10 +2278,6 @@ _csl_cleanup ()
       rm -rf "${CSL_TMPDIR}"
    done
 
-   if is_func plugin_params; then
-      plugin_params;
-   fi
-
    exit $EXITCODE
 }
 readonly -f _csl_cleanup
@@ -2479,15 +2429,6 @@ _csl_add_threshold ()
    #done
 }
 readonly -f _csl_add_threshold
-
-# @function _csl_add_limit()
-# @todo to be removed by 2017-12-31
-# @deprecated true
-_csl_add_limit ()
-{
-   _csl_deprecate_func _csl_add_threshold "${@}"
-}
-readonly -f _csl_add_limit
 
 # @function _csl_compare_version()
 # @brief This function compares to version strings.
