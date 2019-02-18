@@ -1390,11 +1390,8 @@ create_tmpdir ()
       exit 1
    fi
 
-   CSL_TMPDIR="$(mktemp -d -p /tmp csl.XXXXXX)"
-   RETVAL="${?}"
-
-   if [ "x${RETVAL}" != "x0" ]; then
-      fail "mktemp exited non-zero!";
+   if ! CSL_TMPDIR="$(mktemp -d -p /tmp csl.XXXXXX)"; then
+      fail "mktemp exited non-zero (${?})!";
       exit 1
    fi
 
@@ -1408,7 +1405,7 @@ create_tmpdir ()
       exit 1
    fi
 
-   CSL_TEMP_DIRS=( "${CSL_TMPDIR}" )
+   CSL_TEMP_DIRS+=( "${CSL_TMPDIR}" )
    echo "${CSL_TMPDIR}"
 }
 readonly -f create_tmpdir

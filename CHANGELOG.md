@@ -1,5 +1,10 @@
 # Changes in monitoring-common-shell-library
 
+## 1.9.1 (unreleased)
+
+* fix create\_tmpdir() not correctly internally recording the
+  create tmpdir - and thus not clean it up later on termination.
+
 ## 1.9 (2018-12-08)
 
 * rename all CSL-internal functions from `csl\_*` to `_csl_*`
