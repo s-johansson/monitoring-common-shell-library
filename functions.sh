@@ -1499,11 +1499,16 @@ in_array ()
 
    local -n haystack="${1}"
 
-   for i in "${haystack[@]}"; do
-      if [[ "${i}" =~ ${2} ]]; then
-         return 0
-      fi
-   done
+   n=$((${#haystack[@]}))
+   # DEBUG : echo $n elements
+
+   if [ $n -gt 0 ];then
+      for i in "${haystack[@]}"; do
+         if [[ "${i}" =~ ${2} ]]; then
+            return 0
+         fi
+     done
+   fi
 
    return 1
 }
